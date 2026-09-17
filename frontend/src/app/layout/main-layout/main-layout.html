@@ -1,0 +1,12 @@
+<mat-sidenav-container class="shell">
+  <mat-sidenav mode="side" opened class="shell-sidenav" [fixedInViewport]="true" fixedTopGap="0">
+    <app-sidebar />
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell-content">
+    <app-header />
+    <main class="shell-main">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

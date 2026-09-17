@@ -1,0 +1,20 @@
+# Copia este archivo a "application-local.yml" (ya está en .gitignore, nunca se commitea)
+# y completa los valores reales de tu instancia SQL Server local.
+#
+# Se activa automáticamente porque application.yml usa el perfil "local" por defecto.
+# Alternativa sin copiar el archivo: exportar las mismas variables de entorno
+# (DB_URL, DB_USER, DB_PASSWORD, JWT_SECRET, CORS_ALLOWED_ORIGINS) antes de levantar el backend.
+
+spring:
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=RamichanStoreDB;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: TU_PASSWORD_AQUI
+
+app:
+  jwt:
+    # Genera un secreto aleatorio de al menos 64 bytes, por ejemplo con:
+    # PowerShell: [Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Maximum 256 }))
+    secret: GENERA_UN_SECRETO_ALEATORIO_DE_AL_MENOS_64_BYTES_AQUI
+  cors:
+    allowed-origins: http://localhost:4200

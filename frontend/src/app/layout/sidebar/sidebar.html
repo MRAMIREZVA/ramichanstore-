@@ -1,0 +1,28 @@
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-mark">ラ</span>
+    <span class="brand-name">RamichanStore</span>
+  </div>
+
+  <mat-nav-list class="nav-list">
+    @for (item of navItems; track item.route) {
+      @if (item.available) {
+        <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link" class="nav-item">
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      } @else {
+        <a
+          mat-list-item
+          class="nav-item disabled"
+          [matTooltip]="'Próximamente · Disponible en Fase ' + item.phase"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+          <mat-icon matListItemMeta class="lock-icon">lock</mat-icon>
+        </a>
+      }
+    }
+  </mat-nav-list>
+</div>

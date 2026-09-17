@@ -1,0 +1,55 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--mat-sys-surface-container-low);
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font-weight: 700;
+}
+
+.brand-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.nav-list {
+  overflow-y: auto;
+  padding-top: 4px;
+}
+
+.nav-item.disabled {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: auto;
+}
+
+.active-link {
+  background: var(--mat-sys-secondary-container);
+  border-radius: 8px;
+}
+
+.lock-icon.lock-icon {
+  font-family: 'Material Icons' !important;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--mat-sys-outline);
+}
