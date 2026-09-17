@@ -12,11 +12,19 @@ Moneda: **soles peruanos (PEN)**. Locale: **es-PE**.
 
 Dueño/administrador del proyecto: mramirezv2015@gmail.com (usuario semilla `admin`).
 
-## 2. Estado actual: Fase 0 completada
+## 2. Estado actual: Fase 0 y Fase 1 completadas
 
-La Fase 0 (arquitectura + scaffolding) está **terminada y verificada end-to-end** (compilación, migración de BD, login real contra el backend, render del frontend en navegador headless). A partir de aquí, el trabajo avanza **módulo por módulo** siguiendo el roadmap de la sección 9 — nunca todo de una vez.
+- **Fase 0** (arquitectura + scaffolding): login, JWT, usuarios/roles/permisos (entidades), settings, auditoría, dashboard shell. Verificada end-to-end.
+- **Fase 1** (Productos): módulo completo de productos + catálogos de apoyo (categorías, marcas, líneas, proveedores). Backend con cálculo automático de costo/ganancia/margen, búsqueda/filtro paginado, soft delete. Frontend con listado (tabla + filtros + paginación), formulario crear/editar (diálogo), confirmación antes de eliminar. Sembrada con 10 productos de prueba basados en el catálogo público real de RamichanStore. Verificada end-to-end en navegador real (crear → buscar → eliminar → recrear con el mismo SKU).
 
-Antes de empezar un módulo nuevo: leer este archivo, revisar el roadmap, y verificar que las relaciones con los módulos ya construidos (usuarios, auditoría, settings) sigan funcionando.
+A partir de aquí, el trabajo avanza **módulo por módulo** siguiendo el roadmap de la sección 9 — nunca todo de una vez.
+
+Antes de empezar un módulo nuevo: leer este archivo, revisar el roadmap, y verificar que las relaciones con los módulos ya construidos (usuarios, auditoría, settings, productos) sigan funcionando.
+
+**Patrón a replicar en módulos futuros — lecciones de la Fase 1 (evita re-descubrirlas):**
+- El mapeo de entidad a DTO (`XxxResponse.from(entity)`) que accede a una relación `@ManyToOne`/`@OneToMany` **debe ocurrir dentro del método `@Transactional`** del service, nunca en el controller después de que la transacción ya cerró (`open-in-view: false` está deliberadamente desactivado). Si no, sale `LazyInitializationException`. Ya pasó con `products` y `product-lines`.
+- `Specification.allOf(...)` de Spring Data JPA **no acepta elementos `null` en la lista/varargs** — hay que filtrar los `null` antes de combinarlas (ver `ProductService.search`).
+- Toda tabla con soft delete (`deleted_at`) que además tenga una columna única (SKU, username, email, nombre de categoría/marca, etc.) **necesita un índice único filtrado** (`CREATE UNIQUE INDEX ... WHERE deleted_at IS NULL`), no una `UNIQUE CONSTRAINT` plana — si no, un registro eliminado lógicamente bloquea para siempre volver a usar ese valor. Ver `V3__soft_delete_unique_indexes.sql`. Al agregar una tabla nueva con soft delete + columna única, usar el índice filtrado desde el inicio (no una migración de corrección después).
 
 ## 3. Stack y versiones exactas
 
@@ -103,9 +111,13 @@ RamichanStore/
 
 ## 6. Modelo de datos
 
-19 entidades mínimas según el spec original. **Construidas en Fase 0** (existen físicamente en `RamichanStoreDB`): `roles`, `permissions`, `role_permissions`, `users`, `settings`, `audit_logs`.
+19 entidades mínimas según el spec original, más `product_images` (no estaba en la lista original pero era necesaria para normalizar "imágenes adicionales" sin duplicar datos).
 
-**Pendientes** (se crean con una nueva migración Flyway `V2__...sql` en su fase correspondiente): `products`, `categories`, `brands`, `product_lines`, `suppliers`, `inventory`, `inventory_movements`, `customers`, `sales`, `sale_details`, `preorders`, `preorder_customers`, `payments`, `deliveries`, `loyalty_points`, `loyalty_point_movements`.
+**Construidas en Fase 0** (`V1__core_schema.sql`): `roles`, `permissions`, `role_permissions`, `users`, `settings`, `audit_logs`.
+
+**Construidas en Fase 1** (`V2__products_schema.sql`, corregida por `V3__soft_delete_unique_indexes.sql`): `categories`, `brands`, `product_lines`, `suppliers`, `products`, `product_images`.
+
+**Pendientes** (se crean con una nueva migración Flyway `V4__...sql` en adelante, en su fase correspondiente): `inventory`, `inventory_movements`, `customers`, `sales`, `sale_details`, `preorders`, `preorder_customers`, `payments`, `deliveries`, `loyalty_points`, `loyalty_point_movements`.
 
 Convenciones DDL (ver `backend/src/main/resources/db/migration/V1__core_schema.sql` como referencia):
 - `BIGINT IDENTITY(1,1)` como PK.
@@ -116,7 +128,7 @@ Convenciones DDL (ver `backend/src/main/resources/db/migration/V1__core_schema.s
 - Auditoría de fila: `created_at`, `updated_at`, `created_by`, `updated_by` en entidades que extienden `BaseEntity` (no todas las tablas los necesitan — ver nota abajo).
 - Cada tabla nueva de un módulo de negocio debe llevar FKs explícitas a `products`, `customers`, `users`, etc. según corresponda, con índices en las columnas de FK más consultadas.
 
-**Nota sobre `BaseEntity`:** no todas las entidades lo extienden. `Role`, `Permission` y `User` sí (tienen las 4 columnas de auditoría + soft delete). `Setting` y `AuditLog` son entidades livianas con su propio manejo manual de timestamps porque no calzan con el patrón de soft-delete (un `AuditLog` nunca se edita ni se borra; un `Setting` se actualiza in-place, no se "elimina lógicamente"). Al crear una entidad nueva, decidir explícitamente si extiende `BaseEntity` o no, no por defecto.
+**Nota sobre `BaseEntity`:** no todas las entidades lo extienden. `Role`, `Permission`, `User`, `Category`, `Brand`, `ProductLine`, `Supplier` y `Product` sí (tienen las 4 columnas de auditoría + soft delete + `@SQLRestriction("deleted_at IS NULL")`). `Setting`, `AuditLog` y `ProductImage` son entidades livianas sin ese patrón: `AuditLog` nunca se edita ni se borra, `Setting` se actualiza in-place, y `ProductImage` es un hijo de `Product` (se borra/recrea junto con su padre vía `cascade = ALL, orphanRemoval = true`, no tiene ciclo de vida propio). Al crear una entidad nueva, decidir explícitamente si extiende `BaseEntity` o no, no por defecto. **Si extiende `BaseEntity` y tiene una columna única (nombre, código, SKU, email...), usar `CREATE UNIQUE INDEX ... WHERE deleted_at IS NULL` en vez de `UNIQUE` a secas** (ver sección 2, lecciones de Fase 1).
 
 ## 7. Configuración y variables de entorno
 
@@ -162,7 +174,7 @@ ng test                                     # Karma/Jasmine (requiere Chrome)
 ## 9. Roadmap de módulos (MVP administrativo)
 
 - [x] **Fase 0 — Arquitectura y scaffolding.** Login, esqueleto de Dashboard, Usuarios/Roles/Permisos (solo entidades + backend, sin UI de gestión todavía), Configuración (solo `settings` de puntos/moneda vía API, sin UI todavía), Auditoría (infraestructura reutilizable, sin pantalla de consulta todavía). Verificado end-to-end: migración Flyway, login real, JWT, dashboard renderizado en navegador con la sesión del admin semilla.
-- [ ] **Fase 1 — Productos.** `products`, `categories`, `brands`, `product_lines`, `suppliers`. Cálculo automático de costo total/ganancia/margen. CRUD + imágenes + filtros/búsqueda.
+- [x] **Fase 1 — Productos.** `products`, `categories`, `brands`, `product_lines`, `suppliers`, `product_images`. Cálculo automático de costo total/ganancia/margen en backend. CRUD completo (list paginado + filtros/búsqueda, crear/editar en diálogo, eliminar con confirmación). Imagen principal vía URL (subida de archivos real queda pendiente para cuando haya almacenamiento de archivos, ej. Fase de Configuración/infra). Sembrada con 10 productos de prueba reales del catálogo público.
 - [ ] **Fase 2 — Inventario.** `inventory_movements`, actualización automática de stock, alertas de stock mínimo.
 - [ ] **Fase 3 — Clientes.** `customers`, ficha con historial (placeholders hasta que existan ventas/preventas/pagos).
 - [ ] **Fase 4 — Preventas.** `preorders`, `preorder_customers`, cupos disponibles, estados.

@@ -10,8 +10,12 @@
         <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
         <div class="stat-body">
           <span class="stat-label">{{ stat.label }}</span>
-          <span class="stat-value">—</span>
-          <span class="stat-phase">Próximamente · Fase {{ stat.phase }}</span>
+          @if (stat.value) {
+            <span class="stat-value">{{ stat.value() ?? '…' }}</span>
+          } @else {
+            <span class="stat-value">—</span>
+            <span class="stat-phase">Próximamente · Fase {{ stat.phase }}</span>
+          }
         </div>
       </mat-card>
     }

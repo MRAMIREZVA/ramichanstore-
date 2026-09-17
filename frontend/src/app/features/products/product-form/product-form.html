@@ -1,0 +1,167 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar producto' : 'Nuevo producto' }}</h2>
+
+<mat-dialog-content>
+  @if (loadingCatalogs()) {
+    <div class="loading"><mat-spinner diameter="32" /></div>
+  } @else {
+    <form [formGroup]="form" class="product-form">
+      <h3 class="section-title">Identificación</h3>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>SKU</mat-label>
+          <input matInput formControlName="sku" />
+          @if (form.controls.sku.touched && form.controls.sku.invalid) {
+            <mat-error>El SKU es obligatorio</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="name" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <mat-error>El nombre es obligatorio</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Personaje</mat-label>
+          <input matInput formControlName="characterName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Franquicia</mat-label>
+          <input matInput formControlName="franchise" />
+        </mat-form-field>
+      </div>
+
+      <h3 class="section-title">Clasificación</h3>
+      <div class="grid-3">
+        <mat-form-field appearance="outline">
+          <mat-label>Marca</mat-label>
+          <mat-select formControlName="brandId">
+            @for (b of brands(); track b.id) {
+              <mat-option [value]="b.id">{{ b.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.brandId.touched && form.controls.brandId.invalid) {
+            <mat-error>La marca es obligatoria</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Categoría</mat-label>
+          <mat-select formControlName="categoryId">
+            @for (c of categories(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
+            <mat-error>La categoría es obligatoria</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Línea (opcional)</mat-label>
+          <mat-select formControlName="lineId">
+            <mat-option [value]="null">— Sin línea —</mat-option>
+            @for (l of lines(); track l.id) {
+              <mat-option [value]="l.id">{{ l.name }} @if (l.brandName) { ({{ l.brandName }}) }</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>Tamaño</mat-label>
+          <input matInput formControlName="size" placeholder="ej. ~17cm" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>URL de imagen principal</mat-label>
+          <input matInput formControlName="mainImageUrl" />
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descripción</mat-label>
+        <textarea matInput formControlName="description" rows="3"></textarea>
+      </mat-form-field>
+
+      <h3 class="section-title">Costos y precio</h3>
+      <div class="grid-3">
+        <mat-form-field appearance="outline">
+          <mat-label>Precio de compra (S/)</mat-label>
+          <input matInput type="number" step="0.01" formControlName="purchasePrice" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Gastos adicionales (S/)</mat-label>
+          <input matInput type="number" step="0.01" formControlName="additionalCosts" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Precio de venta (S/)</mat-label>
+          <input matInput type="number" step="0.01" formControlName="salePrice" />
+          @if (form.controls.salePrice.touched && form.controls.salePrice.invalid) {
+            <mat-error>Debe ser mayor a 0</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div class="calc-preview">
+        <span>Costo total: <strong>S/ {{ previewTotalCost.toFixed(2) }}</strong></span>
+        <span>Ganancia: <strong>S/ {{ previewProfit.toFixed(2) }}</strong></span>
+        <span>Margen: <strong>{{ previewMargin.toFixed(2) }}%</strong></span>
+        <span class="calc-note">(vista previa — el valor definitivo lo calcula el servidor al guardar)</span>
+      </div>
+
+      <h3 class="section-title">Inventario y estado</h3>
+      <div class="grid-3">
+        <mat-form-field appearance="outline">
+          <mat-label>Stock actual</mat-label>
+          <input matInput type="number" formControlName="currentStock" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Stock mínimo</mat-label>
+          <input matInput type="number" formControlName="minStock" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="status">
+            @for (opt of statusOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <h3 class="section-title">Entrega</h3>
+      <div class="grid-3">
+        <mat-form-field appearance="outline">
+          <mat-label>Ubicación</mat-label>
+          <input matInput formControlName="location" placeholder="ej. Estante A1" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de ingreso</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="entryDate" />
+          <mat-datepicker-toggle matSuffix [for]="picker" />
+          <mat-datepicker #picker />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Proveedor</mat-label>
+          <mat-select formControlName="supplierId">
+            <mat-option [value]="null">— Sin proveedor —</mat-option>
+            @for (s of suppliers(); track s.id) {
+              <mat-option [value]="s.id">{{ s.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Observaciones</mat-label>
+        <textarea matInput formControlName="notes" rows="2"></textarea>
+      </mat-form-field>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving() || loadingCatalogs()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      {{ isEdit ? 'Guardar cambios' : 'Crear producto' }}
+    }
+  </button>
+</mat-dialog-actions>

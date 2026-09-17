@@ -6,7 +6,7 @@ import { NavItem } from '../models/nav-item.model';
  */
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', available: true },
-  { label: 'Productos', icon: 'inventory_2', route: '/productos', available: false, phase: 1 },
+  { label: 'Productos', icon: 'inventory_2', route: '/productos', available: true },
   { label: 'Inventario', icon: 'warehouse', route: '/inventario', available: false, phase: 2 },
   { label: 'Clientes', icon: 'groups', route: '/clientes', available: false, phase: 3 },
   { label: 'Preventas', icon: 'schedule', route: '/preventas', available: false, phase: 4 },

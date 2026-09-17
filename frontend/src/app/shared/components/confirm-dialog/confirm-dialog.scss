@@ -1,0 +1,9 @@
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warn-icon {
+  color: var(--mat-sys-error);
+}
