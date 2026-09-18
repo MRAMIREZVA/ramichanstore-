@@ -49,13 +49,13 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_PRODUCT_CREATE')")
     public ApiResponse<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
-        return ApiResponse.ok("Producto creado", ProductResponse.from(productService.create(request)));
+        return ApiResponse.ok("Producto creado", productService.create(request));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_PRODUCT_EDIT')")
     public ApiResponse<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
-        return ApiResponse.ok("Producto actualizado", ProductResponse.from(productService.update(id, request)));
+        return ApiResponse.ok("Producto actualizado", productService.update(id, request));
     }
 
     @DeleteMapping("/{id}")

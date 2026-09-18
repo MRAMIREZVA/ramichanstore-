@@ -15,6 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Brand, Category } from '../../../core/models/catalog.model';
 import { PRODUCT_STATUS_LABELS, Product, ProductStatus } from '../../../core/models/product.model';
+import { resolveImageUrl } from '../../../core/utils/image-url';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductFilters, ProductService } from '../../../core/services/product.service';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -47,6 +48,7 @@ export class ProductsList implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly statusLabels = PRODUCT_STATUS_LABELS;
+  readonly resolveImageUrl = resolveImageUrl;
   readonly displayedColumns = ['image', 'sku', 'name', 'category', 'price', 'margin', 'stock', 'status', 'actions'];
 
   readonly loading = signal(true);

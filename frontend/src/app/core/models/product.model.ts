@@ -8,6 +8,15 @@ export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
   DISCONTINUED: 'Descontinuado',
 };
 
+export interface ProductImage {
+  id: number;
+  fileName: string | null;
+  isMain: boolean;
+  sortOrder: number;
+  /** Ruta relativa al servidor (ej. /api/products/images/5/file); anteponer environment.serverOrigin. */
+  url: string;
+}
+
 export interface Product {
   id: number;
   sku: string;
@@ -22,7 +31,7 @@ export interface Product {
   lineName: string | null;
   description: string | null;
   mainImageUrl: string | null;
-  additionalImageUrls: string[];
+  images: ProductImage[];
   size: string | null;
   purchasePrice: number;
   additionalCosts: number;
@@ -50,8 +59,6 @@ export interface ProductRequest {
   categoryId: number;
   lineId: number | null;
   description: string | null;
-  mainImageUrl: string | null;
-  additionalImageUrls: string[];
   size: string | null;
   purchasePrice: number;
   additionalCosts: number;

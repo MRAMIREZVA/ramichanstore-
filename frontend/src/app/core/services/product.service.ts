@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
-import { Product, ProductRequest, ProductStatus } from '../models/product.model';
+import { Product, ProductImage, ProductRequest, ProductStatus } from '../models/product.model';
 
 export interface ProductFilters {
   search?: string;
@@ -46,5 +46,22 @@ export class ProductService {
 
   delete(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
+  }
+
+  uploadImage(productId: number, file: File, isMain: boolean): Observable<ApiResponse<ProductImage>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<ProductImage>>(
+      `${this.baseUrl}/${productId}/images?isMain=${isMain}`,
+      formData,
+    );
+  }
+
+  setMainImage(productId: number, imageId: number): Observable<ApiResponse<void>> {
+    return this.http.put<ApiResponse<void>>(`${this.baseUrl}/${productId}/images/${imageId}/main`, null);
+  }
+
+  deleteImage(productId: number, imageId: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${productId}/images/${imageId}`);
   }
 }

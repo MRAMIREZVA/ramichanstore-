@@ -16,6 +16,7 @@ Dueño/administrador del proyecto: mramirezv2015@gmail.com (usuario semilla `adm
 
 - **Fase 0** (arquitectura + scaffolding): login, JWT, usuarios/roles/permisos (entidades), settings, auditoría, dashboard shell. Verificada end-to-end.
 - **Fase 1** (Productos): módulo completo de productos + catálogos de apoyo (categorías, marcas, líneas, proveedores). Backend con cálculo automático de costo/ganancia/margen, búsqueda/filtro paginado, soft delete. Frontend con listado (tabla + filtros + paginación), formulario crear/editar (diálogo), confirmación antes de eliminar. Sembrada con 10 productos de prueba basados en el catálogo público real de RamichanStore. Verificada end-to-end en navegador real (crear → buscar → eliminar → recrear con el mismo SKU).
+- **Imágenes de producto** (dentro de Fase 1, agregada después): subida real de archivos (no URLs), guardadas como binario en `product_images.image_data` (`VARBINARY(MAX)`), varias por producto, una marcada `is_main` a la vez — pensada para reutilizarse tal cual en el futuro catálogo público. Ver sección 6.1.
 
 A partir de aquí, el trabajo avanza **módulo por módulo** siguiendo el roadmap de la sección 9 — nunca todo de una vez.
 
@@ -129,6 +130,17 @@ Convenciones DDL (ver `backend/src/main/resources/db/migration/V1__core_schema.s
 - Cada tabla nueva de un módulo de negocio debe llevar FKs explícitas a `products`, `customers`, `users`, etc. según corresponda, con índices en las columnas de FK más consultadas.
 
 **Nota sobre `BaseEntity`:** no todas las entidades lo extienden. `Role`, `Permission`, `User`, `Category`, `Brand`, `ProductLine`, `Supplier` y `Product` sí (tienen las 4 columnas de auditoría + soft delete + `@SQLRestriction("deleted_at IS NULL")`). `Setting`, `AuditLog` y `ProductImage` son entidades livianas sin ese patrón: `AuditLog` nunca se edita ni se borra, `Setting` se actualiza in-place, y `ProductImage` es un hijo de `Product` (se borra/recrea junto con su padre vía `cascade = ALL, orphanRemoval = true`, no tiene ciclo de vida propio). Al crear una entidad nueva, decidir explícitamente si extiende `BaseEntity` o no, no por defecto. **Si extiende `BaseEntity` y tiene una columna única (nombre, código, SKU, email...), usar `CREATE UNIQUE INDEX ... WHERE deleted_at IS NULL` en vez de `UNIQUE` a secas** (ver sección 2, lecciones de Fase 1).
+
+### 6.1 Imágenes de producto (binario en BD)
+
+Decisión explícita del usuario: las imágenes se guardan **como binario en la base de datos** (`product_images.image_data VARBINARY(MAX)`), no en filesystem ni en un bucket externo. Esto es intencional — mantiene todo el estado del negocio en la BD, sin depender de storage externo, aceptable para el volumen de un catálogo de figuras (no una CDN de alto tráfico).
+
+- `Product.mainImageUrl` (columna heredada de Fase 1 inicial, con URLs externas del catálogo público de referencia) sigue existiendo como **fallback legacy**: si un producto no tiene ninguna imagen subida (`product_images` vacío), `ProductResponse.mainImageUrl` cae a ese valor. En cuanto se sube una imagen real, la marcada `is_main` siempre tiene prioridad.
+- Solo una imagen por producto puede tener `is_main = true`. Al subir la primera imagen de un producto se marca principal automáticamente; al eliminar la principal, se promueve la de menor `sort_order` que quede (si hay alguna).
+- Subir/marcar-principal/eliminar requieren `PERM_PRODUCT_EDIT` (`POST/PUT/DELETE /api/products/{id}/images/...`). **Servir el binario es público a propósito** (`GET /api/products/images/{imageId}/file`, sin auth) porque son fotos de producto pensadas para mostrarse tal cual en el futuro catálogo de clientes — no expongas por este mismo patrón nada que sí deba protegerse.
+- Límite: 5MB por archivo, solo JPEG/PNG/WEBP/GIF (validado en frontend Y backend — el backend es la fuente de verdad).
+- Frontend: `environment.serverOrigin` + la `url` relativa que devuelve el backend (`/api/products/images/{id}/file`) arman la URL completa vía `resolveImageUrl()` (`core/utils/image-url.ts`). Necesario porque backend y frontend corren en orígenes distintos en dev.
+- **Lección aprendida:** si subes varios archivos en un mismo evento (`<input multiple>`), súbelos **secuencialmente** (esperar la respuesta antes del siguiente), no en paralelo — si dos subidas concurrentes leen el estado "¿ya hay una imagen principal?" antes de que la primera responda, ambas pueden intentar marcarse `is_main`, y el resultado final queda no determinista. Ver `ProductFormComponent.uploadQueue()`.
 
 ## 7. Configuración y variables de entorno
 

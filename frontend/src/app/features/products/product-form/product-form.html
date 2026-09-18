@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Editar producto' : 'Nuevo producto' }}</h2>
+<h2 mat-dialog-title>{{ product() ? 'Editar producto' : 'Nuevo producto' }}</h2>
 
 <mat-dialog-content>
   @if (loadingCatalogs()) {
@@ -65,20 +65,61 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="grid-2">
-        <mat-form-field appearance="outline">
-          <mat-label>Tamaño</mat-label>
-          <input matInput formControlName="size" placeholder="ej. ~17cm" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>URL de imagen principal</mat-label>
-          <input matInput formControlName="mainImageUrl" />
-        </mat-form-field>
-      </div>
+      <mat-form-field appearance="outline">
+        <mat-label>Tamaño</mat-label>
+        <input matInput formControlName="size" placeholder="ej. ~17cm" />
+      </mat-form-field>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Descripción</mat-label>
         <textarea matInput formControlName="description" rows="3"></textarea>
       </mat-form-field>
+
+      <h3 class="section-title">Imágenes</h3>
+      @if (!product()) {
+        <p class="hint">Guarda el producto primero (botón "Crear producto") para poder subir imágenes.</p>
+      } @else {
+        <div class="image-gallery">
+          @for (img of product()!.images; track img.id) {
+            <div class="image-tile" [class.is-main]="img.isMain">
+              <img [src]="resolveImageUrl(img.url)" [alt]="img.fileName ?? 'Imagen de producto'" />
+              <div class="image-actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="img.isMain ? 'Imagen principal' : 'Marcar como principal'"
+                  [disabled]="img.isMain"
+                  (click)="setMainImage(img.id)"
+                >
+                  <mat-icon>{{ img.isMain ? 'star' : 'star_outline' }}</mat-icon>
+                </button>
+                <button mat-icon-button type="button" matTooltip="Eliminar imagen" (click)="deleteImage(img.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              @if (img.isMain) {
+                <span class="main-badge">Principal</span>
+              }
+            </div>
+          }
+          <label class="upload-tile" [class.disabled]="uploadingImage()">
+            @if (uploadingImage()) {
+              <mat-spinner diameter="24" />
+            } @else {
+              <mat-icon>add_photo_alternate</mat-icon>
+              <span>Agregar</span>
+            }
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              hidden
+              [disabled]="uploadingImage()"
+              (change)="onFilesSelected($event)"
+            />
+          </label>
+        </div>
+        <p class="hint">JPG, PNG, WEBP o GIF, máx. 5MB c/u. La imagen con la estrella es la principal (se usará en el catálogo).</p>
+      }
 
       <h3 class="section-title">Costos y precio</h3>
       <div class="grid-3">
@@ -156,12 +197,12 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()" [disabled]="saving()">Cancelar</button>
+  <button mat-button (click)="close()" [disabled]="saving()">{{ product() ? 'Cerrar' : 'Cancelar' }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="saving() || loadingCatalogs()">
     @if (saving()) {
       <mat-spinner diameter="18" />
     } @else {
-      {{ isEdit ? 'Guardar cambios' : 'Crear producto' }}
+      {{ product() ? 'Guardar cambios' : 'Crear producto' }}
     }
   </button>
 </mat-dialog-actions>

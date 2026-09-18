@@ -9,15 +9,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 import { Brand, Category, ProductLine, Supplier } from '../../../core/models/catalog.model';
 import { PRODUCT_STATUS_LABELS, Product, ProductRequest, ProductStatus } from '../../../core/models/product.model';
+import { resolveImageUrl } from '../../../core/utils/image-url';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductService } from '../../../core/services/product.service';
 
 export interface ProductFormData {
   product: Product | null;
 }
+
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 @Component({
   selector: 'app-product-form',
@@ -32,6 +37,7 @@ export interface ProductFormData {
     MatDatepickerModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
   ],
   templateUrl: './product-form.html',
   styleUrl: './product-form.scss',
@@ -44,9 +50,13 @@ export class ProductFormComponent {
   private readonly dialogRef = inject(MatDialogRef<ProductFormComponent>);
   readonly data = inject<ProductFormData>(MAT_DIALOG_DATA);
 
-  readonly isEdit = !!this.data.product;
+  /** Producto actual del diálogo: null hasta que se crea por primera vez. */
+  readonly product = signal<Product | null>(this.data.product);
+  readonly changed = signal(false);
+
   readonly saving = signal(false);
   readonly loadingCatalogs = signal(true);
+  readonly uploadingImage = signal(false);
 
   readonly categories = signal<Category[]>([]);
   readonly brands = signal<Brand[]>([]);
@@ -54,6 +64,7 @@ export class ProductFormComponent {
   readonly suppliers = signal<Supplier[]>([]);
 
   readonly statusOptions = Object.entries(PRODUCT_STATUS_LABELS) as [ProductStatus, string][];
+  readonly resolveImageUrl = resolveImageUrl;
 
   readonly form = this.fb.group({
     sku: [this.data.product?.sku ?? '', [Validators.required, Validators.maxLength(50)]],
@@ -64,7 +75,6 @@ export class ProductFormComponent {
     categoryId: [this.data.product?.categoryId ?? null, Validators.required],
     lineId: [this.data.product?.lineId ?? null],
     size: [this.data.product?.size ?? ''],
-    mainImageUrl: [this.data.product?.mainImageUrl ?? ''],
     description: [this.data.product?.description ?? ''],
     purchasePrice: [this.data.product?.purchasePrice ?? 0, [Validators.required, Validators.min(0)]],
     additionalCosts: [this.data.product?.additionalCosts ?? 0, [Validators.required, Validators.min(0)]],
@@ -129,8 +139,6 @@ export class ProductFormComponent {
       categoryId: v.categoryId!,
       lineId: v.lineId || null,
       description: v.description || null,
-      mainImageUrl: v.mainImageUrl || null,
-      additionalImageUrls: this.data.product?.additionalImageUrls ?? [],
       size: v.size || null,
       purchasePrice: Number(v.purchasePrice),
       additionalCosts: Number(v.additionalCosts),
@@ -144,22 +152,94 @@ export class ProductFormComponent {
       notes: v.notes || null,
     };
 
+    const current = this.product();
     this.saving.set(true);
-    const request$ = this.isEdit
-      ? this.productService.update(this.data.product!.id, request)
-      : this.productService.create(request);
+    const request$ = current ? this.productService.update(current.id, request) : this.productService.create(request);
 
     request$.subscribe({
       next: (response) => {
-        this.snackBar.open(response.message, 'Cerrar', { duration: 3000 });
-        this.dialogRef.close(response.data);
+        this.saving.set(false);
+        this.changed.set(true);
+        this.product.set(response.data);
+        const message = current ? response.message : `${response.message}. Ya puedes agregar imágenes.`;
+        this.snackBar.open(message, 'Cerrar', { duration: 4000 });
       },
       error: () => this.saving.set(false),
     });
   }
 
-  cancel(): void {
-    this.dialogRef.close(null);
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    input.value = '';
+    if (files.length === 0) return;
+
+    const valid: File[] = [];
+    for (const file of files) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        this.snackBar.open(`"${file.name}" no es un formato soportado (usa JPG, PNG, WEBP o GIF)`, 'Cerrar', {
+          duration: 4000,
+        });
+        continue;
+      }
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        this.snackBar.open(`"${file.name}" supera el límite de 5MB`, 'Cerrar', { duration: 4000 });
+        continue;
+      }
+      valid.push(file);
+    }
+
+    // Se suben de a una: si dos subidas concurrentes se marcaran ambas como "primera
+    // imagen" (isMain), el backend terminaría con un resultado no determinista.
+    this.uploadQueue(valid);
+  }
+
+  private uploadQueue(files: File[]): void {
+    if (files.length === 0) return;
+    const [file, ...rest] = files;
+    const product = this.product();
+    if (!product) return;
+
+    const hasImages = product.images.length > 0;
+    this.uploadingImage.set(true);
+    this.productService.uploadImage(product.id, file, !hasImages).subscribe({
+      next: (response) => {
+        this.product.update((p) => (p ? { ...p, images: [...p.images, response.data] } : p));
+        this.changed.set(true);
+        this.uploadingImage.set(false);
+        this.uploadQueue(rest);
+      },
+      error: () => {
+        this.uploadingImage.set(false);
+        this.uploadQueue(rest);
+      },
+    });
+  }
+
+  setMainImage(imageId: number): void {
+    const product = this.product();
+    if (!product) return;
+
+    this.productService.setMainImage(product.id, imageId).subscribe(() => {
+      this.product.update((p) =>
+        p ? { ...p, images: p.images.map((img) => ({ ...img, isMain: img.id === imageId })) } : p,
+      );
+      this.changed.set(true);
+    });
+  }
+
+  deleteImage(imageId: number): void {
+    const product = this.product();
+    if (!product) return;
+
+    this.productService.deleteImage(product.id, imageId).subscribe(() => {
+      this.product.update((p) => (p ? { ...p, images: p.images.filter((img) => img.id !== imageId) } : p));
+      this.changed.set(true);
+    });
+  }
+
+  close(): void {
+    this.dialogRef.close(this.changed());
   }
 
   private toIsoDate(date: Date): string {

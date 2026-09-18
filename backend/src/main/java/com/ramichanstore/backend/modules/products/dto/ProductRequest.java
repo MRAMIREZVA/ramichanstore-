@@ -8,11 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * DTO de creación/edición de producto. Deliberadamente NO incluye totalCost,
- * profit ni marginPercent: esos siempre los calcula ProductService.
+ * profit ni marginPercent: esos siempre los calcula ProductService. Las imágenes
+ * tampoco viajan aquí: se suben/gestionan aparte vía ProductImageController una
+ * vez que el producto existe (ver /api/products/{id}/images).
  */
 public record ProductRequest(
         @NotBlank(message = "El SKU es obligatorio") @Size(max = 50) String sku,
@@ -23,8 +24,6 @@ public record ProductRequest(
         @NotNull(message = "La categoría es obligatoria") Long categoryId,
         Long lineId,
         String description,
-        @Size(max = 500) String mainImageUrl,
-        List<@Size(max = 500) String> additionalImageUrls,
         @Size(max = 100) String size,
         @NotNull(message = "El precio de compra es obligatorio") @DecimalMin(value = "0", inclusive = true) BigDecimal purchasePrice,
         @NotNull(message = "Los gastos adicionales son obligatorios") @DecimalMin(value = "0", inclusive = true) BigDecimal additionalCosts,

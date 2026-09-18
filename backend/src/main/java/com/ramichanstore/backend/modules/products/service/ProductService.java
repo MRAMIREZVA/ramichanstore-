@@ -13,7 +13,6 @@ import com.ramichanstore.backend.modules.productlines.repository.ProductLineRepo
 import com.ramichanstore.backend.modules.products.dto.ProductRequest;
 import com.ramichanstore.backend.modules.products.dto.ProductResponse;
 import com.ramichanstore.backend.modules.products.entity.Product;
-import com.ramichanstore.backend.modules.products.entity.ProductImage;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.products.repository.ProductSpecifications;
@@ -72,7 +71,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Product create(ProductRequest request) {
+    public ProductResponse create(ProductRequest request) {
         if (productRepository.existsBySkuIgnoreCase(request.sku())) {
             throw new BusinessRuleException("Ya existe un producto con el SKU '" + request.sku() + "'");
         }
@@ -80,11 +79,11 @@ public class ProductService {
         applyRequest(product, request);
         Product saved = productRepository.save(product);
         auditService.log(AuditAction.CREATE, MODULE, "Product", saved.getId().toString(), null, summarize(saved));
-        return saved;
+        return ProductResponse.from(saved);
     }
 
     @Transactional
-    public Product update(Long id, ProductRequest request) {
+    public ProductResponse update(Long id, ProductRequest request) {
         Product product = findById(id);
         if (!product.getSku().equalsIgnoreCase(request.sku()) && productRepository.existsBySkuIgnoreCase(request.sku())) {
             throw new BusinessRuleException("Ya existe un producto con el SKU '" + request.sku() + "'");
@@ -93,7 +92,7 @@ public class ProductService {
         applyRequest(product, request);
         Product saved = productRepository.save(product);
         auditService.log(AuditAction.UPDATE, MODULE, "Product", id.toString(), before, summarize(saved));
-        return saved;
+        return ProductResponse.from(saved);
     }
 
     @Transactional
@@ -113,7 +112,6 @@ public class ProductService {
         product.setCategory(resolveCategory(request.categoryId()));
         product.setLine(resolveLine(request.lineId()));
         product.setDescription(request.description());
-        product.setMainImageUrl(request.mainImageUrl());
         product.setSize(request.size());
         product.setCurrentStock(request.currentStock());
         product.setMinStock(request.minStock());
@@ -124,7 +122,6 @@ public class ProductService {
         product.setNotes(request.notes());
 
         applyCalculatedCosts(product, request.purchasePrice(), request.additionalCosts(), request.salePrice());
-        applyImages(product, request.additionalImageUrls());
     }
 
     /** Ganancia = Precio de venta - Costo total. Margen % = Ganancia / Precio de venta * 100. */
@@ -145,22 +142,6 @@ public class ProductService {
         product.setSalePrice(salePrice);
         product.setProfit(profit.setScale(2, RoundingMode.HALF_UP));
         product.setMarginPercent(marginPercent);
-    }
-
-    private void applyImages(Product product, List<String> additionalImageUrls) {
-        product.getImages().clear();
-        if (additionalImageUrls == null) {
-            return;
-        }
-        int order = 0;
-        for (String url : additionalImageUrls) {
-            if (url == null || url.isBlank()) {
-                continue;
-            }
-            ProductImage image = new ProductImage(url, order++);
-            image.setProduct(product);
-            product.getImages().add(image);
-        }
     }
 
     private Brand resolveBrand(Long id) {
