@@ -10,6 +10,15 @@
   background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
   color: white;
 
+  /* Con imagen propia (tipo portada de Facebook, bien ancha) el banner necesita más
+     alto para no recortarla tanto — se usa aspect-ratio en vez de una altura fija
+     para que se mantenga proporcional en cualquier ancho de pantalla. */
+  &.has-image {
+    aspect-ratio: 2.7 / 1;
+    min-height: 220px;
+    max-height: 480px;
+  }
+
   &::before {
     content: '';
     position: absolute;
