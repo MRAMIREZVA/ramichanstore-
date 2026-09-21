@@ -121,18 +121,36 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /
 apt update && apt install -y caddy
 ```
 
-3. Edita `/etc/caddy/Caddyfile` para que quede así (reemplaza el dominio):
+3. Edita `/etc/caddy/Caddyfile` para que quede así (reemplaza el dominio; incluye
+   `www` si vas a usarlo):
 
 ```
-tu-dominio.com {
-    reverse_proxy localhost:80
+tu-dominio.com, www.tu-dominio.com {
+    reverse_proxy localhost:8081
 }
 ```
 
-4. En `docker-compose.yml`, cambia el puerto del frontend de `"80:80"` a
-   `"127.0.0.1:80:80"` (para que solo Caddy, no internet directamente, hable
-   con el contenedor), y en `.env` actualiza `CORS_ALLOWED_ORIGINS` a
-   `https://tu-dominio.com`.
+4. En `.env`, descomenta (o agrega) estas dos líneas y actualiza `CORS_ALLOWED_ORIGINS`:
+
+```
+FRONTEND_BIND=127.0.0.1
+FRONTEND_PORT=8081
+CORS_ALLOWED_ORIGINS=https://tu-dominio.com
+```
+
+   **Importante, verificado con una instalación real:** el contenedor del
+   frontend debe quedar en un **puerto distinto a 80** (`8081` en el ejemplo),
+   no solo en una IP distinta con el mismo puerto (`127.0.0.1:80`). Aunque
+   parezca que no debería chocar (una es `127.0.0.1` y la otra `0.0.0.0`),
+   Caddy escucha `:80` en modo dual-stack (IPv4+IPv6 a la vez) y el kernel de
+   Linux lo trata como si reservara *todo* el puerto 80 — el contenedor no
+   puede arrancar ("address already in use") aunque esté en una IP distinta.
+   Usar un puerto interno diferente (8081) evita el problema por completo.
+
+   **No edites `docker-compose.yml` a mano para esto** — usar las variables de
+   entorno de arriba es justamente para que un futuro `git pull` no te borre
+   este ajuste (`docker-compose.yml` sí se actualiza con el código; `.env`
+   nunca se toca porque está en `.gitignore` y es específico de este servidor).
 
 5. Reinicia:
 

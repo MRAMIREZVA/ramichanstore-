@@ -57,8 +57,15 @@ services:
 
   frontend:
     build: ./frontend
+    # Por defecto expuesto directo en el puerto 80 de cualquier interfaz. Si
+    # pusiste Caddy (u otro reverse proxy) delante para HTTPS, define en tu
+    # .env FRONTEND_BIND=127.0.0.1 y FRONTEND_PORT=8081 (o el que prefieras)
+    # para que el contenedor solo escuche en localhost — ver deploy/DEPLOYMENT.md.
+    # Variables de entorno (no listas) sí se sobreescriben limpio con `docker
+    # compose up`, a diferencia de un docker-compose.override.yml con `ports`
+    # como lista, que Compose concatena en vez de reemplazar.
     ports:
-      - "80:80"
+      - "${FRONTEND_BIND:-0.0.0.0}:${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
     restart: unless-stopped
