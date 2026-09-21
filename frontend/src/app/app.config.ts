@@ -6,6 +6,7 @@ import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/cor
 
 import { routes } from './app.routes';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
+import { portalJwtInterceptor } from './core/interceptors/portal-jwt.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -14,7 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptors([jwtInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([jwtInterceptor, portalJwtInterceptor, errorInterceptor])),
     provideNativeDateAdapter(),
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' }
   ]

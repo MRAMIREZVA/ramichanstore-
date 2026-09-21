@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Cancelar venta #{{ data.sale.id }}</h2>
+
+<mat-dialog-content>
+  <p>Esta acción revierte el stock de los productos vendidos (movimiento de Devolución) y marca la venta como cancelada. No se puede deshacer.</p>
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Motivo de la cancelación</mat-label>
+      <textarea matInput formControlName="reason" rows="2"></textarea>
+      @if (form.controls.reason.touched && form.controls.reason.invalid) {
+        <mat-error>El motivo es obligatorio</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Volver</button>
+  <button mat-flat-button color="warn" (click)="confirm()" [disabled]="saving()">Cancelar venta</button>
+</mat-dialog-actions>

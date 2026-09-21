@@ -1,6 +1,7 @@
 package com.ramichanstore.backend.security.jwt;
 
 import com.ramichanstore.backend.security.CustomUserDetailsService;
+import com.ramichanstore.backend.security.CustomerPrincipalService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final CustomerPrincipalService customerPrincipalService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -30,7 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
         if (StringUtils.hasText(token) && jwtTokenProvider.isValid(token) && !jwtTokenProvider.isRefreshToken(token)) {
             String username = jwtTokenProvider.extractUsername(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = JwtTokenProvider.PRINCIPAL_CUSTOMER.equals(jwtTokenProvider.extractPrincipalType(token))
+                    ? customerPrincipalService.loadByPortalUsername(username)
+                    : userDetailsService.loadUserByUsername(username);
             var authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

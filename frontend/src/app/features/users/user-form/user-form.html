@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>{{ data.user ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="user-form">
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Usuario</mat-label>
+        <input matInput formControlName="username" />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <mat-error>El usuario es obligatorio</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Correo</mat-label>
+        <input matInput formControlName="email" />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <mat-error>Correo inválido</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre completo</mat-label>
+      <input matInput formControlName="fullName" />
+      @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+        <mat-error>El nombre es obligatorio</mat-error>
+      }
+    </mat-form-field>
+
+    @if (!data.user) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña inicial</mat-label>
+        <input matInput type="password" formControlName="password" />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <mat-error>Mínimo 8 caracteres</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="roleId">
+          @for (r of data.roles; track r.id) {
+            <mat-option [value]="r.id">{{ r.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-checkbox formControlName="active">Activo</mat-checkbox>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      {{ data.user ? 'Guardar cambios' : 'Crear usuario' }}
+    }
+  </button>
+</mat-dialog-actions>

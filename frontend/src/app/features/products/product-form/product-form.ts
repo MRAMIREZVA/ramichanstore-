@@ -19,6 +19,8 @@ import { ProductService } from '../../../core/services/product.service';
 
 export interface ProductFormData {
   product: Product | null;
+  /** Si viene seteado, el formulario abre en modo "crear" pero precargado con estos valores (salvo el SKU). */
+  duplicateFrom?: Product | null;
 }
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -50,9 +52,13 @@ export class ProductFormComponent {
   private readonly dialogRef = inject(MatDialogRef<ProductFormComponent>);
   readonly data = inject<ProductFormData>(MAT_DIALOG_DATA);
 
-  /** Producto actual del diálogo: null hasta que se crea por primera vez. */
+  /** Producto actual del diálogo: null hasta que se crea por primera vez (incluye el caso "duplicar"). */
   readonly product = signal<Product | null>(this.data.product);
   readonly changed = signal(false);
+  readonly isDuplicate = !!this.data.duplicateFrom;
+
+  /** Valores para precargar el formulario: el producto real en edición, o el original al duplicar. */
+  private readonly prefill = this.data.product ?? this.data.duplicateFrom ?? null;
 
   readonly saving = signal(false);
   readonly loadingCatalogs = signal(true);
@@ -67,25 +73,24 @@ export class ProductFormComponent {
   readonly resolveImageUrl = resolveImageUrl;
 
   readonly form = this.fb.group({
-    sku: [this.data.product?.sku ?? '', [Validators.required, Validators.maxLength(50)]],
-    name: [this.data.product?.name ?? '', [Validators.required, Validators.maxLength(200)]],
-    characterName: [this.data.product?.characterName ?? ''],
-    franchise: [this.data.product?.franchise ?? ''],
-    brandId: [this.data.product?.brandId ?? null, Validators.required],
-    categoryId: [this.data.product?.categoryId ?? null, Validators.required],
-    lineId: [this.data.product?.lineId ?? null],
-    size: [this.data.product?.size ?? ''],
-    description: [this.data.product?.description ?? ''],
-    purchasePrice: [this.data.product?.purchasePrice ?? 0, [Validators.required, Validators.min(0)]],
-    additionalCosts: [this.data.product?.additionalCosts ?? 0, [Validators.required, Validators.min(0)]],
-    salePrice: [this.data.product?.salePrice ?? 0, [Validators.required, Validators.min(0.01)]],
-    currentStock: [this.data.product?.currentStock ?? 0, [Validators.required, Validators.min(0)]],
-    minStock: [this.data.product?.minStock ?? 1, [Validators.required, Validators.min(0)]],
-    status: [this.data.product?.status ?? 'AVAILABLE', Validators.required],
-    location: [this.data.product?.location ?? ''],
-    entryDate: [this.data.product?.entryDate ? new Date(this.data.product.entryDate) : null],
-    supplierId: [this.data.product?.supplierId ?? null],
-    notes: [this.data.product?.notes ?? ''],
+    name: [this.prefill?.name ?? '', [Validators.required, Validators.maxLength(200)]],
+    characterName: [this.prefill?.characterName ?? ''],
+    franchise: [this.prefill?.franchise ?? ''],
+    brandId: [this.prefill?.brandId ?? null, Validators.required],
+    categoryId: [this.prefill?.categoryId ?? null, Validators.required],
+    lineId: [this.prefill?.lineId ?? null],
+    size: [this.prefill?.size ?? ''],
+    description: [this.prefill?.description ?? ''],
+    purchasePrice: [this.prefill?.purchasePrice ?? 0, [Validators.required, Validators.min(0)]],
+    additionalCosts: [this.prefill?.additionalCosts ?? 0, [Validators.required, Validators.min(0)]],
+    salePrice: [this.prefill?.salePrice ?? 0, [Validators.required, Validators.min(0.01)]],
+    currentStock: [this.isDuplicate ? 0 : (this.prefill?.currentStock ?? 0), [Validators.required, Validators.min(0)]],
+    minStock: [this.prefill?.minStock ?? 1, [Validators.required, Validators.min(0)]],
+    status: [this.prefill?.status ?? 'AVAILABLE', Validators.required],
+    location: [this.isDuplicate ? '' : (this.prefill?.location ?? '')],
+    entryDate: [!this.isDuplicate && this.prefill?.entryDate ? new Date(this.prefill.entryDate) : null],
+    supplierId: [this.prefill?.supplierId ?? null],
+    notes: [this.prefill?.notes ?? ''],
   });
 
   constructor() {
@@ -131,7 +136,6 @@ export class ProductFormComponent {
 
     const v = this.form.getRawValue();
     const request: ProductRequest = {
-      sku: v.sku!,
       name: v.name!,
       characterName: v.characterName || null,
       franchise: v.franchise || null,

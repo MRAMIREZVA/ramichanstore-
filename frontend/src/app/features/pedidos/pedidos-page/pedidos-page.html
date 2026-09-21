@@ -1,0 +1,22 @@
+<div class="pedidos-page">
+  <h1 class="page-title">Pedidos</h1>
+  <p class="page-subtitle">Ventas, separaciones y preventas de tus clientes, todo en un solo lugar.</p>
+
+  <mat-tab-group animationDuration="150ms" [selectedIndex]="initialTab">
+    <mat-tab label="Ventas">
+      <div class="tab-content"><app-sales-list /></div>
+    </mat-tab>
+    <mat-tab label="Separaciones">
+      <div class="tab-content"><app-separations-list /></div>
+    </mat-tab>
+    <mat-tab label="Preventas">
+      <div class="tab-content"><app-reservations-list /></div>
+    </mat-tab>
+    <mat-tab label="Campañas de preventa">
+      <div class="tab-content"><app-preorders-list /></div>
+    </mat-tab>
+    <mat-tab label="Pedidos web">
+      <div class="tab-content"><app-order-requests-list /></div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

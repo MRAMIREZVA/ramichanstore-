@@ -4,7 +4,8 @@ import { environment } from '../../../environments/environment';
 import { TokenStorageService } from '../services/token-storage.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!req.url.startsWith(environment.apiBaseUrl)) {
+  // Las llamadas a /api/portal llevan el token del cliente (ver portalJwtInterceptor), no el de staff.
+  if (!req.url.startsWith(environment.apiBaseUrl) || req.url.startsWith(`${environment.apiBaseUrl}/portal`)) {
     return next(req);
   }
 

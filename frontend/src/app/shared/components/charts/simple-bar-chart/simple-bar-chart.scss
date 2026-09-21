@@ -1,0 +1,48 @@
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-label {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  background: var(--mat-sys-surface-container);
+  border-radius: 4px;
+  height: 14px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+
+.bar-value {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 70px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 13px;
+}

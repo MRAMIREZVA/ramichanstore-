@@ -1,0 +1,146 @@
+<h2 mat-dialog-title>
+  {{ customer().fullName }}
+  @if (!loadingPoints()) {
+    <span class="points-badge" (click)="viewPointsHistory()" matTooltip="Ver historial de puntos">
+      <mat-icon>loyalty</mat-icon>
+      {{ pointsBalance() }} pts
+    </span>
+  }
+</h2>
+
+<mat-dialog-content>
+  <div class="info-grid">
+    <div class="info-item">
+      <span class="info-label">Documento</span>
+      <span>{{ documentTypeLabel(customer().documentType) }} {{ customer().documentNumber || '' }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Estado</span>
+      <span class="status-chip" [attr.data-status]="customer().status">{{ statusLabel(customer().status) }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Teléfono</span>
+      <span>{{ customer().phone }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">WhatsApp</span>
+      <span>{{ customer().whatsapp || '—' }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Correo</span>
+      <span>{{ customer().email || '—' }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Distrito</span>
+      <span>{{ customer().district || '—' }}</span>
+    </div>
+    <div class="info-item full">
+      <span class="info-label">Dirección</span>
+      <span>{{ customer().address || '—' }}</span>
+    </div>
+    @if (customer().notes) {
+      <div class="info-item full">
+        <span class="info-label">Observaciones</span>
+        <span>{{ customer().notes }}</span>
+      </div>
+    }
+  </div>
+
+  <h3 class="section-title">Acceso al portal de clientes</h3>
+  <div class="portal-access">
+    @if (customer().portalEnabled) {
+      <div class="portal-status">
+        <mat-icon class="portal-icon enabled">check_circle</mat-icon>
+        <div>
+          <div class="portal-username">Usuario: {{ customer().portalUsername }}</div>
+          <div class="portal-hint">Puede entrar a /portal/login a ver sus compras y preventas.</div>
+        </div>
+      </div>
+      <div class="portal-actions">
+        <button mat-stroked-button (click)="openResetPortalPassword()">Restablecer contraseña</button>
+        <button mat-stroked-button color="warn" (click)="confirmDisablePortalAccess()">Deshabilitar</button>
+      </div>
+    } @else {
+      <div class="portal-status">
+        <mat-icon class="portal-icon disabled">cancel</mat-icon>
+        <div class="portal-hint">Este cliente todavía no tiene acceso al portal.</div>
+      </div>
+      <button mat-flat-button color="primary" (click)="openEnablePortalAccess()">Habilitar acceso al portal</button>
+    }
+  </div>
+
+  <div class="section-header">
+    <h3 class="section-title">Compras {{ totalPurchases() > 0 ? '(' + totalPurchases() + ')' : '' }}</h3>
+    @if (totalPurchases() > 0) {
+      <button mat-button (click)="viewAllPurchases()">
+        Ver todas
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </button>
+    }
+  </div>
+  @if (loadingPurchases()) {
+    <div class="loading"><mat-spinner diameter="28" /></div>
+  } @else if (recentPurchases().length === 0) {
+    <p class="empty-hint">Todavía no tiene compras registradas.</p>
+  } @else {
+    <div class="history-list">
+      @for (p of recentPurchases(); track p.type + '-' + p.id) {
+        <div class="history-row">
+          <mat-icon class="history-row-icon">{{ p.type === 'VENTA' ? 'point_of_sale' : 'inventory_2' }}</mat-icon>
+          <div class="history-row-body">
+            <span class="history-row-title">
+              <span class="type-tag">{{ p.type === 'VENTA' ? 'Venta' : 'Separación' }}</span>
+              {{ p.date }} · {{ p.summary }}
+            </span>
+            <span class="history-row-sub">S/ {{ p.total.toFixed(2) }}</span>
+          </div>
+          <div class="history-row-badges">
+            <span class="status-chip" [attr.data-status]="p.paymentStatus">{{ paymentStatusLabel(p.paymentStatus) }}</span>
+            @if (p.deliveryLabel) {
+              <span class="status-chip" [attr.data-delivery-status]="p.deliveryStatusAttr">{{ p.deliveryLabel }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+    @if (totalPurchases() > recentPurchases().length) {
+      <p class="more-hint">+{{ totalPurchases() - recentPurchases().length }} compra(s) más.</p>
+    }
+  }
+
+  <div class="section-header">
+    <h3 class="section-title">Preventas</h3>
+    @if (reservations().length > 0) {
+      <button mat-button (click)="viewAllReservations()">
+        Ver todas
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </button>
+    }
+  </div>
+  @if (loadingReservations()) {
+    <div class="loading"><mat-spinner diameter="28" /></div>
+  } @else if (reservations().length === 0) {
+    <p class="empty-hint">Todavía no tiene reservas de preventa.</p>
+  } @else {
+    <div class="history-list">
+      @for (r of reservations(); track r.id) {
+        <div class="history-row">
+          @if (r.productMainImageUrl) {
+            <img [src]="resolveImageUrl(r.productMainImageUrl)" [alt]="r.productName" class="history-row-image" />
+          } @else {
+            <mat-icon class="history-row-icon">schedule</mat-icon>
+          }
+          <div class="history-row-body">
+            <span class="history-row-title">{{ r.productName }}</span>
+            <span class="history-row-sub">{{ r.productSku }} · Cant. {{ r.quantity }} · Separación S/ {{ r.depositAmount.toFixed(2) }}</span>
+          </div>
+          <span class="status-chip" [attr.data-preorder-status]="r.preorderStatus">{{ preorderStatusLabels[r.preorderStatus] }}</span>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

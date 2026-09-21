@@ -1,0 +1,150 @@
+.page-title {
+  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.section-title {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--mat-sys-primary);
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 32px;
+  align-items: start;
+}
+
+.checkout-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.payment-hint {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.submit-btn {
+  margin-top: 8px;
+  align-self: flex-start;
+  min-width: 160px;
+}
+
+.order-summary {
+  background: var(--mat-sys-surface-container);
+  border-radius: 12px;
+  padding: 16px;
+  position: sticky;
+  top: 16px;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 4px 0;
+
+  &.total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+    font-weight: 700;
+    font-size: 16px;
+  }
+}
+
+.edit-cart-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 480px;
+  margin: 40px auto;
+  gap: 6px;
+}
+
+.confirmation-icon {
+  font-size: 56px;
+  width: 56px;
+  height: 56px;
+  color: #1e7a3a;
+  margin-bottom: 8px;
+}
+
+.confirmation-sub {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0 0 16px;
+}
+
+.confirmation-summary {
+  width: 100%;
+  background: var(--mat-sys-surface-container);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.confirmation-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 3px 0;
+  text-align: left;
+
+  &.total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+    font-weight: 700;
+  }
+}
+
+.whatsapp-hint {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 4px 0;
+}
+
+.whatsapp-btn {
+  margin: 4px 0 16px;
+}
+
+.back-link {
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

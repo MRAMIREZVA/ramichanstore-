@@ -1,0 +1,135 @@
+<h2 mat-dialog-title>Nueva venta</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="header" class="sale-form">
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Cliente (opcional)</mat-label>
+        <input
+          matInput
+          formControlName="customerSearch"
+          [matAutocomplete]="customerAuto"
+          placeholder="Busca por nombre o teléfono"
+        />
+        @if (searchingCustomer()) {
+          <mat-spinner matSuffix diameter="18" />
+        } @else {
+          <mat-icon matSuffix>person_search</mat-icon>
+        }
+        <mat-autocomplete #customerAuto="matAutocomplete" [displayWith]="customerLabel">
+          @for (c of customerOptions(); track c.id) {
+            <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ customerLabel(c) }}</mat-option>
+          }
+        </mat-autocomplete>
+        <mat-hint>Sin cliente no se generan puntos de fidelidad</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de venta</mat-label>
+        <input matInput [matDatepicker]="saleDatePicker" formControlName="saleDate" />
+        <mat-datepicker-toggle matSuffix [for]="saleDatePicker" />
+        <mat-datepicker #saleDatePicker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Método de pago</mat-label>
+        <mat-select formControlName="paymentMethod">
+          @for (opt of paymentMethodOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Estado de pago</mat-label>
+        <mat-select formControlName="paymentStatus">
+          @for (opt of paymentStatusOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Método de entrega</mat-label>
+        <mat-select formControlName="deliveryMethod">
+          @for (opt of deliveryMethodOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <h3 class="section-title">Productos</h3>
+    <div class="lines">
+      @for (line of lines(); track $index; let i = $index) {
+        <div class="line-row">
+          <mat-form-field appearance="outline" class="product-field">
+            <mat-label>Producto</mat-label>
+            <input
+              matInput
+              [value]="line.productSearchTerm"
+              (input)="onProductSearchChange(i, $any($event.target).value)"
+              [matAutocomplete]="productAuto"
+            />
+            @if (line.searching) {
+              <mat-spinner matSuffix diameter="16" />
+            }
+            <mat-autocomplete #productAuto="matAutocomplete" [displayWith]="productLabel">
+              @for (p of line.productOptions; track p.id) {
+                <mat-option [value]="p" (onSelectionChange)="onProductSelected(i, p)">
+                  {{ p.sku }} — {{ p.name }} <span class="option-stock">(stock: {{ p.currentStock }})</span>
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="qty-field">
+            <mat-label>Cant.</mat-label>
+            <input matInput type="number" [value]="line.quantity" (input)="updateLine(i, { quantity: +$any($event.target).value })" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="price-field">
+            <mat-label>P. unitario</mat-label>
+            <input matInput type="number" [value]="line.unitPrice" (input)="updateLine(i, { unitPrice: +$any($event.target).value })" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="price-field">
+            <mat-label>Descuento</mat-label>
+            <input matInput type="number" [value]="line.discount" (input)="updateLine(i, { discount: +$any($event.target).value })" />
+          </mat-form-field>
+
+          <div class="line-subtotal">S/ {{ lineSubtotal(line).toFixed(2) }}</div>
+
+          <button mat-icon-button (click)="removeLine(i)" [disabled]="lines().length === 1">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+    <button mat-stroked-button type="button" (click)="addLine()">
+      <mat-icon>add</mat-icon>
+      Agregar producto
+    </button>
+
+    <div class="totals">
+      <span>Subtotal: S/ {{ subtotal().toFixed(2) }}</span>
+      <span class="total-amount">Total: S/ {{ total().toFixed(2) }}</span>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Registrar venta
+    }
+  </button>
+</mat-dialog-actions>

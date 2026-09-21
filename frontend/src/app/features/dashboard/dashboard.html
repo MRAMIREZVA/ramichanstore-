@@ -1,21 +1,16 @@
 <div class="dashboard">
   <header class="dashboard-header">
     <h1>Hola, {{ currentUser()?.fullName }}</h1>
-    <p>Este es el panel de RamichanStore. Los indicadores se irán activando a medida que avance cada fase del roadmap.</p>
+    <p>Este es el panel de RamichanStore.</p>
   </header>
 
   <div class="stats-grid">
     @for (stat of stats; track stat.label) {
-      <mat-card class="stat-card">
+      <mat-card class="stat-card" [class.warn]="stat.warn?.()">
         <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
         <div class="stat-body">
           <span class="stat-label">{{ stat.label }}</span>
-          @if (stat.value) {
-            <span class="stat-value">{{ stat.value() ?? '…' }}</span>
-          } @else {
-            <span class="stat-value">—</span>
-            <span class="stat-phase">Próximamente · Fase {{ stat.phase }}</span>
-          }
+          <span class="stat-value">{{ loading() ? '…' : stat.value() }}</span>
         </div>
       </mat-card>
     }

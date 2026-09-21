@@ -1,0 +1,40 @@
+.meta {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-width: 560px;
+}
+
+.value-col h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+pre {
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .values {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+}

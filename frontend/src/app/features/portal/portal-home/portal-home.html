@@ -1,0 +1,114 @@
+<div class="portal-home">
+  <mat-card class="points-card">
+    <mat-icon class="points-icon">loyalty</mat-icon>
+    <div>
+      <div class="points-label">Tus puntos disponibles</div>
+      <div class="points-value">{{ loadingBalance() ? '…' : pointsBalance() }}</div>
+    </div>
+  </mat-card>
+
+  <mat-tab-group>
+    <mat-tab label="Mis compras">
+      <div class="tab-body">
+        @if (loadingPurchases()) {
+          <div class="loading"><mat-spinner diameter="36" /></div>
+        } @else if (purchases().length === 0) {
+          <div class="empty-state">
+            <mat-icon>point_of_sale</mat-icon>
+            <p>Todavía no tienes compras registradas.</p>
+          </div>
+        } @else {
+          <table mat-table [dataSource]="purchases()" class="portal-table">
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let p">{{ p.date }}</td>
+            </ng-container>
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let p">{{ p.type === 'VENTA' ? 'Venta' : 'Separación' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="summary">
+              <th mat-header-cell *matHeaderCellDef>Detalle</th>
+              <td mat-cell *matCellDef="let p">{{ p.summary }}</td>
+            </ng-container>
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef>Total</th>
+              <td mat-cell *matCellDef="let p">S/ {{ p.total.toFixed(2) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Pago</th>
+              <td mat-cell *matCellDef="let p">
+                <span class="status-chip" [attr.data-status]="p.paymentStatus">{{ statusLabel(p.paymentStatus) }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="delivery">
+              <th mat-header-cell *matHeaderCellDef>Entrega</th>
+              <td mat-cell *matCellDef="let p">
+                <span class="status-chip" [attr.data-delivery-status]="p.deliveryStatusAttr">{{ p.deliveryLabel }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let p">
+                @if (p.sale) {
+                  <button mat-icon-button (click)="viewPurchase(p)" matTooltip="Ver detalle">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="purchaseColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: purchaseColumns"></tr>
+          </table>
+
+          <mat-paginator
+            [length]="totalPurchases()"
+            [pageSize]="pageSize"
+            [pageIndex]="page"
+            [pageSizeOptions]="[10, 20]"
+            (page)="onPage($event)"
+          />
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Mis preventas">
+      <div class="tab-body">
+        @if (loadingReservations()) {
+          <div class="loading"><mat-spinner diameter="36" /></div>
+        } @else if (reservations().length === 0) {
+          <div class="empty-state">
+            <mat-icon>schedule</mat-icon>
+            <p>No tienes reservas de preventa activas.</p>
+          </div>
+        } @else {
+          <div class="reservations-grid">
+            @for (r of reservations(); track r.id) {
+              <mat-card class="reservation-card">
+                @if (r.productMainImageUrl) {
+                  <img [src]="resolveImageUrl(r.productMainImageUrl)" [alt]="r.productName" class="reservation-image" />
+                } @else {
+                  <div class="reservation-image placeholder"><mat-icon>image</mat-icon></div>
+                }
+                <div class="reservation-body">
+                  <div class="reservation-name">{{ r.productName }}</div>
+                  <div class="reservation-sub">{{ r.productSku }} · Cant. {{ r.quantity }}</div>
+                  <div class="reservation-row">
+                    <span class="status-chip" [attr.data-preorder-status]="r.preorderStatus">{{ reservationStatusLabel(r.preorderStatus) }}</span>
+                    <span>Separación: S/ {{ r.depositAmount.toFixed(2) }}</span>
+                  </div>
+                  <div class="reservation-dates">
+                    <span>Límite: {{ r.limitDate }}</span>
+                    @if (r.estimatedArrivalDate) {
+                      <span>Llegada estimada: {{ r.estimatedArrivalDate }}</span>
+                    }
+                  </div>
+                </div>
+              </mat-card>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

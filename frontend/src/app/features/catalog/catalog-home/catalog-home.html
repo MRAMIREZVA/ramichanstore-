@@ -1,0 +1,126 @@
+<section class="hero-banner" [class.has-image]="storeInfo()?.bannerUrl">
+  @if (storeInfo()?.bannerUrl) {
+    <img class="hero-image" [src]="resolveImageUrl(storeInfo()!.bannerUrl)" alt="" />
+  }
+  <div class="hero-content">
+    <span class="hero-eyebrow">Catálogo</span>
+    <h1 class="hero-title">{{ storeInfo()?.storeName || 'RamichanStore' }}</h1>
+    <p class="hero-subtitle">Figuras y coleccionables de tus animes favoritos — nuevos ingresos y preventas cada semana.</p>
+  </div>
+</section>
+
+<div class="filters">
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar por nombre, personaje o franquicia</mat-label>
+    <input matInput [formControl]="searchControl" placeholder="ej. Goku, One Piece..." />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>Anime / Franquicia</mat-label>
+    <mat-select [formControl]="franchiseControl">
+      <mat-option [value]="null">Todas</mat-option>
+      @for (f of franchises(); track f) {
+        <mat-option [value]="f">{{ f }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>Categoría</mat-label>
+    <mat-select [formControl]="categoryControl">
+      <mat-option [value]="null">Todas</mat-option>
+      @for (c of categories(); track c.id) {
+        <mat-option [value]="c.id">{{ c.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>Marca</mat-label>
+    <mat-select [formControl]="brandControl">
+      <mat-option [value]="null">Todas</mat-option>
+      @for (b of brands(); track b.id) {
+        <mat-option [value]="b.id">{{ b.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<ng-template #productCard let-p>
+  <mat-card class="product-card" (click)="openProduct(p)">
+    <div class="thumb">
+      @if (p.mainImageUrl) {
+        <img [src]="resolveImageUrl(p.mainImageUrl)" [alt]="p.name" />
+      } @else {
+        <mat-icon class="placeholder-icon">image</mat-icon>
+      }
+      @if (!p.inStock) {
+        <span class="stock-badge out">Agotado</span>
+      } @else if (p.status !== 'AVAILABLE') {
+        <span class="stock-badge">{{ statusLabel(p.status) }}</span>
+      }
+    </div>
+    <div class="info">
+      <span class="brand-name">{{ p.brandName }}</span>
+      <span class="product-name">{{ p.name }}</span>
+      @if (p.characterName) {
+        <span class="character">{{ p.characterName }}</span>
+      }
+      <div class="price-row">
+        <span class="price">S/ {{ p.salePrice.toFixed(2) }}</span>
+        <button
+          mat-icon-button
+          class="add-to-cart-btn"
+          [disabled]="!p.inStock"
+          matTooltip="Agregar al carrito"
+          (click)="addToCart(p, $event)"
+        >
+          <mat-icon>add_shopping_cart</mat-icon>
+        </button>
+      </div>
+    </div>
+  </mat-card>
+</ng-template>
+
+@if (loading()) {
+  <div class="loading"><mat-spinner diameter="36" /></div>
+} @else if (products().length === 0) {
+  <p class="empty">No se encontraron productos con esos filtros.</p>
+} @else if (hasActiveFilter()) {
+  <div class="product-grid">
+    @for (p of products(); track p.id) {
+      <ng-container [ngTemplateOutlet]="productCard" [ngTemplateOutletContext]="{ $implicit: p }" />
+    }
+  </div>
+
+  <mat-paginator
+    [length]="totalElements()"
+    [pageSize]="pageSize"
+    [pageIndex]="page"
+    [pageSizeOptions]="[12, 24, 48]"
+    (page)="onPage($event)"
+  />
+} @else {
+  @for (group of groupedByFranchise(); track group.franchise) {
+    <div class="franchise-section">
+      <div class="franchise-header">
+        <h2>{{ group.franchise }}</h2>
+        <button mat-button (click)="filterByFranchise(group.franchise)">
+          Ver todo
+          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </button>
+      </div>
+      <div class="product-grid">
+        @for (p of group.products; track p.id) {
+          <ng-container [ngTemplateOutlet]="productCard" [ngTemplateOutletContext]="{ $implicit: p }" />
+        }
+      </div>
+    </div>
+  }
+
+  <mat-paginator
+    [length]="totalElements()"
+    [pageSize]="pageSize"
+    [pageIndex]="page"
+    [pageSizeOptions]="[12, 24, 48]"
+    (page)="onPage($event)"
+  />
+}

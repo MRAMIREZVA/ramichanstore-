@@ -1,3 +1,11 @@
+.sku-badge {
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface-variant);
+  vertical-align: middle;
+}
+
 .loading {
   display: flex;
   justify-content: center;
@@ -27,13 +35,15 @@
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 12px;
+  gap: 12px 12px;
+  align-items: start;
 }
 
 .grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0 12px;
+  gap: 12px 12px;
+  align-items: start;
 }
 
 .full-width {

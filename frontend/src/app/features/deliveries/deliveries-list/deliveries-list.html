@@ -1,0 +1,97 @@
+<div class="deliveries-page">
+  <header class="page-header">
+    <div>
+      <h1>Entregas</h1>
+      <p>Seguimiento logístico de las ventas — recojo, delivery y envío por agencia.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openCreate()">
+      <mat-icon>add</mat-icon>
+      Nueva entrega
+    </button>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Estado</mat-label>
+      <mat-select [formControl]="statusControl">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (opt of statusLabels | keyvalue; track opt.key) {
+          <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading"><mat-spinner diameter="36" /></div>
+    } @else if (deliveries().length === 0) {
+      <div class="empty-state">
+        <mat-icon>local_shipping</mat-icon>
+        <p>No se encontraron entregas con estos filtros.</p>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="deliveries()" class="deliveries-table">
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef>Cliente</th>
+          <td mat-cell *matCellDef="let d">
+            <div>{{ d.customerName }}</div>
+            <div class="sub">{{ d.customerPhone }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="items">
+          <th mat-header-cell *matHeaderCellDef>Compras</th>
+          <td mat-cell *matCellDef="let d">
+            <div>{{ d.items.length }} compra(s)</div>
+            <div class="sub">S/ {{ d.totalAmount.toFixed(2) }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let d">{{ methodLabel(d.deliveryType) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="destination">
+          <th mat-header-cell *matHeaderCellDef>Destino</th>
+          <td mat-cell *matCellDef="let d">
+            {{ d.district || d.agency || d.courier || '—' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="scheduledDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha programada</th>
+          <td mat-cell *matCellDef="let d">{{ d.scheduledDate }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let d">
+            <span class="status-chip" [attr.data-status]="d.status">{{ statusLabel(d.status) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let d">
+            <button mat-icon-button (click)="openEdit(d)" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize"
+        [pageIndex]="page"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+      />
+    }
+  </div>
+</div>

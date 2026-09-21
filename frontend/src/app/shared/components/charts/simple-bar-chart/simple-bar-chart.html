@@ -1,0 +1,15 @@
+@if (items().length === 0) {
+  <div class="empty">{{ emptyMessage() }}</div>
+} @else {
+  <div class="bars">
+    @for (item of items(); track item.label) {
+      <div class="bar-row">
+        <span class="bar-label" [title]="item.label">{{ item.label }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" [style.width.%]="barWidthPercent(item.value)" [style.background]="color()"></div>
+        </div>
+        <span class="bar-value">{{ formattedValue(item.value) }}</span>
+      </div>
+    }
+  </div>
+}

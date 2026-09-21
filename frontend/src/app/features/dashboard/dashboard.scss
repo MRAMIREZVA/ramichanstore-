@@ -51,8 +51,11 @@
   font-weight: 700;
 }
 
-.stat-phase {
-  font-size: 11px;
-  color: var(--mat-sys-tertiary);
-  font-weight: 600;
+.stat-card.warn .stat-value {
+  color: #b5560d;
+}
+
+.stat-card.warn .stat-icon {
+  color: #b5560d;
+  background: #fde8d8;
 }

@@ -1,4 +1,9 @@
-<h2 mat-dialog-title>{{ product() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+<h2 mat-dialog-title>
+  {{ product() ? 'Editar producto' : isDuplicate ? 'Duplicar producto' : 'Nuevo producto' }}
+  @if (product()) {
+    <span class="sku-badge">SKU: {{ product()!.sku }}</span>
+  }
+</h2>
 
 <mat-dialog-content>
   @if (loadingCatalogs()) {
@@ -6,21 +11,17 @@
   } @else {
     <form [formGroup]="form" class="product-form">
       <h3 class="section-title">Identificación</h3>
+      @if (isDuplicate) {
+        <p class="hint">Los demás campos se copiaron a este nuevo producto (se le asignará un SKU propio al guardar)</p>
+      }
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>El nombre es obligatorio</mat-error>
+        }
+      </mat-form-field>
       <div class="grid-2">
-        <mat-form-field appearance="outline">
-          <mat-label>SKU</mat-label>
-          <input matInput formControlName="sku" />
-          @if (form.controls.sku.touched && form.controls.sku.invalid) {
-            <mat-error>El SKU es obligatorio</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Nombre</mat-label>
-          <input matInput formControlName="name" />
-          @if (form.controls.name.touched && form.controls.name.invalid) {
-            <mat-error>El nombre es obligatorio</mat-error>
-          }
-        </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Personaje</mat-label>
           <input matInput formControlName="characterName" />

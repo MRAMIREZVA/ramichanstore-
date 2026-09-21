@@ -1,0 +1,89 @@
+<h2 mat-dialog-title>
+  Separación #{{ separation().id }} — {{ separation().productName }}
+  <span class="status-chip" [attr.data-status]="separation().status">{{ statusLabels[separation().status] }}</span>
+</h2>
+
+<mat-dialog-content>
+  <app-buyer-card
+    [customerName]="separation().customerName"
+    [phone]="separation().customerPhone"
+    [whatsapp]="separation().customerWhatsapp"
+    [message]="'Hola ' + separation().customerName + ', te escribo por tu separación de ' + separation().productName + ' en RamichanStore.'"
+  />
+
+  <div class="summary">
+    <span>Total: <strong>S/ {{ separation().totalPrice.toFixed(2) }}</strong></span>
+    <span>Pagado: <strong>S/ {{ separation().amountPaid.toFixed(2) }}</strong></span>
+    <span [class.negative]="separation().balanceDue > 0">Saldo: <strong>S/ {{ separation().balanceDue.toFixed(2) }}</strong></span>
+    @if (separation().overdue) {
+      <span class="overdue-badge">Vencida</span>
+    }
+  </div>
+
+  @if (separation().status !== 'CANCELLED' && separation().status !== 'PAID') {
+    <form [formGroup]="form" class="payment-form">
+      <mat-form-field appearance="outline" class="amount-field">
+        <mat-label>Monto (S/)</mat-label>
+        <input matInput type="number" formControlName="amount" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="method-field">
+        <mat-label>Método</mat-label>
+        <mat-select formControlName="paymentMethod">
+          @for (opt of methodOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Fecha</mat-label>
+        <input matInput [matDatepicker]="payDatePicker" formControlName="paymentDate" />
+        <mat-datepicker-toggle matSuffix [for]="payDatePicker" />
+        <mat-datepicker #payDatePicker />
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="registerPayment()" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Abonar
+        }
+      </button>
+    </form>
+  }
+
+  @if (loading()) {
+    <div class="loading"><mat-spinner diameter="32" /></div>
+  } @else if (payments().length === 0) {
+    <div class="empty-state">
+      <mat-icon>payments</mat-icon>
+      <p>Todavía no hay abonos registrados.</p>
+    </div>
+  } @else {
+    <table mat-table [dataSource]="payments()" class="payments-table">
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let p">{{ p.paymentDate }}</td>
+      </ng-container>
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Monto</th>
+        <td mat-cell *matCellDef="let p">S/ {{ p.amount.toFixed(2) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="method">
+        <th mat-header-cell *matHeaderCellDef>Método</th>
+        <td mat-cell *matCellDef="let p">{{ p.paymentMethod }}</td>
+      </ng-container>
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef>Usuario</th>
+        <td mat-cell *matCellDef="let p">{{ p.username }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (separation().status !== 'CANCELLED' && separation().status !== 'PAID') {
+    <button mat-button color="warn" (click)="cancelSeparation()">Cancelar separación</button>
+  }
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

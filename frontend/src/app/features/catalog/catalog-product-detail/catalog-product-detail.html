@@ -1,0 +1,99 @@
+<button mat-button class="back-link" (click)="back()">
+  <mat-icon>arrow_back</mat-icon>
+  Volver al catálogo
+</button>
+
+@if (loading()) {
+  <div class="loading"><mat-spinner diameter="36" /></div>
+} @else if (notFound()) {
+  <p class="empty">Este producto no está disponible.</p>
+} @else if (product(); as p) {
+  <div class="detail">
+    <div class="gallery">
+      <div class="main-image">
+        @if (activeImageUrl()) {
+          <img [src]="resolveImageUrl(activeImageUrl())" [alt]="p.name" />
+        } @else {
+          <mat-icon class="placeholder-icon">image</mat-icon>
+        }
+      </div>
+      @if (p.images.length > 1) {
+        <div class="thumbs">
+          @for (img of p.images; track img.id) {
+            <button
+              type="button"
+              class="thumb"
+              [class.active]="resolveImageUrl(img.url) === activeImageUrl()"
+              (click)="activeImageUrl.set(resolveImageUrl(img.url))"
+            >
+              <img [src]="resolveImageUrl(img.url)" [alt]="p.name" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="info">
+      <span class="brand-name">{{ p.brandName }}</span>
+      <h1>{{ p.name }}</h1>
+      @if (p.characterName || p.franchise) {
+        <p class="subtitle">
+          @if (p.characterName) {
+            {{ p.characterName }}
+          }
+          @if (p.characterName && p.franchise) {
+            &middot;
+          }
+          @if (p.franchise) {
+            {{ p.franchise }}
+          }
+        </p>
+      }
+
+      <div class="chips">
+        <mat-chip-set>
+          <mat-chip>{{ p.categoryName }}</mat-chip>
+          @if (p.lineName) {
+            <mat-chip>{{ p.lineName }}</mat-chip>
+          }
+          @if (p.size) {
+            <mat-chip>{{ p.size }}</mat-chip>
+          }
+        </mat-chip-set>
+      </div>
+
+      <div class="price-row">
+        <span class="price">S/ {{ p.salePrice.toFixed(2) }}</span>
+        @if (!p.inStock) {
+          <span class="stock-badge out">Agotado</span>
+        } @else {
+          <span class="stock-badge">{{ statusLabels[p.status] }}</span>
+        }
+      </div>
+
+      @if (p.description) {
+        <p class="description">{{ p.description }}</p>
+      }
+
+      @if (p.inStock) {
+        <div class="add-to-cart-row">
+          <div class="quantity-stepper">
+            <button mat-icon-button type="button" (click)="decrementQuantity()" [disabled]="quantity() <= 1">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <span class="quantity-value">{{ quantity() }}</span>
+            <button mat-icon-button type="button" (click)="incrementQuantity()">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+          <button mat-flat-button color="primary" (click)="addToCart()">
+            <mat-icon>add_shopping_cart</mat-icon>
+            Agregar al carrito
+          </button>
+        </div>
+      }
+
+      <p class="sku-note">SKU: {{ p.sku }}</p>
+    </div>
+  </div>
+}

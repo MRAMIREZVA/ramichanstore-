@@ -51,7 +51,8 @@ export interface Product {
 }
 
 export interface ProductRequest {
-  sku: string;
+  /** Opcional: si no se envía, el backend genera uno (ver ProductService.generateSku). */
+  sku?: string | null;
   name: string;
   characterName: string | null;
   franchise: string | null;

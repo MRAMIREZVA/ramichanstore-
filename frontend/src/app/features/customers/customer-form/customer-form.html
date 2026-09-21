@@ -1,0 +1,82 @@
+<h2 mat-dialog-title>{{ data.customer ? 'Editar cliente' : 'Nuevo cliente' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="customer-form">
+    <h3 class="section-title">Identificación</h3>
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput formControlName="fullName" />
+        @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+          <mat-error>El nombre es obligatorio</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Teléfono</mat-label>
+        <input matInput formControlName="phone" />
+        @if (form.controls.phone.touched && form.controls.phone.invalid) {
+          <mat-error>El teléfono es obligatorio</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de documento</mat-label>
+        <mat-select formControlName="documentType">
+          <mat-option [value]="null">Sin especificar</mat-option>
+          @for (opt of documentTypeOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Número de documento</mat-label>
+        <input matInput formControlName="documentNumber" />
+      </mat-form-field>
+    </div>
+
+    <h3 class="section-title">Contacto</h3>
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>WhatsApp</mat-label>
+        <input matInput formControlName="whatsapp" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Correo</mat-label>
+        <input matInput formControlName="email" />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <mat-error>Correo inválido</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Distrito</mat-label>
+        <input matInput formControlName="district" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="status">
+          @for (opt of statusOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección</mat-label>
+      <input matInput formControlName="address" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      {{ data.customer ? 'Guardar cambios' : 'Crear cliente' }}
+    }
+  </button>
+</mat-dialog-actions>

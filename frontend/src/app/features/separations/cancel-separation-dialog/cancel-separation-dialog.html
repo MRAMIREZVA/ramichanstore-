@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Cancelar separación</h2>
+
+<mat-dialog-content>
+  <p>Esta acción revierte el stock del producto (movimiento de Devolución) y marca la separación como cancelada. Los abonos ya registrados quedan en el historial. No se puede deshacer.</p>
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Motivo de la cancelación</mat-label>
+      <textarea matInput formControlName="reason" rows="2"></textarea>
+      @if (form.controls.reason.touched && form.controls.reason.invalid) {
+        <mat-error>El motivo es obligatorio</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Volver</button>
+  <button mat-flat-button color="warn" (click)="confirm()" [disabled]="saving()">Cancelar separación</button>
+</mat-dialog-actions>

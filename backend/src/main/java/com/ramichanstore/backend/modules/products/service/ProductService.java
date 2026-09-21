@@ -29,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * Costo total, ganancia y margen SIEMPRE se calculan aquí a partir de precio de
@@ -65,6 +66,36 @@ public class ProductService {
         return ProductResponse.from(findById(id));
     }
 
+    /** Para el catálogo público (sin login): mismos filtros que {@link #search}, pero nunca incluye descontinuados. */
+    @Transactional(readOnly = true)
+    public Page<Product> searchPublic(String term, Long categoryId, Long brandId, String franchise, Pageable pageable) {
+        List<Specification<Product>> specs = Stream.of(
+                        ProductSpecifications.search(term),
+                        ProductSpecifications.hasCategory(categoryId),
+                        ProductSpecifications.hasBrand(brandId),
+                        ProductSpecifications.hasFranchise(franchise),
+                        ProductSpecifications.excludeStatus(ProductStatus.DISCONTINUED))
+                .filter(Objects::nonNull)
+                .toList();
+        return productRepository.findAll(Specification.allOf(specs), pageable);
+    }
+
+    /** Para el filtro "Franquicia" del catálogo público. */
+    @Transactional(readOnly = true)
+    public List<String> findDistinctFranchises() {
+        return productRepository.findDistinctFranchises();
+    }
+
+    /** Para el catálogo público: un producto descontinuado no existe de cara al cliente (404, no 403). */
+    @Transactional(readOnly = true)
+    public Product findPublicById(Long id) {
+        Product product = findById(id);
+        if (product.getStatus() == ProductStatus.DISCONTINUED) {
+            throw ResourceNotFoundException.of("Producto", id);
+        }
+        return product;
+    }
+
     @Transactional(readOnly = true)
     public Product findById(Long id) {
         return productRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Producto", id));
@@ -72,11 +103,13 @@ public class ProductService {
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
-        if (productRepository.existsBySkuIgnoreCase(request.sku())) {
-            throw new BusinessRuleException("Ya existe un producto con el SKU '" + request.sku() + "'");
+        String sku = StringUtils.hasText(request.sku()) ? request.sku().trim() : generateSku();
+        if (productRepository.existsBySkuIgnoreCase(sku)) {
+            throw new BusinessRuleException("Ya existe un producto con el SKU '" + sku + "'");
         }
         Product product = new Product();
         applyRequest(product, request);
+        product.setSku(sku);
         Product saved = productRepository.save(product);
         auditService.log(AuditAction.CREATE, MODULE, "Product", saved.getId().toString(), null, summarize(saved));
         return ProductResponse.from(saved);
@@ -85,14 +118,32 @@ public class ProductService {
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         Product product = findById(id);
-        if (!product.getSku().equalsIgnoreCase(request.sku()) && productRepository.existsBySkuIgnoreCase(request.sku())) {
-            throw new BusinessRuleException("Ya existe un producto con el SKU '" + request.sku() + "'");
+        String sku = StringUtils.hasText(request.sku()) ? request.sku().trim() : product.getSku();
+        if (!product.getSku().equalsIgnoreCase(sku) && productRepository.existsBySkuIgnoreCase(sku)) {
+            throw new BusinessRuleException("Ya existe un producto con el SKU '" + sku + "'");
         }
         String before = summarize(product);
         applyRequest(product, request);
+        product.setSku(sku);
         Product saved = productRepository.save(product);
         auditService.log(AuditAction.UPDATE, MODULE, "Product", id.toString(), before, summarize(saved));
         return ProductResponse.from(saved);
+    }
+
+    /**
+     * El formulario de alta oculta el SKU a propósito (ver ProductRequest) — se
+     * genera acá con un contador simple ("PROD-000123"); si hay colisión (huecos
+     * por productos eliminados que "liberaron" un número, o alta concurrente) se
+     * prueba el siguiente hasta encontrar uno libre entre los activos.
+     */
+    private String generateSku() {
+        long seq = productRepository.count() + 1;
+        String candidate = "PROD-%06d".formatted(seq);
+        while (productRepository.existsBySkuIgnoreCase(candidate)) {
+            seq++;
+            candidate = "PROD-%06d".formatted(seq);
+        }
+        return candidate;
     }
 
     @Transactional
@@ -104,7 +155,6 @@ public class ProductService {
     }
 
     private void applyRequest(Product product, ProductRequest request) {
-        product.setSku(request.sku());
         product.setName(request.name());
         product.setCharacterName(request.characterName());
         product.setFranchise(request.franchise());

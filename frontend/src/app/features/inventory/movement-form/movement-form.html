@@ -1,0 +1,84 @@
+<h2 mat-dialog-title>Registrar movimiento</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="movement-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Producto</mat-label>
+      <input
+        matInput
+        formControlName="productSearch"
+        [matAutocomplete]="auto"
+        placeholder="Busca por nombre, SKU, personaje o franquicia"
+      />
+      @if (searching()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="productLabel">
+        @for (p of productOptions(); track p.id) {
+          <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">
+            {{ p.sku }} — {{ p.name }} <span class="option-stock">(stock: {{ p.currentStock }})</span>
+          </mat-option>
+        }
+      </mat-autocomplete>
+      @if (form.controls.productSearch.touched && form.controls.productSearch.invalid) {
+        <mat-error>Selecciona un producto</mat-error>
+      }
+    </mat-form-field>
+
+    @if (selectedProduct(); as product) {
+      <div class="stock-preview">
+        <span>Stock actual: <strong>{{ product.currentStock }}</strong></span>
+        @if (previewNewStock !== null) {
+          <mat-icon inline>arrow_forward</mat-icon>
+          <span>Nuevo stock: <strong [class.negative]="previewNewStock! < 0">{{ previewNewStock }}</strong></span>
+        }
+      </div>
+    }
+
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de movimiento</mat-label>
+        <mat-select formControlName="movementType">
+          @for (opt of typeOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Cantidad</mat-label>
+        <input matInput type="number" formControlName="quantity" />
+        @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
+          <mat-error>La cantidad es obligatoria</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <p class="hint">{{ directionHint() }}</p>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Motivo</mat-label>
+      <input matInput formControlName="reason" maxlength="255" />
+      @if (form.controls.reason.touched && form.controls.reason.invalid) {
+        <mat-error>El motivo es obligatorio</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones (opcional)</mat-label>
+      <textarea matInput formControlName="observation" rows="2" maxlength="1000"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving() || !selectedProduct()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Registrar movimiento
+    }
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,80 @@
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+  min-width: 420px;
+  margin-bottom: 12px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.items-table {
+  width: 100%;
+}
+
+.totals {
+  display: flex;
+  justify-content: flex-end;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 12px 0 4px;
+  font-size: 13px;
+}
+
+.total-amount {
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+.points-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #1e7a3a;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-chip[data-delivery-status='DELIVERED'],
+.status-chip[data-delivery-status='READY'] {
+  background: #d9f2e0;
+  color: #1e7a3a;
+}
+
+.status-chip[data-delivery-status='SHIPPED'] {
+  background: #fde8d8;
+  color: #b5560d;
+}
+
+.status-chip[data-delivery-status='PENDING'],
+.status-chip[data-delivery-status='PREPARING'],
+.status-chip[data-delivery-status='NONE'] {
+  background: #e3e0f7;
+  color: #4c3fa8;
+}
+
+@media (max-width: 480px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+}

@@ -2,13 +2,14 @@ import { Component, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
-import { ProductService } from '../../core/services/product.service';
+import { DashboardSummary } from '../../core/models/report.model';
+import { ReportService } from '../../core/services/report.service';
 
 interface StatCard {
   label: string;
   icon: string;
-  phase?: number;
-  value?: () => number | null;
+  value: () => string;
+  warn?: () => boolean;
 }
 
 @Component({
@@ -20,28 +21,40 @@ interface StatCard {
 })
 export class Dashboard {
   private readonly authService = inject(AuthService);
-  private readonly productService = inject(ProductService);
+  private readonly reportService = inject(ReportService);
 
   readonly currentUser = this.authService.currentUser;
-
-  readonly totalProducts = signal<number | null>(null);
-  readonly lowStockProducts = signal<number | null>(null);
+  readonly loading = signal(true);
+  readonly summary = signal<DashboardSummary | null>(null);
 
   readonly stats: StatCard[] = [
-    { label: 'Ventas del día', icon: 'today', phase: 5 },
-    { label: 'Ventas del mes', icon: 'calendar_month', phase: 5 },
-    { label: 'Ganancia del mes', icon: 'trending_up', phase: 5 },
-    { label: 'Productos registrados', icon: 'inventory_2', value: () => this.totalProducts() },
-    { label: 'Stock bajo', icon: 'warning', value: () => this.lowStockProducts() },
-    { label: 'Preventas activas', icon: 'schedule', phase: 4 },
-    { label: 'Clientes registrados', icon: 'groups', phase: 3 },
-    { label: 'Pagos pendientes', icon: 'payments', phase: 6 },
+    { label: 'Ventas del día', icon: 'today', value: () => `S/ ${(this.summary()?.salesTodayTotal ?? 0).toFixed(2)}` },
+    { label: 'Ventas del mes', icon: 'calendar_month', value: () => `S/ ${(this.summary()?.salesMonthTotal ?? 0).toFixed(2)}` },
+    { label: 'Ganancia del mes', icon: 'trending_up', value: () => `S/ ${(this.summary()?.profitMonth ?? 0).toFixed(2)}` },
+    { label: 'Productos registrados', icon: 'inventory_2', value: () => `${this.summary()?.productsRegistered ?? 0}` },
+    {
+      label: 'Stock bajo',
+      icon: 'warning',
+      value: () => `${this.summary()?.lowStockCount ?? 0}`,
+      warn: () => (this.summary()?.lowStockCount ?? 0) > 0,
+    },
+    { label: 'Preventas activas', icon: 'schedule', value: () => `${this.summary()?.activePreorders ?? 0}` },
+    { label: 'Clientes registrados', icon: 'groups', value: () => `${this.summary()?.registeredCustomers ?? 0}` },
+    {
+      label: 'Pagos pendientes',
+      icon: 'payments',
+      value: () => `${this.summary()?.pendingPaymentsCount ?? 0} (S/ ${(this.summary()?.pendingPaymentsBalance ?? 0).toFixed(2)})`,
+      warn: () => (this.summary()?.pendingPaymentsCount ?? 0) > 0,
+    },
   ];
 
   constructor() {
-    this.productService.search({ page: 0, size: 100 }).subscribe((res) => {
-      this.totalProducts.set(res.data.totalElements);
-      this.lowStockProducts.set(res.data.content.filter((p) => p.lowStock).length);
+    this.reportService.getDashboard().subscribe({
+      next: (res) => {
+        this.summary.set(res.data);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 }

@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>{{ data.resetOnly ? 'Restablecer contraseña del portal' : 'Habilitar acceso al portal' }}</h2>
+
+<mat-dialog-content>
+  @if (!savedCredentials()) {
+    <form [formGroup]="form" class="form">
+      @if (!data.resetOnly) {
+        <p class="hint">El cliente podrá entrar al portal (/portal/login) con este usuario y contraseña, para ver solo sus compras y preventas.</p>
+      }
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Usuario</mat-label>
+        <input matInput formControlName="username" />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <mat-error>El usuario es obligatorio</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ data.resetOnly ? 'Nueva contraseña' : 'Contraseña' }}</mat-label>
+        <input matInput type="password" formControlName="password" />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <mat-error>Mínimo 8 caracteres</mat-error>
+        }
+      </mat-form-field>
+    </form>
+  } @else {
+    <div class="success">
+      <mat-icon class="success-icon">check_circle</mat-icon>
+      <p>Ahora avísale al cliente estas credenciales — no vuelven a mostrarse una vez que cierres esta ventana:</p>
+      <div class="credentials-box">
+        <div class="credential-row">
+          <span class="credential-label">Usuario</span>
+          <span class="credential-value">{{ savedCredentials()!.username }}</span>
+        </div>
+        <div class="credential-row">
+          <span class="credential-label">Contraseña</span>
+          <span class="credential-value">{{ savedCredentials()!.password }}</span>
+          <button mat-icon-button type="button" matTooltip="Copiar contraseña" (click)="copyPassword()">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+      </div>
+      @if (hasWhatsAppNumber) {
+        <a mat-flat-button color="primary" class="whatsapp-btn" [href]="whatsAppShareUrl" target="_blank" rel="noopener">
+          <mat-icon>chat</mat-icon>
+          Enviar por WhatsApp
+        </a>
+      } @else {
+        <p class="hint">Este cliente no tiene WhatsApp ni teléfono registrado — cópiale la contraseña y avísale por otro medio.</p>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (!savedCredentials()) {
+    <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+    <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+      {{ data.resetOnly ? 'Restablecer' : 'Habilitar acceso' }}
+    </button>
+  } @else {
+    <button mat-flat-button color="primary" (click)="finish()">Listo</button>
+  }
+</mat-dialog-actions>

@@ -1,0 +1,54 @@
+<div class="reports-page">
+  <header class="page-header">
+    <div>
+      <h1>Reportes</h1>
+      <p>Ventas, ganancias, top productos/categorías y evolución de clientes por período.</p>
+    </div>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
+      <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+      <mat-datepicker #fromPicker />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
+      <mat-datepicker-toggle matSuffix [for]="toPicker" />
+      <mat-datepicker #toPicker />
+    </mat-form-field>
+  </div>
+
+  @if (loading()) {
+    <div class="loading"><mat-spinner diameter="36" /></div>
+  } @else {
+    <div class="charts-grid">
+      <mat-card class="chart-card wide">
+        <h3>Ventas y ganancia por día</h3>
+        <app-simple-line-chart [labels]="salesLabels()" [series]="salesSeries()" />
+      </mat-card>
+
+      <mat-card class="chart-card">
+        <h3>Top productos por ingresos</h3>
+        <app-simple-bar-chart [items]="topProductsBars()" color="#2a78d6" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
+      </mat-card>
+
+      <mat-card class="chart-card">
+        <h3>Top categorías por ingresos</h3>
+        <app-simple-bar-chart [items]="topCategoriesBars()" color="#1baf7a" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
+      </mat-card>
+
+      <mat-card class="chart-card wide">
+        <h3>Evolución de clientes nuevos</h3>
+        <app-simple-bar-chart
+          [items]="customerGrowthBars()"
+          color="#4a3aa7"
+          [integer]="true"
+          emptyMessage="Sin clientes nuevos en el período."
+        />
+      </mat-card>
+    </div>
+  }
+</div>

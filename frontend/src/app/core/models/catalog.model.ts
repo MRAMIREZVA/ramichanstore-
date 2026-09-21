@@ -29,3 +29,25 @@ export interface Supplier {
   address: string | null;
   notes: string | null;
 }
+
+export interface NameDescriptionRequest {
+  name: string;
+  description: string | null;
+}
+
+export interface ProductLineRequest {
+  name: string;
+  brandId: number | null;
+  description: string | null;
+}
+
+export interface SupplierRequest {
+  name: string;
+  company: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  country: string | null;
+  address: string | null;
+  notes: string | null;
+}

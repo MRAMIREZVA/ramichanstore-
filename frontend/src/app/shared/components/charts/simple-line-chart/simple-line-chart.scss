@@ -1,0 +1,89 @@
+.chart-root {
+  position: relative;
+  width: 100%;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch,
+.tooltip-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.gridline {
+  stroke: #e1e0d9;
+  stroke-width: 1;
+}
+
+.axis-label {
+  fill: #898781;
+  font-size: 10px;
+}
+
+.line-path {
+  stroke-width: 2;
+}
+
+.point {
+  opacity: 0;
+}
+
+.crosshair {
+  stroke: #c3c2b7;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.tooltip {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.tooltip-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gridline {
+    stroke: #2c2c2a;
+  }
+  .axis-label {
+    fill: #898781;
+  }
+}

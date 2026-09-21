@@ -57,8 +57,11 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/portal/auth/login", "/api/portal/auth/refresh").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/images/*/file").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/catalog/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/order-requests").permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

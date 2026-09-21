@@ -1,0 +1,115 @@
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.search-field {
+  flex: 1 1 280px;
+}
+
+.filters mat-form-field:not(.search-field) {
+  flex: 0 1 200px;
+}
+
+.balance-badge {
+  background: var(--mat-sys-surface-container);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.table-card {
+  background: var(--mat-sys-surface);
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  overflow: hidden;
+}
+
+.movements-table {
+  width: 100%;
+}
+
+.loading,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.positive {
+  color: #1e7a3a;
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+}
+
+.type-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.type-chip[data-type='COMPRA'],
+.type-chip[data-type='BONIFICACION'] {
+  background: #d9f2e0;
+  color: #1e7a3a;
+}
+
+.type-chip[data-type='CANJE'] {
+  background: #e3e0f7;
+  color: #4c3fa8;
+}
+
+.type-chip[data-type='VENCIMIENTO'] {
+  background: #fbe0e0;
+  color: #b32424;
+}
+
+.type-chip[data-type='AJUSTE_MANUAL'] {
+  background: #e6e6e6;
+  color: #5a5a5a;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+}

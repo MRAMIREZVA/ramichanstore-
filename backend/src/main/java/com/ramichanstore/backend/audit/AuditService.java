@@ -2,11 +2,19 @@ package com.ramichanstore.backend.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ramichanstore.backend.security.SecurityUser;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -40,6 +48,20 @@ public class AuditService {
                 () -> entry.setUsername("system"));
 
         auditLogRepository.save(entry);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AuditLogResponse> search(String module, AuditAction action, String username, LocalDate from, LocalDate to, Pageable pageable) {
+        List<Specification<AuditLog>> specs = Stream.of(
+                        AuditLogSpecifications.hasModule(module),
+                        AuditLogSpecifications.hasAction(action),
+                        AuditLogSpecifications.usernameContains(username),
+                        AuditLogSpecifications.createdFrom(from),
+                        AuditLogSpecifications.createdTo(to))
+                .filter(Objects::nonNull)
+                .toList();
+        Specification<AuditLog> spec = specs.isEmpty() ? null : Specification.allOf(specs);
+        return auditLogRepository.findAll(spec, pageable).map(AuditLogResponse::from);
     }
 
     public void logForUsername(AuditAction action, String module, String username) {

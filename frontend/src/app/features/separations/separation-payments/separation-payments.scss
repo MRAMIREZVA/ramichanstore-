@@ -1,0 +1,106 @@
+.status-chip {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-chip[data-status='PAID'] {
+  background: #d9f2e0;
+  color: #1e7a3a;
+}
+
+.status-chip[data-status='PENDING'] {
+  background: #fde8d8;
+  color: #b5560d;
+}
+
+.status-chip[data-status='PARTIAL'] {
+  background: #e3e0f7;
+  color: #4c3fa8;
+}
+
+.status-chip[data-status='CANCELLED'] {
+  background: #fbe0e0;
+  color: #b32424;
+}
+
+app-buyer-card {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+
+  .negative {
+    color: var(--mat-sys-error);
+  }
+}
+
+.overdue-badge {
+  background: #fbe0e0;
+  color: #b32424;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.payment-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 640px;
+  margin-bottom: 8px;
+
+  button {
+    margin-top: 4px;
+  }
+}
+
+.amount-field,
+.date-field {
+  flex: 1;
+  min-width: 130px;
+}
+
+.method-field {
+  flex: 1;
+  min-width: 140px;
+}
+
+.payments-table {
+  width: 100%;
+}
+
+.loading,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 720px) {
+  .payment-form {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+}

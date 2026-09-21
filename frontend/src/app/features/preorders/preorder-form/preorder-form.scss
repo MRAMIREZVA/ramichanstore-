@@ -1,0 +1,25 @@
+.preorder-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 560px;
+  max-width: 720px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+@media (max-width: 640px) {
+  .preorder-form {
+    min-width: 0;
+  }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

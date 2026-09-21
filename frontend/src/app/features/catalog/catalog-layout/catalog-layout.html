@@ -1,0 +1,42 @@
+<div class="catalog-shell">
+  <header class="catalog-header">
+    <a class="brand" routerLink="/catalogo">
+      <span class="brand-mark">ラ</span>
+      <span class="brand-name">RamichanStore</span>
+    </a>
+    <div class="header-actions">
+      @if (contactWhatsAppUrl()) {
+        <a mat-button class="whatsapp-link" [href]="contactWhatsAppUrl()" target="_blank" rel="noopener">
+          <mat-icon>chat</mat-icon>
+          Contáctanos
+        </a>
+      }
+      <a
+        mat-button
+        routerLink="/catalogo/carrito"
+        [matBadge]="cartTotalItems() > 0 ? cartTotalItems() : null"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+      >
+        <mat-icon>shopping_cart</mat-icon>
+        Carrito
+      </a>
+      <a mat-button routerLink="/portal/login">
+        <mat-icon>receipt_long</mat-icon>
+        Mis compras
+      </a>
+      <a mat-stroked-button routerLink="/login">
+        <mat-icon>admin_panel_settings</mat-icon>
+        Acceso staff
+      </a>
+    </div>
+  </header>
+
+  <main class="catalog-content">
+    <router-outlet />
+  </main>
+
+  <footer class="catalog-footer">
+    <span>RamichanStore — catálogo de figuras y coleccionables</span>
+  </footer>
+</div>

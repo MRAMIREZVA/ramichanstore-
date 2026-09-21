@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>
+  Reserva — {{ data.reservation.productName }}
+  <span class="status-chip" [attr.data-preorder-status]="data.reservation.preorderStatus">
+    {{ statusLabels[data.reservation.preorderStatus] }}
+  </span>
+</h2>
+
+<mat-dialog-content>
+  <app-buyer-card
+    [customerName]="data.reservation.customerName"
+    [phone]="data.reservation.customerPhone"
+    [whatsapp]="data.reservation.customerWhatsapp"
+    [message]="
+      'Hola ' + data.reservation.customerName + ', te escribo por tu reserva de preventa de ' + data.reservation.productName + ' en RamichanStore.'
+    "
+  />
+
+  <div class="product-row">
+    @if (data.reservation.productMainImageUrl) {
+      <img [src]="resolveImageUrl(data.reservation.productMainImageUrl)" [alt]="data.reservation.productName" class="product-image" />
+    }
+    <div class="product-info">
+      <span class="product-name">{{ data.reservation.productName }}</span>
+      <span class="product-sku">{{ data.reservation.productSku }}</span>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item">
+      <span class="info-label">Cantidad reservada</span>
+      <span>{{ data.reservation.quantity }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Monto de separación</span>
+      <span>S/ {{ data.reservation.depositAmount.toFixed(2) }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Fecha límite de la campaña</span>
+      <span>{{ data.reservation.limitDate }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Llegada estimada</span>
+      <span>{{ data.reservation.estimatedArrivalDate || 'Sin definir' }}</span>
+    </div>
+    <div class="info-item full">
+      <span class="info-label">Reservado el</span>
+      <span>{{ data.reservation.createdAt | slice: 0:16 }}</span>
+    </div>
+  </div>
+
+  @if (data.reservation.notes) {
+    <p class="notes">{{ data.reservation.notes }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

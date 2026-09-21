@@ -1,0 +1,148 @@
+.points-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.points-icon {
+  color: var(--mat-sys-primary);
+  background: var(--mat-sys-primary-container);
+  border-radius: 10px;
+  padding: 10px;
+  box-sizing: content-box;
+}
+
+.points-label {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.points-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.tab-body {
+  padding-top: 16px;
+}
+
+.loading,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.portal-table {
+  width: 100%;
+  background: var(--mat-sys-surface);
+  border-radius: 12px;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-chip[data-status='PAID'],
+.status-chip[data-preorder-status='ACTIVE'],
+.status-chip[data-preorder-status='RECEIVED'],
+.status-chip[data-preorder-status='DELIVERED'],
+.status-chip[data-delivery-status='DELIVERED'],
+.status-chip[data-delivery-status='READY'] {
+  background: #d9f2e0;
+  color: #1e7a3a;
+}
+
+.status-chip[data-status='PENDING'],
+.status-chip[data-preorder-status='IN_TRANSIT'],
+.status-chip[data-delivery-status='SHIPPED'] {
+  background: #fde8d8;
+  color: #b5560d;
+}
+
+.status-chip[data-status='PARTIAL'],
+.status-chip[data-preorder-status='COMING_SOON'],
+.status-chip[data-delivery-status='PENDING'],
+.status-chip[data-delivery-status='PREPARING'],
+.status-chip[data-delivery-status='NONE'] {
+  background: #e3e0f7;
+  color: #4c3fa8;
+}
+
+.status-chip[data-status='CANCELLED'],
+.status-chip[data-preorder-status='CANCELLED'],
+.status-chip[data-preorder-status='SOLD_OUT'] {
+  background: #fbe0e0;
+  color: #b32424;
+}
+
+.reservations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.reservation-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.reservation-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.reservation-image.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-outline);
+}
+
+.reservation-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reservation-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.reservation-sub {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.reservation-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.reservation-dates {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant);
+}

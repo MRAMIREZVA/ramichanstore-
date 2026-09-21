@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Rechazar pedido web #{{ data.orderRequest.id }}</h2>
+
+<mat-dialog-content>
+  <p>El pedido de {{ data.orderRequest.guestName }} quedará marcado como rechazado. No se puede deshacer.</p>
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Motivo del rechazo</mat-label>
+      <textarea matInput formControlName="reason" rows="2"></textarea>
+      @if (form.controls.reason.touched && form.controls.reason.invalid) {
+        <mat-error>El motivo es obligatorio</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Volver</button>
+  <button mat-flat-button color="warn" (click)="confirm()" [disabled]="saving()">Rechazar pedido</button>
+</mat-dialog-actions>

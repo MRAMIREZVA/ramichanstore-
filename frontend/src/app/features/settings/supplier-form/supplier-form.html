@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>{{ data.supplier ? 'Editar proveedor' : 'Nuevo proveedor' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form">
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>El nombre es obligatorio</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Empresa</mat-label>
+        <input matInput formControlName="company" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Teléfono</mat-label>
+        <input matInput formControlName="phone" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>WhatsApp</mat-label>
+        <input matInput formControlName="whatsapp" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Correo</mat-label>
+        <input matInput formControlName="email" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>País</mat-label>
+        <input matInput formControlName="country" />
+      </mat-form-field>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección</mat-label>
+      <input matInput formControlName="address" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()">Guardar</button>
+</mat-dialog-actions>

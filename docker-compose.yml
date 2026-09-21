@@ -1,0 +1,67 @@
+# Despliegue de un solo servidor: SQL Server + backend Spring Boot + frontend
+# Angular servido por nginx (que además hace de reverse proxy a /api). Pensado
+# para una sola VPS pequeña — ver deploy/DEPLOYMENT.md para el paso a paso.
+#
+# Uso:
+#   1. cp .env.example .env   y completa los valores reales
+#   2. docker compose up -d --build
+#   3. docker compose logs -f backend   (confirmar que Flyway migró bien)
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD}
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD}
+      APP_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./deploy/db-init.sql:/db-init.sql:ro
+    entrypoint:
+      - /bin/bash
+      - -c
+      - >
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$SA_PASSWORD" -C
+        -v APP_PASSWORD="$$APP_PASSWORD" -i /db-init.sql
+    restart: "no"
+
+  backend:
+    build: ./backend
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=RamichanStoreDB;encrypt=true;trustServerCertificate=true"
+      DB_USER: ramichan_app
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:

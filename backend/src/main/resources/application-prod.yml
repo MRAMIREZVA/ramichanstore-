@@ -1,0 +1,12 @@
+# Perfil de producción: baja el nivel de log (application.yml deja DEBUG por
+# defecto, muy verboso para producción) y apaga Swagger — la API no debe quedar
+# documentada públicamente en un servidor expuesto a internet.
+logging:
+  level:
+    com.ramichanstore.backend: INFO
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

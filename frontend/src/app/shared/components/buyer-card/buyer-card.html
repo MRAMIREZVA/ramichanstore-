@@ -1,0 +1,17 @@
+<div class="buyer-card">
+  <div class="buyer-avatar">
+    <mat-icon>person</mat-icon>
+  </div>
+  <div class="buyer-info">
+    <span class="buyer-name">{{ customerName() }}</span>
+    @if (phone()) {
+      <span class="buyer-phone">{{ phone() }}</span>
+    }
+  </div>
+  @if (whatsAppUrl()) {
+    <a mat-flat-button class="whatsapp-btn" [href]="whatsAppUrl()" target="_blank" rel="noopener">
+      <mat-icon>chat</mat-icon>
+      Hablar con el cliente
+    </a>
+  }
+</div>

@@ -14,9 +14,14 @@ import java.time.LocalDate;
  * profit ni marginPercent: esos siempre los calcula ProductService. Las imágenes
  * tampoco viajan aquí: se suben/gestionan aparte vía ProductImageController una
  * vez que el producto existe (ver /api/products/{id}/images).
+ *
+ * <p>{@code sku} es opcional a propósito: el formulario de alta no lo pide (se
+ * oculta) y {@link com.ramichanstore.backend.modules.products.service.ProductService}
+ * autogenera uno si viene vacío. Si se envía uno, se respeta (permite importar
+ * catálogos externos con su propio código más adelante sin cambiar el contrato).</p>
  */
 public record ProductRequest(
-        @NotBlank(message = "El SKU es obligatorio") @Size(max = 50) String sku,
+        @Size(max = 50) String sku,
         @NotBlank(message = "El nombre es obligatorio") @Size(max = 200) String name,
         @Size(max = 150) String characterName,
         @Size(max = 150) String franchise,

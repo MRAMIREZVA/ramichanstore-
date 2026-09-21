@@ -1,0 +1,115 @@
+@if (submittedOrder(); as order) {
+  <div class="confirmation">
+    <mat-icon class="confirmation-icon">check_circle</mat-icon>
+    <h1>¡Pedido enviado!</h1>
+    <p class="confirmation-sub">Tu pedido web #{{ order.id }} quedó registrado. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.</p>
+
+    <div class="confirmation-summary">
+      @for (item of order.items; track item.id) {
+        <div class="confirmation-line">
+          <span>{{ item.quantity }}x {{ item.productName }}</span>
+          <span>S/ {{ item.subtotal.toFixed(2) }}</span>
+        </div>
+      }
+      <div class="confirmation-line total">
+        <span>Total</span>
+        <span>S/ {{ order.total.toFixed(2) }}</span>
+      </div>
+    </div>
+
+    @if (whatsAppUrl()) {
+      <p class="whatsapp-hint">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>
+      <a mat-flat-button color="primary" class="whatsapp-btn" [href]="whatsAppUrl()" target="_blank" rel="noopener">
+        <mat-icon>chat</mat-icon>
+        Enviar por WhatsApp
+      </a>
+    } @else if (!storeHasWhatsapp()) {
+      <p class="whatsapp-hint">La tienda todavía no configuró un WhatsApp de contacto — quedará pendiente de revisión igual.</p>
+    }
+
+    <a mat-button routerLink="/catalogo" class="back-link">Volver al catálogo</a>
+  </div>
+} @else {
+  <h1 class="page-title">Finalizar pedido</h1>
+
+  <div class="checkout-layout">
+    <form [formGroup]="form" class="checkout-form" (ngSubmit)="submit()">
+      <h2 class="section-title">Tus datos</h2>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput formControlName="guestName" />
+      </mat-form-field>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>Teléfono</mat-label>
+          <input matInput formControlName="guestPhone" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>WhatsApp (si es distinto)</mat-label>
+          <input matInput formControlName="guestWhatsapp" />
+        </mat-form-field>
+      </div>
+
+      <h2 class="section-title">Entrega</h2>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tipo de entrega</mat-label>
+        <mat-select formControlName="deliveryMethod">
+          @for (opt of deliveryMethodOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (needsAddress()) {
+        <div class="grid-2">
+          <mat-form-field appearance="outline">
+            <mat-label>Distrito</mat-label>
+            <input matInput formControlName="guestDistrict" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="guestAddress" />
+          </mat-form-field>
+        </div>
+      }
+
+      <h2 class="section-title">Pago</h2>
+      <p class="payment-hint">Elige cómo prefieres pagar — coordinaremos el pago real contigo por WhatsApp.</p>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Método de pago preferido</mat-label>
+        <mat-select formControlName="preferredPaymentMethod">
+          @for (opt of paymentMethodOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Observaciones (opcional)</mat-label>
+        <textarea matInput formControlName="notes" rows="2"></textarea>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          Enviar pedido
+        }
+      </button>
+    </form>
+
+    <aside class="order-summary">
+      <h2 class="section-title">Tu pedido</h2>
+      @for (line of lines(); track line.productId) {
+        <div class="summary-line">
+          <span>{{ line.quantity }}x {{ line.name }}</span>
+          <span>S/ {{ (line.unitPrice * line.quantity).toFixed(2) }}</span>
+        </div>
+      }
+      <div class="summary-line total">
+        <span>Total</span>
+        <span>S/ {{ totalAmount().toFixed(2) }}</span>
+      </div>
+      <a routerLink="/catalogo/carrito" class="edit-cart-link">Editar carrito</a>
+    </aside>
+  </div>
+}

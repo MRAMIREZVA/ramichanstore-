@@ -1,0 +1,92 @@
+.sale-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 720px;
+  max-width: 900px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 12px;
+  align-items: start;
+}
+
+.section-title {
+  margin: 8px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mat-sys-primary);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.line-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.product-field {
+  flex: 3;
+}
+
+.qty-field {
+  flex: 0 0 70px;
+}
+
+.price-field {
+  flex: 0 0 110px;
+}
+
+.option-stock {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.line-subtotal {
+  flex: 0 0 90px;
+  padding-top: 16px;
+  text-align: right;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.totals {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.total-amount {
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+@media (max-width: 780px) {
+  .sale-form {
+    min-width: 0;
+  }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .line-row {
+    flex-wrap: wrap;
+  }
+}

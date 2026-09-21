@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>{{ data.entry.module }} — {{ data.entry.entityName || 'Sin entidad' }} #{{ data.entry.entityId || '—' }}</h2>
+
+<mat-dialog-content>
+  <div class="meta">
+    <span><strong>Usuario:</strong> {{ data.entry.username || 'sistema' }}</span>
+    <span><strong>Fecha:</strong> {{ data.entry.createdAt }}</span>
+    <span><strong>IP:</strong> {{ data.entry.ipAddress || '—' }}</span>
+  </div>
+
+  <div class="values">
+    <div class="value-col">
+      <h4>Valor anterior</h4>
+      <pre>{{ pretty(data.entry.oldValue) }}</pre>
+    </div>
+    <div class="value-col">
+      <h4>Valor nuevo</h4>
+      <pre>{{ pretty(data.entry.newValue) }}</pre>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

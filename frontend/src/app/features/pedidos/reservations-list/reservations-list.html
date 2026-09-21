@@ -1,0 +1,106 @@
+<div class="reservations-page">
+  <header class="page-header">
+    <p class="tab-hint">Reservas de clientes contra campañas de preventa activas.</p>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Buscar por cliente, producto o SKU</mat-label>
+      <input matInput [formControl]="searchControl" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Estado de campaña</mat-label>
+      <mat-select [formControl]="statusControl">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (opt of statusLabels | keyvalue; track opt.key) {
+          <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
+      <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+      <mat-datepicker #fromPicker />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
+      <mat-datepicker-toggle matSuffix [for]="toPicker" />
+      <mat-datepicker #toPicker />
+    </mat-form-field>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading"><mat-spinner diameter="36" /></div>
+    } @else if (reservations().length === 0) {
+      <div class="empty-state">
+        <mat-icon>schedule</mat-icon>
+        <p>No se encontraron reservas con estos filtros.</p>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="reservations()" class="reservations-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let r">{{ r.createdAt | slice: 0:10 }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef>Cliente</th>
+          <td mat-cell *matCellDef="let r">{{ r.customerName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef>Producto</th>
+          <td mat-cell *matCellDef="let r" class="product-cell">
+            @if (r.productMainImageUrl) {
+              <img [src]="resolveImageUrl(r.productMainImageUrl)" [alt]="r.productName" class="product-thumb" />
+            }
+            <span>{{ r.productName }} · Cant. {{ r.quantity }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="deposit">
+          <th mat-header-cell *matHeaderCellDef>Separación</th>
+          <td mat-cell *matCellDef="let r">S/ {{ r.depositAmount.toFixed(2) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="status-chip" [attr.data-preorder-status]="r.preorderStatus">{{ statusLabel(r.preorderStatus) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button (click)="openDetail(r)" matTooltip="Ver detalle">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            @if (r.preorderStatus !== 'CANCELLED' && r.preorderStatus !== 'DELIVERED') {
+              <button mat-icon-button (click)="cancelReservation(r)" matTooltip="Cancelar reserva">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize"
+        [pageIndex]="page"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+      />
+    }
+  </div>
+</div>

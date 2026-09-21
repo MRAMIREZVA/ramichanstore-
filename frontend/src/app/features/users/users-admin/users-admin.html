@@ -1,0 +1,126 @@
+<div class="users-admin-page">
+  <header class="page-header">
+    <div>
+      <h1>Usuarios y Permisos</h1>
+      <p>Cuentas del sistema, roles y sus permisos.</p>
+    </div>
+  </header>
+
+  <mat-tab-group>
+    <mat-tab label="Usuarios">
+      <div class="tab-body">
+        <div class="tab-actions">
+          <button mat-flat-button color="primary" (click)="openCreateUser()">
+            <mat-icon>add</mat-icon>
+            Nuevo usuario
+          </button>
+        </div>
+
+        <div class="table-card">
+          @if (loadingUsers()) {
+            <div class="loading"><mat-spinner diameter="36" /></div>
+          } @else {
+            <table mat-table [dataSource]="users()" class="admin-table">
+              <ng-container matColumnDef="username">
+                <th mat-header-cell *matHeaderCellDef>Usuario</th>
+                <td mat-cell *matCellDef="let u">{{ u.username }}</td>
+              </ng-container>
+              <ng-container matColumnDef="fullName">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                <td mat-cell *matCellDef="let u">{{ u.fullName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="email">
+                <th mat-header-cell *matHeaderCellDef>Correo</th>
+                <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+              </ng-container>
+              <ng-container matColumnDef="role">
+                <th mat-header-cell *matHeaderCellDef>Rol</th>
+                <td mat-cell *matCellDef="let u">{{ u.roleName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let u">
+                  <span class="status-chip" [attr.data-active]="u.active">{{ u.active ? 'Activo' : 'Inactivo' }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="lastLogin">
+                <th mat-header-cell *matHeaderCellDef>Último acceso</th>
+                <td mat-cell *matCellDef="let u">{{ u.lastLoginAt ? (u.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let u">
+                  <button mat-icon-button (click)="openEditUser(u)" matTooltip="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="openResetPassword(u)" matTooltip="Restablecer contraseña">
+                    <mat-icon>key</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    (click)="confirmDeleteUser(u)"
+                    [disabled]="u.id === currentUserId"
+                    [matTooltip]="u.id === currentUserId ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: userColumns"></tr>
+            </table>
+          }
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Roles">
+      <div class="tab-body">
+        <div class="tab-actions">
+          <button mat-flat-button color="primary" (click)="openCreateRole()">
+            <mat-icon>add</mat-icon>
+            Nuevo rol
+          </button>
+        </div>
+
+        <div class="table-card">
+          @if (loadingRoles()) {
+            <div class="loading"><mat-spinner diameter="36" /></div>
+          } @else {
+            <table mat-table [dataSource]="roles()" class="admin-table">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Rol</th>
+                <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Descripción</th>
+                <td mat-cell *matCellDef="let r">{{ r.description || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="permissions">
+                <th mat-header-cell *matHeaderCellDef>Permisos</th>
+                <td mat-cell *matCellDef="let r">{{ r.permissions.length }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let r">
+                  <button mat-icon-button (click)="openEditRole(r)" matTooltip="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  @if (r.name !== 'ADMIN') {
+                    <button mat-icon-button (click)="confirmDeleteRole(r)" matTooltip="Eliminar">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="roleColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: roleColumns"></tr>
+            </table>
+          }
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

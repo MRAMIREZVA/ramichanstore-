@@ -1,0 +1,22 @@
+<div class="portal-shell">
+  <header class="portal-header">
+    <div class="brand">
+      <span class="brand-mark">ラ</span>
+      <span class="brand-name">RamichanStore</span>
+    </div>
+    <div class="user-info">
+      <a mat-button routerLink="/catalogo">
+        <mat-icon>storefront</mat-icon>
+        Ver catálogo
+      </a>
+      <span>{{ customer()?.fullName }}</span>
+      <button mat-icon-button (click)="logout()" matTooltip="Cerrar sesión">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <main class="portal-content">
+    <router-outlet />
+  </main>
+</div>

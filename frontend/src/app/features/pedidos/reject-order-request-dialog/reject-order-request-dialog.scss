@@ -1,0 +1,10 @@
+.full-width {
+  width: 100%;
+}
+
+p {
+  min-width: 380px;
+  max-width: 480px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 13px;
+}

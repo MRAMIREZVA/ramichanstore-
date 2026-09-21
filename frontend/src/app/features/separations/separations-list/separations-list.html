@@ -1,0 +1,130 @@
+<div class="separations-page">
+  <header class="page-header">
+    <p class="tab-hint">Productos apartados por clientes, saldo pendiente y abonos.</p>
+    <button mat-flat-button color="primary" (click)="openCreate()">
+      <mat-icon>add</mat-icon>
+      Nueva separación
+    </button>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Filtrar por cliente</mat-label>
+      <input matInput [formControl]="customerFilterControl" [matAutocomplete]="customerAuto" />
+      @if (selectedCustomer()) {
+        <button matSuffix mat-icon-button (click)="clearCustomerFilter()" matTooltip="Quitar filtro">
+          <mat-icon>close</mat-icon>
+        </button>
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+      <mat-autocomplete #customerAuto="matAutocomplete" [displayWith]="customerLabel">
+        @for (c of customerOptions(); track c.id) {
+          <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ c.fullName }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Estado</mat-label>
+      <mat-select [formControl]="statusControl">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (opt of statusLabels | keyvalue; track opt.key) {
+          <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
+      <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+      <mat-datepicker #fromPicker />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
+      <mat-datepicker-toggle matSuffix [for]="toPicker" />
+      <mat-datepicker #toPicker />
+    </mat-form-field>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading"><mat-spinner diameter="36" /></div>
+    } @else if (separations().length === 0) {
+      <div class="empty-state">
+        <mat-icon>payments</mat-icon>
+        <p>No se encontraron separaciones con estos filtros.</p>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="separations()" class="separations-table">
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef>Producto</th>
+          <td mat-cell *matCellDef="let s">
+            <div class="product-name">{{ s.productName }}</div>
+            <div class="product-sub">{{ s.productSku }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef>Cliente</th>
+          <td mat-cell *matCellDef="let s">{{ s.customerName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Total / Pagado</th>
+          <td mat-cell *matCellDef="let s">
+            <div>S/ {{ s.totalPrice.toFixed(2) }}</div>
+            <div class="product-sub">Pagado S/ {{ s.amountPaid.toFixed(2) }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="balance">
+          <th mat-header-cell *matHeaderCellDef>Saldo</th>
+          <td mat-cell *matCellDef="let s">
+            <span [class.negative]="s.balanceDue > 0">S/ {{ s.balanceDue.toFixed(2) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="limitDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha límite</th>
+          <td mat-cell *matCellDef="let s">
+            {{ s.limitDate }}
+            @if (s.overdue) {
+              <mat-icon inline class="warn-icon" matTooltip="Vencida">warning</mat-icon>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let s">
+            <span class="status-chip" [attr.data-status]="s.status">{{ statusLabel(s.status) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let s">
+            <button mat-icon-button (click)="openPayments(s)" matTooltip="Ver abonos">
+              <mat-icon>payments</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize"
+        [pageIndex]="page"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+      />
+    }
+  </div>
+</div>

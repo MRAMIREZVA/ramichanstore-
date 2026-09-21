@@ -43,4 +43,18 @@ public final class ProductSpecifications {
         }
         return (root, query, cb) -> cb.equal(root.get("status"), status);
     }
+
+    public static Specification<Product> excludeStatus(ProductStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.notEqual(root.get("status"), status);
+    }
+
+    public static Specification<Product> hasFranchise(String franchise) {
+        if (!StringUtils.hasText(franchise)) {
+            return null;
+        }
+        return (root, query, cb) -> cb.equal(root.get("franchise"), franchise);
+    }
 }

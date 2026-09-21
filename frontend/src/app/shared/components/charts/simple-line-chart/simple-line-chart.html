@@ -1,0 +1,63 @@
+<div class="chart-root">
+  @if (series().length > 1) {
+    <div class="legend">
+      @for (s of series(); track s.name) {
+        <span class="legend-item">
+          <span class="legend-swatch" [style.background]="s.color"></span>
+          {{ s.name }}
+        </span>
+      }
+    </div>
+  }
+
+  <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="chart-svg">
+    @for (tick of yTicks(); track tick) {
+      <line
+        [attr.x1]="axisLeftX"
+        [attr.x2]="width - 16"
+        [attr.y1]="gridY(tick)"
+        [attr.y2]="gridY(tick)"
+        class="gridline"
+      />
+      <text [attr.x]="axisLeftX - 8" [attr.y]="gridY(tick) + 3" class="axis-label" text-anchor="end">{{ tick }}</text>
+    }
+
+    @for (s of series(); track s.name) {
+      <path [attr.d]="linePath(s.values)" [attr.stroke]="s.color" class="line-path" fill="none" />
+      @for (v of s.values; track $index) {
+        <circle [attr.cx]="pointX($index)" [attr.cy]="pointY(v)" r="3" [attr.fill]="s.color" class="point" />
+      }
+    }
+
+    @for (label of labels(); track $index) {
+      @if (showLabel($index)) {
+        <text [attr.x]="pointX($index)" [attr.y]="height - 8" class="axis-label" text-anchor="middle">{{ label }}</text>
+      }
+      <rect
+        [attr.x]="pointX($index) - (width / labels().length) / 2"
+        [attr.y]="axisBaselineY - (height - 44)"
+        [attr.width]="width / labels().length"
+        [attr.height]="height - 44"
+        fill="transparent"
+        (mouseenter)="onHover($index)"
+        (mouseleave)="onLeave()"
+      />
+    }
+
+    @if (hoverData(); as hover) {
+      <line [attr.x1]="hover.x" [attr.x2]="hover.x" [attr.y1]="16" [attr.y2]="axisBaselineY" class="crosshair" />
+    }
+  </svg>
+
+  @if (hoverData(); as hover) {
+    <div class="tooltip">
+      <div class="tooltip-title">{{ hover.label }}</div>
+      @for (v of hover.values; track v.name) {
+        <div class="tooltip-row">
+          <span class="tooltip-swatch" [style.background]="v.color"></span>
+          {{ v.name }}: <strong>{{ v.value.toFixed(2) }}</strong>
+        </div>
+      }
+    </div>
+  }
+</div>

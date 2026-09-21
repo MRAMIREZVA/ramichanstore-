@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>Nueva separación</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="separation-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cliente</mat-label>
+      <input matInput formControlName="customerSearch" [matAutocomplete]="customerAuto" placeholder="Busca por nombre o teléfono" />
+      @if (searchingCustomer()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>person_search</mat-icon>
+      }
+      <mat-autocomplete #customerAuto="matAutocomplete" [displayWith]="customerLabel">
+        @for (c of customerOptions(); track c.id) {
+          <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ customerLabel(c) }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Producto</mat-label>
+      <input matInput formControlName="productSearch" [matAutocomplete]="productAuto" placeholder="Busca por nombre o SKU" />
+      @if (searchingProduct()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+      <mat-autocomplete #productAuto="matAutocomplete" [displayWith]="productLabel">
+        @for (p of productOptions(); track p.id) {
+          <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">
+            {{ p.sku }} — {{ p.name }} <span class="option-stock">(stock: {{ p.currentStock }})</span>
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Cantidad</mat-label>
+        <input matInput type="number" formControlName="quantity" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Precio total (S/)</mat-label>
+        <input matInput type="number" formControlName="totalPrice" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de separación</mat-label>
+        <input matInput [matDatepicker]="sepPicker" formControlName="separationDate" />
+        <mat-datepicker-toggle matSuffix [for]="sepPicker" />
+        <mat-datepicker #sepPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha límite de pago</mat-label>
+        <input matInput [matDatepicker]="limitPicker" formControlName="limitDate" />
+        <mat-datepicker-toggle matSuffix [for]="limitPicker" />
+        <mat-datepicker #limitPicker />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Crear separación
+    }
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,95 @@
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  .tab-hint {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .search-field {
+    flex: 1 1 280px;
+  }
+
+  mat-form-field:not(.search-field) {
+    flex: 0 1 220px;
+  }
+}
+
+.table-card {
+  background: var(--mat-sys-surface);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.reservations-table {
+  width: 100%;
+}
+
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-chip[data-preorder-status='ACTIVE'],
+.status-chip[data-preorder-status='RECEIVED'],
+.status-chip[data-preorder-status='DELIVERED'] {
+  background: #d9f2e0;
+  color: #1e7a3a;
+}
+
+.status-chip[data-preorder-status='IN_TRANSIT'] {
+  background: #fde8d8;
+  color: #b5560d;
+}
+
+.status-chip[data-preorder-status='COMING_SOON'] {
+  background: #e3e0f7;
+  color: #4c3fa8;
+}
+
+.status-chip[data-preorder-status='CANCELLED'],
+.status-chip[data-preorder-status='SOLD_OUT'] {
+  background: #fbe0e0;
+  color: #b32424;
+}
+
+.loading,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--mat-sys-on-surface-variant);
+}

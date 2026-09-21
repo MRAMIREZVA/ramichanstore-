@@ -1,0 +1,83 @@
+<h2 mat-dialog-title>{{ data.preorder ? 'Editar preventa' : 'Nueva preventa' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="preorder-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Producto</mat-label>
+      <input
+        matInput
+        formControlName="productSearch"
+        [matAutocomplete]="auto"
+        placeholder="Busca por nombre, SKU o franquicia"
+      />
+      @if (searching()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="productLabel">
+        @for (p of productOptions(); track p.id) {
+          <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">{{ p.sku }} — {{ p.name }}</mat-option>
+        }
+      </mat-autocomplete>
+      @if (form.controls.productSearch.touched && form.controls.productSearch.invalid) {
+        <mat-error>Selecciona un producto</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Monto mínimo de separación (S/)</mat-label>
+        <input matInput type="number" formControlName="minDepositAmount" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Cantidad disponible</mat-label>
+        <input matInput type="number" formControlName="availableQuantity" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de inicio</mat-label>
+        <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+        <mat-datepicker-toggle matSuffix [for]="startPicker" />
+        <mat-datepicker #startPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha límite de reserva</mat-label>
+        <input matInput [matDatepicker]="limitPicker" formControlName="limitDate" />
+        <mat-datepicker-toggle matSuffix [for]="limitPicker" />
+        <mat-datepicker #limitPicker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Llegada estimada (opcional)</mat-label>
+        <input matInput [matDatepicker]="arrivalPicker" formControlName="estimatedArrivalDate" />
+        <mat-datepicker-toggle matSuffix [for]="arrivalPicker" />
+        <mat-datepicker #arrivalPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="status">
+          @for (opt of statusOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      {{ data.preorder ? 'Guardar cambios' : 'Crear preventa' }}
+    }
+  </button>
+</mat-dialog-actions>

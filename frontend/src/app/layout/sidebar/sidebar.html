@@ -4,7 +4,7 @@
     <span class="brand-name">RamichanStore</span>
   </div>
 
-  <mat-nav-list class="nav-list">
+  <mat-nav-list class="nav-list module-list">
     @for (item of navItems; track item.route) {
       @if (item.available) {
         <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link" class="nav-item">
@@ -24,5 +24,21 @@
         </a>
       }
     }
+  </mat-nav-list>
+
+  <mat-nav-list class="nav-list external-list">
+    <a
+      mat-list-item
+      href="/catalogo"
+      target="_blank"
+      rel="noopener"
+      class="nav-item"
+      matTooltip="Abre el catálogo público en una pestaña nueva"
+      matTooltipPosition="right"
+    >
+      <mat-icon matListItemIcon>storefront</mat-icon>
+      <span matListItemTitle>Ver catálogo</span>
+      <mat-icon matListItemMeta class="external-icon">open_in_new</mat-icon>
+    </a>
   </mat-nav-list>
 </div>

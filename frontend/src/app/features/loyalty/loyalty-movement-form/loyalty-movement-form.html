@@ -1,0 +1,55 @@
+<h2 mat-dialog-title>Registrar movimiento de puntos</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="loyalty-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cliente</mat-label>
+      <input matInput formControlName="customerSearch" [matAutocomplete]="auto" placeholder="Busca por nombre o teléfono" />
+      @if (searching()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="customerLabel">
+        @for (c of customerOptions(); track c.id) {
+          <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ customerLabel(c) }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de movimiento</mat-label>
+        <mat-select formControlName="movementType">
+          @for (opt of typeOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Puntos</mat-label>
+        <input matInput type="number" formControlName="points" />
+      </mat-form-field>
+    </div>
+    <p class="hint">{{ directionHint() }}</p>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Motivo</mat-label>
+      <input matInput formControlName="reason" maxlength="255" />
+      @if (form.controls.reason.touched && form.controls.reason.invalid) {
+        <mat-error>El motivo es obligatorio</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving() || !selectedCustomer()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Registrar
+    }
+  </button>
+</mat-dialog-actions>

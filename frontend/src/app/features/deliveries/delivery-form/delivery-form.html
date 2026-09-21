@@ -1,0 +1,98 @@
+<h2 mat-dialog-title>{{ data.delivery ? 'Editar entrega' : 'Nueva entrega' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="delivery-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cliente</mat-label>
+      <input matInput formControlName="customerSearch" [matAutocomplete]="customerAuto" placeholder="Busca por nombre o teléfono" />
+      @if (searchingCustomer()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>person_search</mat-icon>
+      }
+      <mat-autocomplete #customerAuto="matAutocomplete" [displayWith]="customerLabel">
+        @for (c of customerOptions(); track c.id) {
+          <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ customerLabel(c) }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    @if (selectedCustomerId()) {
+      <div class="purchases-section">
+        <div class="purchases-title">Compras a incluir en esta entrega</div>
+        @if (loadingPurchases()) {
+          <div class="purchases-loading"><mat-spinner diameter="24" /></div>
+        } @else if (pendingPurchases().length === 0) {
+          <p class="purchases-hint">Este cliente no tiene compras pendientes de entregar.</p>
+        } @else {
+          <div class="purchases-list">
+            @for (p of pendingPurchases(); track p.type + '-' + p.id) {
+              <label class="purchase-row">
+                <mat-checkbox [checked]="isSelected(p)" (change)="toggle(p)" />
+                <span class="purchase-type">{{ p.type === 'VENTA' ? 'Venta' : 'Separación' }}</span>
+                <span class="purchase-summary">{{ p.purchaseDate }} · {{ p.summary }}</span>
+                <span class="purchase-total">S/ {{ p.total.toFixed(2) }}</span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de entrega</mat-label>
+        <mat-select formControlName="deliveryType">
+          @for (opt of deliveryTypeOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="status">
+          @for (opt of statusOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Distrito</mat-label>
+        <input matInput formControlName="district" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha programada</mat-label>
+        <input matInput [matDatepicker]="schedPicker" formControlName="scheduledDate" />
+        <mat-datepicker-toggle matSuffix [for]="schedPicker" />
+        <mat-datepicker #schedPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Agencia (envío por agencia)</mat-label>
+        <input matInput formControlName="agency" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Motorizado (delivery)</mat-label>
+        <input matInput formControlName="courier" />
+      </mat-form-field>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección</mat-label>
+      <input matInput formControlName="address" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      {{ data.delivery ? 'Guardar cambios' : 'Crear entrega' }}
+    }
+  </button>
+</mat-dialog-actions>

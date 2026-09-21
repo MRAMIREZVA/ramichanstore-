@@ -6,3 +6,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Secretos de despliegue (ver .env.example para la plantilla)
+.env
