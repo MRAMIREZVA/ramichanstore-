@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record SaleResponse(
-        Long id,
+        Long id, String orderCode,
         Long customerId, String customerName, String customerPhone, String customerWhatsapp,
         LocalDate saleDate, PaymentMethod paymentMethod, PaymentStatus paymentStatus, DeliveryMethod deliveryMethod,
         List<SaleItemResponse> items,
@@ -20,7 +20,7 @@ public record SaleResponse(
     public static SaleResponse from(Sale s) {
         List<SaleItemResponse> items = s.getItems().stream().map(SaleItemResponse::from).toList();
         return new SaleResponse(
-                s.getId(),
+                s.getId(), orderCode(s),
                 s.getCustomer() != null ? s.getCustomer().getId() : null,
                 s.getCustomer() != null ? s.getCustomer().getFullName() : null,
                 s.getCustomer() != null ? s.getCustomer().getPhone() : null,
@@ -29,5 +29,10 @@ public record SaleResponse(
                 items,
                 s.getSubtotal(), s.getTotal(), s.getTotalCost(), s.getProfit(), s.getPointsGenerated(),
                 s.getNotes(), s.getCreatedAt());
+    }
+
+    /** Código legible del pedido, derivado del id — nunca guardado (evita una columna/migración para algo calculable). */
+    private static String orderCode(Sale s) {
+        return "V-%06d".formatted(s.getId());
     }
 }

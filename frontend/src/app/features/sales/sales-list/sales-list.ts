@@ -62,7 +62,7 @@ export class SalesList implements OnInit {
 
   readonly statusLabels = PAYMENT_STATUS_LABELS;
   readonly methodLabels = PAYMENT_METHOD_LABELS;
-  readonly displayedColumns = ['date', 'customer', 'items', 'total', 'profit', 'status', 'actions'];
+  readonly displayedColumns = ['code', 'date', 'customer', 'items', 'total', 'profit', 'status', 'actions'];
 
   readonly loading = signal(true);
   readonly sales = signal<Sale[]>([]);

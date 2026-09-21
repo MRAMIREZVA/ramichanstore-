@@ -15,12 +15,14 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import { PREORDER_STATUS_LABELS, PreorderReservation, PreorderStatus } from '../../../core/models/preorder.model';
+import { PREORDER_STATUS_LABELS, Preorder, PreorderReservation, PreorderStatus } from '../../../core/models/preorder.model';
 import { PreorderService } from '../../../core/services/preorder.service';
 import { toIsoDate } from '../../../core/utils/date';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { PreorderReservationsComponent, PreorderReservationsData } from '../../preorders/preorder-reservations/preorder-reservations';
 import { ReservationDetailComponent, ReservationDetailData } from '../reservation-detail/reservation-detail';
+import { SelectPreorderDialogComponent } from '../select-preorder-dialog/select-preorder-dialog';
 
 @Component({
   selector: 'app-reservations-list',
@@ -122,6 +124,26 @@ export class ReservationsList implements OnInit {
 
   statusLabel(status: PreorderStatus): string {
     return this.statusLabels[status];
+  }
+
+  openNewReservation(): void {
+    const selectRef = this.dialog.open<SelectPreorderDialogComponent, void, Preorder | null>(
+      SelectPreorderDialogComponent,
+      { width: '520px', maxWidth: '95vw', autoFocus: false },
+    );
+    selectRef.afterClosed().subscribe((preorder) => {
+      if (!preorder) return;
+      const data: PreorderReservationsData = { preorder };
+      const reserveRef = this.dialog.open<PreorderReservationsComponent, PreorderReservationsData, boolean>(
+        PreorderReservationsComponent,
+        { data, width: '760px', maxWidth: '95vw', autoFocus: false },
+      );
+      reserveRef.afterClosed().subscribe((changed) => {
+        if (changed) {
+          this.load();
+        }
+      });
+    });
   }
 
   openDetail(reservation: PreorderReservation): void {

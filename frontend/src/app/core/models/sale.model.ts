@@ -31,6 +31,7 @@ export interface SaleItem {
   productId: number;
   productSku: string;
   productName: string;
+  productMainImageUrl: string | null;
   quantity: number;
   unitPrice: number;
   discount: number;
@@ -40,6 +41,8 @@ export interface SaleItem {
 
 export interface Sale {
   id: number;
+  /** Código legible del pedido (ej. "V-000123"), calculado por el backend a partir del id. */
+  orderCode: string;
   customerId: number | null;
   customerName: string | null;
   customerPhone: string | null;

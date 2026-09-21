@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>Nueva reserva — elige la campaña</h2>
+
+<mat-dialog-content>
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar producto, SKU o franquicia</mat-label>
+    <input matInput [formControl]="searchControl" placeholder="ej. Goku, PROD-000012, One Piece..." autofocus />
+    @if (loading()) {
+      <mat-spinner matSuffix diameter="18" />
+    } @else {
+      <mat-icon matSuffix>search</mat-icon>
+    }
+  </mat-form-field>
+
+  @if (!searched()) {
+    <p class="hint">Escribe para buscar la campaña de preventa a la que pertenece esta reserva.</p>
+  } @else if (results().length === 0) {
+    <div class="empty-state">
+      <mat-icon>schedule</mat-icon>
+      <p>No hay ninguna campaña de preventa con ese nombre/SKU.</p>
+      <p class="hint">Si el producto todavía no tiene campaña, créala primero en la pestaña "Campañas de preventa".</p>
+    </div>
+  } @else {
+    <ul class="result-list">
+      @for (p of results(); track p.id) {
+        <li class="result-row" (click)="select(p)">
+          @if (p.productMainImageUrl) {
+            <img [src]="resolveImageUrl(p.productMainImageUrl)" [alt]="p.productName" class="thumb" />
+          } @else {
+            <div class="thumb placeholder"><mat-icon>image</mat-icon></div>
+          }
+          <div class="info">
+            <span class="product-name">{{ p.productName }}</span>
+            <span class="product-sub">{{ p.productSku }} · Cupos {{ p.reservedQuantity }}/{{ p.availableQuantity }}</span>
+          </div>
+          <span class="status-chip" [attr.data-status]="p.status">{{ statusLabel(p.status) }}</span>
+        </li>
+      }
+    </ul>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancelar</button>
+</mat-dialog-actions>
