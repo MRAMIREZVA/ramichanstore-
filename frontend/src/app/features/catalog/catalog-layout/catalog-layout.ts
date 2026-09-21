@@ -10,9 +10,6 @@ import { resolveImageUrl } from '../../../core/utils/image-url';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { AnnouncementPopupComponent } from '../announcement-popup/announcement-popup';
 
-/** sessionStorage, no localStorage a propósito: el anuncio debe volver a mostrarse en cada visita nueva (nueva pestaña/sesión), no solo una vez por siempre en el navegador. */
-const ANNOUNCEMENT_SEEN_KEY = 'ramichan_catalog_announcement_seen';
-
 @Component({
   selector: 'app-catalog-layout',
   standalone: true,
@@ -43,14 +40,14 @@ export class CatalogLayout implements OnInit {
     });
   }
 
+  /**
+   * El link del catálogo se comparte directamente a clientes (no es un flujo de
+   * "visita una vez" tipo SPA) — a propósito se muestra en CADA carga/recarga de
+   * la página, no solo la primera vez por sesión, para que la promoción/noticia
+   * tenga la mayor visibilidad posible cada vez que alguien abre el link.
+   */
   private maybeShowAnnouncement(announcementImageUrl: string | null): void {
     if (!announcementImageUrl) return;
-    try {
-      if (sessionStorage.getItem(ANNOUNCEMENT_SEEN_KEY)) return;
-      sessionStorage.setItem(ANNOUNCEMENT_SEEN_KEY, '1');
-    } catch {
-      // sessionStorage no disponible (modo incógnito estricto, etc.) — se muestra igual, sin recordar.
-    }
     this.dialog.open(AnnouncementPopupComponent, {
       data: { imageUrl: resolveImageUrl(announcementImageUrl)! },
       panelClass: 'announcement-dialog-panel',
