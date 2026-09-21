@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -37,6 +38,7 @@ export interface FranchiseGroup {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatSlideToggleModule,
     MatChipsModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
@@ -58,6 +60,7 @@ export class CatalogHome implements OnInit {
   readonly categoryControl = new FormControl<number | null>(null);
   readonly brandControl = new FormControl<number | null>(null);
   readonly franchiseControl = new FormControl<string | null>(null);
+  readonly onlyPreorderControl = new FormControl(false);
 
   readonly categories = signal<CatalogFilterOption[]>([]);
   readonly brands = signal<CatalogFilterOption[]>([]);
@@ -72,7 +75,14 @@ export class CatalogHome implements OnInit {
 
   /** Sin ningún filtro activo, la vitrina se agrupa por franquicia/anime en vez de mostrar una grilla plana. */
   readonly hasActiveFilter = computed(
-    () => !!(this.searchControl.value || this.categoryControl.value || this.brandControl.value || this.franchiseControl.value),
+    () =>
+      !!(
+        this.searchControl.value ||
+        this.categoryControl.value ||
+        this.brandControl.value ||
+        this.franchiseControl.value ||
+        this.onlyPreorderControl.value
+      ),
   );
 
   readonly groupedByFranchise = computed<FranchiseGroup[]>(() => {
@@ -107,6 +117,10 @@ export class CatalogHome implements OnInit {
       this.page = 0;
       this.load();
     });
+    this.onlyPreorderControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
 
     this.load();
   }
@@ -119,6 +133,7 @@ export class CatalogHome implements OnInit {
         categoryId: this.categoryControl.value,
         brandId: this.brandControl.value,
         franchise: this.franchiseControl.value,
+        onlyPreorder: !!this.onlyPreorderControl.value,
         page: this.page,
         size: this.pageSize,
       })

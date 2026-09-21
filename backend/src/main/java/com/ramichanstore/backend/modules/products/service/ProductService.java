@@ -66,15 +66,22 @@ public class ProductService {
         return ProductResponse.from(findById(id));
     }
 
-    /** Para el catálogo público (sin login): mismos filtros que {@link #search}, pero nunca incluye descontinuados. */
+    /**
+     * Para el catálogo público (sin login): mismos filtros que {@link #search}, pero nunca
+     * incluye descontinuados ni agotados (un producto sin stock no es una vitrina útil para
+     * un visitante que no puede comprarlo). {@code onlyPreorder} agrega el filtro "Solo preventas".
+     */
     @Transactional(readOnly = true)
-    public Page<Product> searchPublic(String term, Long categoryId, Long brandId, String franchise, Pageable pageable) {
+    public Page<Product> searchPublic(
+            String term, Long categoryId, Long brandId, String franchise, boolean onlyPreorder, Pageable pageable) {
         List<Specification<Product>> specs = Stream.of(
                         ProductSpecifications.search(term),
                         ProductSpecifications.hasCategory(categoryId),
                         ProductSpecifications.hasBrand(brandId),
                         ProductSpecifications.hasFranchise(franchise),
-                        ProductSpecifications.excludeStatus(ProductStatus.DISCONTINUED))
+                        ProductSpecifications.excludeStatus(ProductStatus.DISCONTINUED),
+                        ProductSpecifications.excludeStatus(ProductStatus.OUT_OF_STOCK),
+                        onlyPreorder ? ProductSpecifications.hasStatus(ProductStatus.PREORDER) : null)
                 .filter(Objects::nonNull)
                 .toList();
         return productRepository.findAll(Specification.allOf(specs), pageable);
@@ -86,11 +93,15 @@ public class ProductService {
         return productRepository.findDistinctFranchises();
     }
 
-    /** Para el catálogo público: un producto descontinuado no existe de cara al cliente (404, no 403). */
+    /**
+     * Para el catálogo público: un producto descontinuado o agotado no existe de cara al
+     * cliente (404, no 403) — mismo criterio que {@link #searchPublic}, aplicado también al
+     * acceso directo por id (un link viejo a un producto que ya se agotó no debe mostrarlo).
+     */
     @Transactional(readOnly = true)
     public Product findPublicById(Long id) {
         Product product = findById(id);
-        if (product.getStatus() == ProductStatus.DISCONTINUED) {
+        if (product.getStatus() == ProductStatus.DISCONTINUED || product.getStatus() == ProductStatus.OUT_OF_STOCK) {
             throw ResourceNotFoundException.of("Producto", id);
         }
         return product;

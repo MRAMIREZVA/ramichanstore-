@@ -52,8 +52,9 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public Page<PublicProductResponse> searchProducts(
-            String term, Long categoryId, Long brandId, String franchise, Pageable pageable) {
-        return productService.searchPublic(term, categoryId, brandId, franchise, pageable).map(PublicProductResponse::from);
+            String term, Long categoryId, Long brandId, String franchise, boolean onlyPreorder, Pageable pageable) {
+        return productService.searchPublic(term, categoryId, brandId, franchise, onlyPreorder, pageable)
+                .map(PublicProductResponse::from);
     }
 
     @Transactional(readOnly = true)

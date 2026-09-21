@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
  * "/api/catalog/**" en GET). Vitrina de solo lectura para visitantes que no
  * son clientes con acceso al portal (ver Fase 13) ni staff: no expone nada de
  * costos/ganancia/ubicación/proveedor (ver PublicProductResponse) y nunca
- * lista productos DISCONTINUED (ver ProductService.searchPublic/findPublicById).
+ * lista productos DISCONTINUED ni OUT_OF_STOCK (ver ProductService.searchPublic/findPublicById).
  */
 @RestController
 @RequestMapping("/api/catalog")
@@ -48,8 +48,9 @@ public class CatalogController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) String franchise,
+            @RequestParam(required = false, defaultValue = "false") boolean onlyPreorder,
             @PageableDefault(size = 24, sort = "name") Pageable pageable) {
-        var page = catalogService.searchProducts(search, categoryId, brandId, franchise, pageable);
+        var page = catalogService.searchProducts(search, categoryId, brandId, franchise, onlyPreorder, pageable);
         return ApiResponse.ok(PageResponse.from(page));
     }
 

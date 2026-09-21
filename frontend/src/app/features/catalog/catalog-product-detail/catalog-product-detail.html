@@ -64,10 +64,10 @@
 
       <div class="price-row">
         <span class="price">S/ {{ p.salePrice.toFixed(2) }}</span>
-        @if (!p.inStock) {
+        @if (p.status !== 'AVAILABLE') {
+          <span class="stock-badge" [class.out]="p.status === 'OUT_OF_STOCK'">{{ statusLabels[p.status] }}</span>
+        } @else if (!p.inStock) {
           <span class="stock-badge out">Agotado</span>
-        } @else {
-          <span class="stock-badge">{{ statusLabels[p.status] }}</span>
         }
       </div>
 

@@ -11,6 +11,7 @@ export interface PublicCatalogFilters {
   categoryId?: number | null;
   brandId?: number | null;
   franchise?: string | null;
+  onlyPreorder?: boolean;
   page?: number;
   size?: number;
 }
@@ -33,6 +34,7 @@ export class PublicCatalogService {
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.brandId) params = params.set('brandId', filters.brandId);
     if (filters.franchise) params = params.set('franchise', filters.franchise);
+    if (filters.onlyPreorder) params = params.set('onlyPreorder', filters.onlyPreorder);
 
     return this.http.get<ApiResponse<PageResponse<PublicProduct>>>(`${this.base}/products`, { params });
   }

@@ -42,6 +42,7 @@
       }
     </mat-select>
   </mat-form-field>
+  <mat-slide-toggle class="preorder-toggle" [formControl]="onlyPreorderControl">Solo preventas</mat-slide-toggle>
 </div>
 
 <ng-template #productCard let-p>
@@ -52,10 +53,10 @@
       } @else {
         <mat-icon class="placeholder-icon">image</mat-icon>
       }
-      @if (!p.inStock) {
+      @if (p.status !== 'AVAILABLE') {
+        <span class="stock-badge" [class.out]="p.status === 'OUT_OF_STOCK'">{{ statusLabel(p.status) }}</span>
+      } @else if (!p.inStock) {
         <span class="stock-badge out">Agotado</span>
-      } @else if (p.status !== 'AVAILABLE') {
-        <span class="stock-badge">{{ statusLabel(p.status) }}</span>
       }
     </div>
     <div class="info">
