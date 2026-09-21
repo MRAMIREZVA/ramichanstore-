@@ -21,6 +21,10 @@ public class CorsConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        // Content-Disposition no está en la lista "simple" de headers que el navegador expone por
+        // CORS por defecto — sin esto, el frontend no puede leer el nombre de archivo real que arma
+        // el backend para las descargas (ej. GET /api/reports/export).
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -15,11 +15,23 @@
 
 .filters {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
 
   mat-form-field {
     flex: 0 1 200px;
+  }
+}
+
+.export-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+
+  button mat-spinner {
+    margin-right: 4px;
   }
 }
 

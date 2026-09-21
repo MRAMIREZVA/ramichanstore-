@@ -1,22 +1,27 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { LineSeries, SimpleLineChartComponent } from '../../../shared/components/charts/simple-line-chart/simple-line-chart';
 import { BarItem, SimpleBarChartComponent } from '../../../shared/components/charts/simple-bar-chart/simple-bar-chart';
 import { ReportCharts } from '../../../core/models/report.model';
-import { ReportService } from '../../../core/services/report.service';
+import { ReportExportFormat, ReportService } from '../../../core/services/report.service';
 
 @Component({
   selector: 'app-reports-page',
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatDatepickerModule,
     MatProgressSpinnerModule,
@@ -28,8 +33,10 @@ import { ReportService } from '../../../core/services/report.service';
 })
 export class ReportsPage implements OnInit {
   private readonly reportService = inject(ReportService);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly loading = signal(true);
+  readonly exporting = signal(false);
   readonly charts = signal<ReportCharts | null>(null);
 
   readonly fromControl = new FormControl<Date | null>(this.firstDayOfMonth());
@@ -68,6 +75,36 @@ export class ReportsPage implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  exportReport(format: ReportExportFormat): void {
+    this.exporting.set(true);
+    const from = this.toIsoDate(this.fromControl.value);
+    const to = this.toIsoDate(this.toControl.value);
+    this.reportService.exportReport(from, to, format).subscribe({
+      next: (res) => {
+        this.exporting.set(false);
+        this.downloadBlob(res.body!, this.filenameFrom(res.headers.get('Content-Disposition'), format));
+      },
+      error: () => {
+        this.exporting.set(false);
+        this.snackBar.open('No se pudo generar el archivo', 'Cerrar', { duration: 4000 });
+      },
+    });
+  }
+
+  private filenameFrom(contentDisposition: string | null, format: ReportExportFormat): string {
+    const match = contentDisposition?.match(/filename="?([^";]+)"?/);
+    return match ? match[1] : `reporte-ventas.${format}`;
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   private firstDayOfMonth(): Date {

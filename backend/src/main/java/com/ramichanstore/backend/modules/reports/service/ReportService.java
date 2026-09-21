@@ -9,15 +9,21 @@ import com.ramichanstore.backend.modules.reports.dto.CustomerGrowthPoint;
 import com.ramichanstore.backend.modules.reports.dto.DailySalesPoint;
 import com.ramichanstore.backend.modules.reports.dto.DashboardSummaryResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportChartsResponse;
+import com.ramichanstore.backend.modules.reports.dto.ReportExportData;
+import com.ramichanstore.backend.modules.reports.dto.SaleExportRow;
 import com.ramichanstore.backend.modules.reports.dto.TopCategoryPoint;
 import com.ramichanstore.backend.modules.reports.dto.TopProductPoint;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
+import com.ramichanstore.backend.modules.sales.entity.Sale;
 import com.ramichanstore.backend.modules.sales.repository.SaleDetailRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
+import com.ramichanstore.backend.modules.sales.repository.SaleSpecifications;
 import com.ramichanstore.backend.modules.separations.entity.Separation;
 import com.ramichanstore.backend.modules.separations.repository.PaymentRepository;
 import com.ramichanstore.backend.modules.separations.repository.SeparationRepository;
+import com.ramichanstore.backend.modules.settings.service.SettingService;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,9 +31,12 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +56,7 @@ public class ReportService {
     private final SeparationRepository separationRepository;
     private final PaymentRepository paymentRepository;
     private final LoyaltyPointMovementRepository loyaltyPointMovementRepository;
+    private final SettingService settingService;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboardSummary() {
@@ -86,6 +96,35 @@ public class ReportService {
         List<CustomerGrowthPoint> customerGrowth = groupCustomersByDay(from, to);
 
         return new ReportChartsResponse(dailySales, topProducts, topCategories, customerGrowth);
+    }
+
+    /** Todo lo necesario para el reporte exportable (Excel/PDF/CSV) — mismos totales/tops que {@link #getCharts}, más el detalle de ventas. */
+    @Transactional(readOnly = true)
+    public ReportExportData getExportData(LocalDate from, LocalDate to) {
+        ReportChartsResponse charts = getCharts(from, to);
+
+        BigDecimal totalSales = saleRepository.sumTotalBetween(from, to);
+        BigDecimal totalProfit = saleRepository.sumProfitBetween(from, to);
+        long salesCount = saleRepository.countBetween(from, to);
+        BigDecimal averageTicket = salesCount > 0
+                ? totalSales.divide(BigDecimal.valueOf(salesCount), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        List<Specification<Sale>> specs = List.of(
+                SaleSpecifications.saleDateFrom(from), SaleSpecifications.saleDateTo(to));
+        List<SaleExportRow> sales = saleRepository
+                .findAll(Specification.allOf(specs.stream().filter(Objects::nonNull).toList()), Sort.by("saleDate"))
+                .stream()
+                .map(s -> new SaleExportRow(
+                        "V-%06d".formatted(s.getId()), s.getSaleDate(),
+                        s.getCustomer() != null ? s.getCustomer().getFullName() : "Sin cliente",
+                        s.getTotal(), s.getProfit(), s.getPaymentStatus().name()))
+                .toList();
+
+        return new ReportExportData(
+                settingService.getValue("STORE_NAME"), from, to,
+                totalSales, totalProfit, salesCount, averageTicket,
+                sales, charts.dailySales(), charts.topProducts(), charts.topCategories());
     }
 
     private List<CustomerGrowthPoint> groupCustomersByDay(LocalDate from, LocalDate to) {

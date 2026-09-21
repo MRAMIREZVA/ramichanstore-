@@ -19,6 +19,25 @@
       <mat-datepicker-toggle matSuffix [for]="toPicker" />
       <mat-datepicker #toPicker />
     </mat-form-field>
+
+    <div class="export-actions">
+      <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('xlsx')">
+        @if (exporting()) {
+          <mat-spinner diameter="16" />
+        } @else {
+          <mat-icon>table_view</mat-icon>
+        }
+        Excel
+      </button>
+      <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('csv')">
+        <mat-icon>description</mat-icon>
+        CSV
+      </button>
+      <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('pdf')">
+        <mat-icon>picture_as_pdf</mat-icon>
+        PDF
+      </button>
+    </div>
   </div>
 
   @if (loading()) {
