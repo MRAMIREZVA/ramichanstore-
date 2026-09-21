@@ -30,4 +30,6 @@ export interface StoreInfo {
   whatsapp: string | null;
   /** Ruta relativa al backend (ej. /api/catalog/banner/file); null si el admin no subió un banner — antéponer resolveImageUrl(). */
   bannerUrl: string | null;
+  /** Ruta relativa al backend (ej. /api/catalog/announcement/file); null si el admin no subió una imagen para el popup de bienvenida. */
+  announcementImageUrl: string | null;
 }

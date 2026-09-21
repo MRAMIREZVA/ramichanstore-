@@ -39,3 +39,15 @@ body {
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+// Popup de bienvenida del catálogo público (AnnouncementPopupComponent): solo
+// una imagen, sin el padding/fondo por defecto de mat-dialog-container.
+.announcement-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.announcement-dialog-panel .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: transparent;
+}

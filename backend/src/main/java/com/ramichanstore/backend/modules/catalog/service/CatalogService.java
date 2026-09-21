@@ -8,7 +8,9 @@ import com.ramichanstore.backend.modules.brands.service.BrandService;
 import com.ramichanstore.backend.modules.catalog.dto.CatalogFilterOption;
 import com.ramichanstore.backend.modules.catalog.dto.PublicProductResponse;
 import com.ramichanstore.backend.modules.catalog.dto.StoreInfoResponse;
+import com.ramichanstore.backend.modules.catalog.entity.CatalogAnnouncement;
 import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
+import com.ramichanstore.backend.modules.catalog.repository.CatalogAnnouncementRepository;
 import com.ramichanstore.backend.modules.catalog.repository.CatalogBannerRepository;
 import com.ramichanstore.backend.modules.categories.service.CategoryService;
 import com.ramichanstore.backend.modules.products.service.ProductService;
@@ -37,10 +39,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class CatalogService {
 
-    /** El banner es una tabla "singleton": a lo más una fila, siempre con este id. */
+    /** El banner y el anuncio son tablas "singleton": a lo más una fila, siempre con este id. */
     static final long BANNER_ID = 1L;
-    private static final long MAX_BANNER_SIZE_BYTES = 5L * 1024 * 1024;
-    private static final List<String> ALLOWED_BANNER_TYPES =
+    static final long ANNOUNCEMENT_ID = 1L;
+    private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final List<String> ALLOWED_IMAGE_TYPES =
             List.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
     private final ProductService productService;
@@ -48,6 +51,7 @@ public class CatalogService {
     private final BrandService brandService;
     private final SettingService settingService;
     private final CatalogBannerRepository catalogBannerRepository;
+    private final CatalogAnnouncementRepository catalogAnnouncementRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -78,13 +82,19 @@ public class CatalogService {
         return productService.findDistinctFranchises();
     }
 
-    /** whatsapp/bannerUrl vienen null si el admin no los configuró — el frontend público no debe mostrar enlace/imagen rotos. */
+    /**
+     * whatsapp/bannerUrl/announcementImageUrl vienen null si el admin no los configuró —
+     * el frontend público no debe mostrar enlace/imagen/popup rotos.
+     */
     @Transactional(readOnly = true)
     public StoreInfoResponse getStoreInfo() {
         String storeName = settingService.getValue("STORE_NAME");
         String whatsapp = settingService.getValue("STORE_WHATSAPP");
         String bannerUrl = catalogBannerRepository.existsById(BANNER_ID) ? "/api/catalog/banner/file" : null;
-        return new StoreInfoResponse(storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl);
+        String announcementImageUrl =
+                catalogAnnouncementRepository.existsById(ANNOUNCEMENT_ID) ? "/api/catalog/announcement/file" : null;
+        return new StoreInfoResponse(
+                storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl);
     }
 
     /**
@@ -93,17 +103,7 @@ public class CatalogService {
      */
     @Transactional
     public void uploadBanner(MultipartFile file, String username) {
-        if (file.isEmpty()) {
-            throw new BusinessRuleException("El archivo está vacío");
-        }
-        if (file.getSize() > MAX_BANNER_SIZE_BYTES) {
-            throw new BusinessRuleException("La imagen no debe superar 5MB");
-        }
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_BANNER_TYPES.contains(contentType.toLowerCase())) {
-            throw new BusinessRuleException("Formato de imagen no soportado (usa JPG, PNG, WEBP o GIF)");
-        }
-
+        String contentType = validateImage(file);
         CatalogBanner banner = catalogBannerRepository.findById(BANNER_ID).orElseGet(CatalogBanner::new);
         banner.setId(BANNER_ID);
         banner.setFileName(file.getOriginalFilename());
@@ -134,5 +134,61 @@ public class CatalogService {
     public CatalogBanner getBannerForServing() {
         return catalogBannerRepository.findById(BANNER_ID)
                 .orElseThrow(() -> ResourceNotFoundException.of("Banner", BANNER_ID));
+    }
+
+    /**
+     * Reemplaza la imagen del panel flotante de bienvenida (tabla singleton — ver
+     * {@link CatalogAnnouncement}). Mismas reglas de validación que el banner (5MB,
+     * JPG/PNG/WEBP/GIF). Por ahora solo imagen — sin texto/link, a pedido del dueño.
+     */
+    @Transactional
+    public void uploadAnnouncement(MultipartFile file, String username) {
+        String contentType = validateImage(file);
+        CatalogAnnouncement announcement =
+                catalogAnnouncementRepository.findById(ANNOUNCEMENT_ID).orElseGet(CatalogAnnouncement::new);
+        announcement.setId(ANNOUNCEMENT_ID);
+        announcement.setFileName(file.getOriginalFilename());
+        announcement.setContentType(contentType);
+        announcement.setUpdatedAt(LocalDateTime.now());
+        announcement.setUpdatedBy(username);
+        try {
+            announcement.setImageData(file.getBytes());
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el archivo del anuncio", e);
+        }
+        catalogAnnouncementRepository.save(announcement);
+        auditService.log(AuditAction.UPDATE, "SETTINGS", "CatalogAnnouncement", String.valueOf(ANNOUNCEMENT_ID),
+                null, "archivo=" + announcement.getFileName());
+    }
+
+    @Transactional
+    public void deleteAnnouncement() {
+        if (!catalogAnnouncementRepository.existsById(ANNOUNCEMENT_ID)) {
+            return;
+        }
+        catalogAnnouncementRepository.deleteById(ANNOUNCEMENT_ID);
+        auditService.log(AuditAction.DELETE, "SETTINGS", "CatalogAnnouncement", String.valueOf(ANNOUNCEMENT_ID),
+                "anuncio eliminado", null);
+    }
+
+    /** Para servir el binario del anuncio — 404 si el admin nunca subió uno. */
+    @Transactional(readOnly = true)
+    public CatalogAnnouncement getAnnouncementForServing() {
+        return catalogAnnouncementRepository.findById(ANNOUNCEMENT_ID)
+                .orElseThrow(() -> ResourceNotFoundException.of("Anuncio", ANNOUNCEMENT_ID));
+    }
+
+    private String validateImage(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new BusinessRuleException("El archivo está vacío");
+        }
+        if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
+            throw new BusinessRuleException("La imagen no debe superar 5MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            throw new BusinessRuleException("Formato de imagen no soportado (usa JPG, PNG, WEBP o GIF)");
+        }
+        return contentType;
     }
 }

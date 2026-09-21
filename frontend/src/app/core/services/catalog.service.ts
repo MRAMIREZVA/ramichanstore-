@@ -92,4 +92,14 @@ export class CatalogService {
   deleteCatalogBanner(): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/catalog/banner`);
   }
+
+  uploadCatalogAnnouncement(file: File): Observable<ApiResponse<void>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<void>>(`${this.base}/catalog/announcement`, formData);
+  }
+
+  deleteCatalogAnnouncement(): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.base}/catalog/announcement`);
+  }
 }

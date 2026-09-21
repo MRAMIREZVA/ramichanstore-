@@ -22,8 +22,8 @@ import { NameDescriptionFormComponent, NameDescriptionFormData } from '../name-d
 import { ProductLineFormComponent, ProductLineFormData } from '../product-line-form/product-line-form';
 import { SupplierFormComponent, SupplierFormData } from '../supplier-form/supplier-form';
 
-const MAX_BANNER_SIZE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_BANNER_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 @Component({
   selector: 'app-settings-page',
@@ -61,6 +61,11 @@ export class SettingsPage implements OnInit {
   readonly bannerVersion = signal(0);
   readonly uploadingBanner = signal(false);
 
+  readonly loadingAnnouncement = signal(true);
+  readonly announcementUrl = signal<string | null>(null);
+  readonly announcementVersion = signal(0);
+  readonly uploadingAnnouncement = signal(false);
+
   readonly loadingCategories = signal(true);
   readonly categories = signal<Category[]>([]);
 
@@ -84,6 +89,7 @@ export class SettingsPage implements OnInit {
     this.loadLines();
     this.loadSuppliers();
     this.loadBanner();
+    this.loadAnnouncement();
   }
 
   loadBanner(): void {
@@ -109,11 +115,11 @@ export class SettingsPage implements OnInit {
     input.value = '';
     if (!file) return;
 
-    if (!ALLOWED_BANNER_TYPES.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       this.snackBar.open('Formato no soportado (usa JPG, PNG, WEBP o GIF)', 'Cerrar', { duration: 4000 });
       return;
     }
-    if (file.size > MAX_BANNER_SIZE_BYTES) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
       this.snackBar.open('La imagen supera el límite de 5MB', 'Cerrar', { duration: 4000 });
       return;
     }
@@ -144,6 +150,69 @@ export class SettingsPage implements OnInit {
         next: (res) => {
           this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
           this.loadBanner();
+        },
+      });
+    });
+  }
+
+  loadAnnouncement(): void {
+    this.loadingAnnouncement.set(true);
+    this.publicCatalogService.getStoreInfo().subscribe({
+      next: (res) => {
+        this.announcementUrl.set(res.data.announcementImageUrl);
+        this.loadingAnnouncement.set(false);
+      },
+      error: () => this.loadingAnnouncement.set(false),
+    });
+  }
+
+  get announcementPreviewUrl(): string | null {
+    const url = this.announcementUrl();
+    if (!url) return null;
+    return `${this.resolveImageUrl(url)}?v=${this.announcementVersion()}`;
+  }
+
+  onAnnouncementFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      this.snackBar.open('Formato no soportado (usa JPG, PNG, WEBP o GIF)', 'Cerrar', { duration: 4000 });
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      this.snackBar.open('La imagen supera el límite de 5MB', 'Cerrar', { duration: 4000 });
+      return;
+    }
+
+    this.uploadingAnnouncement.set(true);
+    this.catalogService.uploadCatalogAnnouncement(file).subscribe({
+      next: (res) => {
+        this.uploadingAnnouncement.set(false);
+        this.announcementVersion.update((v) => v + 1);
+        this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+        this.loadAnnouncement();
+      },
+      error: () => this.uploadingAnnouncement.set(false),
+    });
+  }
+
+  confirmDeleteAnnouncement(): void {
+    const data: ConfirmDialogData = {
+      title: 'Quitar anuncio',
+      message: '¿Quitar la imagen del panel de bienvenida? Los visitantes dejarán de verlo al entrar al catálogo.',
+      confirmLabel: 'Quitar',
+      destructive: true,
+    };
+    const ref = this.dialog.open(ConfirmDialog, { data, width: '420px' });
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.catalogService.deleteCatalogAnnouncement().subscribe({
+        next: (res) => {
+          this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+          this.loadAnnouncement();
         },
       });
     });

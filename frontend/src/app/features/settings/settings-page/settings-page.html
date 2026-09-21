@@ -229,6 +229,48 @@
           </div>
           <p class="calc-note">JPG, PNG, WEBP o GIF, máx. 5MB. Recomendado: imagen ancha (ej. 1600×400px) para que se vea bien recortada.</p>
         }
+
+        <hr class="section-divider" />
+
+        <p class="hint">
+          Panel flotante que aparece una vez por visita al entrar al catálogo público, con una imagen para promociones o
+          noticias. Sin una imagen propia, no se muestra ningún popup.
+        </p>
+        @if (loadingAnnouncement()) {
+          <div class="loading"><mat-spinner diameter="36" /></div>
+        } @else {
+          <div class="banner-preview announcement-preview">
+            @if (announcementPreviewUrl; as url) {
+              <img [src]="url" alt="Anuncio de bienvenida" />
+            } @else {
+              <div class="banner-placeholder">
+                <mat-icon>campaign</mat-icon>
+                <span>Sin anuncio — no se muestra ningún popup a los visitantes</span>
+              </div>
+            }
+          </div>
+          <div class="banner-actions">
+            <label class="upload-btn" [class.disabled]="uploadingAnnouncement()">
+              @if (uploadingAnnouncement()) {
+                <mat-spinner diameter="18" />
+              } @else {
+                <mat-icon>upload</mat-icon>
+              }
+              {{ announcementUrl() ? 'Reemplazar anuncio' : 'Subir anuncio' }}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                hidden
+                [disabled]="uploadingAnnouncement()"
+                (change)="onAnnouncementFileSelected($event)"
+              />
+            </label>
+            @if (announcementUrl()) {
+              <button mat-button color="warn" (click)="confirmDeleteAnnouncement()">Quitar anuncio</button>
+            }
+          </div>
+          <p class="calc-note">JPG, PNG, WEBP o GIF, máx. 5MB. Recomendado: imagen vertical u horizontal, no muy pesada.</p>
+        }
       </div>
     </mat-tab>
   </mat-tab-group>

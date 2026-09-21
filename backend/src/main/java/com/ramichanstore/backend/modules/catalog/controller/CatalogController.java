@@ -5,6 +5,7 @@ import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.catalog.dto.CatalogFilterOption;
 import com.ramichanstore.backend.modules.catalog.dto.PublicProductResponse;
 import com.ramichanstore.backend.modules.catalog.dto.StoreInfoResponse;
+import com.ramichanstore.backend.modules.catalog.entity.CatalogAnnouncement;
 import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
 import com.ramichanstore.backend.modules.catalog.service.CatalogService;
 import com.ramichanstore.backend.security.SecurityUser;
@@ -103,5 +104,31 @@ public class CatalogController {
                 .contentType(mediaType)
                 .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
                 .body(banner.getImageData());
+    }
+
+    @PostMapping("/announcement")
+    @PreAuthorize("hasAuthority('PERM_CATALOG_MANAGE')")
+    public ApiResponse<Void> uploadAnnouncement(
+            @RequestPart("file") MultipartFile file, @AuthenticationPrincipal SecurityUser currentUser) {
+        catalogService.uploadAnnouncement(file, currentUser.getUsername());
+        return ApiResponse.ok("Anuncio actualizado", null);
+    }
+
+    @DeleteMapping("/announcement")
+    @PreAuthorize("hasAuthority('PERM_CATALOG_MANAGE')")
+    public ApiResponse<Void> deleteAnnouncement() {
+        catalogService.deleteAnnouncement();
+        return ApiResponse.ok("Anuncio eliminado", null);
+    }
+
+    /** Sirve el binario del panel de bienvenida. Público a propósito, como el banner. */
+    @GetMapping("/announcement/file")
+    public ResponseEntity<byte[]> announcementFile() {
+        CatalogAnnouncement announcement = catalogService.getAnnouncementForServing();
+        MediaType mediaType = MediaType.parseMediaType(announcement.getContentType());
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
+                .body(announcement.getImageData());
     }
 }
