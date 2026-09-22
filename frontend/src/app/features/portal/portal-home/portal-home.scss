@@ -58,6 +58,7 @@
 .status-chip[data-status='PAID'],
 .status-chip[data-preorder-status='ACTIVE'],
 .status-chip[data-preorder-status='RECEIVED'],
+.status-chip[data-preorder-status='EN_TIENDA'],
 .status-chip[data-preorder-status='DELIVERED'],
 .status-chip[data-delivery-status='DELIVERED'],
 .status-chip[data-delivery-status='READY'] {
@@ -67,6 +68,7 @@
 
 .status-chip[data-status='PENDING'],
 .status-chip[data-preorder-status='IN_TRANSIT'],
+.status-chip[data-preorder-status='ENVIADO'],
 .status-chip[data-delivery-status='SHIPPED'] {
   background: #fde8d8;
   color: #b5560d;
@@ -88,16 +90,34 @@
   color: #b32424;
 }
 
-.reservations-grid {
+.preorders-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.reservations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .reservation-card {
   display: flex;
   gap: 12px;
   padding: 12px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s ease;
+
+  &.selected {
+    border-color: var(--mat-sys-primary);
+  }
+
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
 }
 
 .reservation-image {
@@ -145,4 +165,176 @@
   flex-direction: column;
   font-size: 11px;
   color: var(--mat-sys-on-surface-variant);
+}
+
+.reservation-detail-panel {
+  padding: 20px;
+  position: sticky;
+  top: 16px;
+  min-width: 0;
+}
+
+.cancelled-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fbe0e0;
+  color: #b32424;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+}
+
+.detail-status-header {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 20px;
+
+  strong {
+    color: var(--mat-sys-primary);
+    font-size: 14px;
+  }
+}
+
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  min-width: 84px;
+  text-align: center;
+}
+
+.step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-outline);
+  margin-bottom: 6px;
+  z-index: 1;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.step-label {
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 80px;
+}
+
+.step-connector {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--mat-sys-surface-container-high);
+  z-index: 0;
+}
+
+.step[data-state='done'] {
+  .step-icon {
+    background: #1e7a3a;
+    color: #fff;
+  }
+  .step-connector {
+    background: #1e7a3a;
+  }
+  .step-label {
+    color: #1e7a3a;
+    font-weight: 600;
+  }
+}
+
+.step[data-state='current'] {
+  .step-icon {
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    box-shadow: 0 0 0 4px var(--mat-sys-primary-container);
+  }
+  .step-label {
+    color: var(--mat-sys-primary);
+    font-weight: 700;
+  }
+}
+
+.actions-section {
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+
+  h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  > button {
+    align-self: flex-start;
+  }
+}
+
+.settle-button {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.3;
+  padding: 10px 16px;
+  height: auto;
+}
+
+.settle-hint {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .preorders-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reservations-list {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .reservation-card {
+    min-width: 260px;
+  }
+
+  .reservation-detail-panel {
+    position: static;
+  }
 }

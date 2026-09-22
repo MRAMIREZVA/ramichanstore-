@@ -1,55 +1,115 @@
 <h2 mat-dialog-title>
-  Reserva — {{ data.reservation.productName }}
-  <span class="status-chip" [attr.data-preorder-status]="data.reservation.preorderStatus">
-    {{ statusLabels[data.reservation.preorderStatus] }}
+  Reserva — {{ reservation().productName }}
+  <span class="status-chip" [attr.data-preorder-status]="reservation().preorderStatus">
+    {{ statusLabels[reservation().preorderStatus] }}
   </span>
 </h2>
 
 <mat-dialog-content>
   <app-buyer-card
-    [customerName]="data.reservation.customerName"
-    [phone]="data.reservation.customerPhone"
-    [whatsapp]="data.reservation.customerWhatsapp"
+    [customerName]="reservation().customerName"
+    [phone]="reservation().customerPhone"
+    [whatsapp]="reservation().customerWhatsapp"
     [message]="
-      'Hola ' + data.reservation.customerName + ', te escribo por tu reserva de preventa de ' + data.reservation.productName + ' en RamichanStore.'
+      'Hola ' + reservation().customerName + ', te escribo por tu reserva de preventa de ' + reservation().productName + ' en RamichanStore.'
     "
   />
 
   <div class="product-row">
-    @if (data.reservation.productMainImageUrl) {
-      <img [src]="resolveImageUrl(data.reservation.productMainImageUrl)" [alt]="data.reservation.productName" class="product-image" />
+    @if (reservation().productMainImageUrl) {
+      <img [src]="resolveImageUrl(reservation().productMainImageUrl)" [alt]="reservation().productName" class="product-image" />
     }
     <div class="product-info">
-      <span class="product-name">{{ data.reservation.productName }}</span>
-      <span class="product-sku">{{ data.reservation.productSku }}</span>
+      <span class="product-name">{{ reservation().productName }}</span>
+      <span class="product-sku">{{ reservation().productSku }} · Cant. {{ reservation().quantity }}</span>
     </div>
+  </div>
+
+  <div class="summary">
+    <span>Total: <strong>S/ {{ reservation().totalPrice.toFixed(2) }}</strong></span>
+    <span>Pagado: <strong>S/ {{ reservation().amountPaid.toFixed(2) }}</strong></span>
+    <span [class.negative]="reservation().balanceDue > 0">Saldo: <strong>S/ {{ reservation().balanceDue.toFixed(2) }}</strong></span>
   </div>
 
   <div class="info-grid">
     <div class="info-item">
-      <span class="info-label">Cantidad reservada</span>
-      <span>{{ data.reservation.quantity }}</span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Monto de separación</span>
-      <span>S/ {{ data.reservation.depositAmount.toFixed(2) }}</span>
-    </div>
-    <div class="info-item">
       <span class="info-label">Fecha límite de la campaña</span>
-      <span>{{ data.reservation.limitDate }}</span>
+      <span>{{ reservation().limitDate }}</span>
     </div>
     <div class="info-item">
       <span class="info-label">Llegada estimada</span>
-      <span>{{ data.reservation.estimatedArrivalDate || 'Sin definir' }}</span>
+      <span>{{ reservation().estimatedArrivalDate || 'Sin definir' }}</span>
     </div>
     <div class="info-item full">
       <span class="info-label">Reservado el</span>
-      <span>{{ data.reservation.createdAt | slice: 0:16 }}</span>
+      <span>{{ reservation().createdAt | slice: 0:16 }}</span>
     </div>
   </div>
 
-  @if (data.reservation.notes) {
-    <p class="notes">{{ data.reservation.notes }}</p>
+  @if (reservation().notes) {
+    <p class="notes">{{ reservation().notes }}</p>
+  }
+
+  @if (reservation().preorderStatus !== 'CANCELLED' && reservation().balanceDue > 0) {
+    <h3 class="section-title">Registrar abono</h3>
+    <form [formGroup]="form" class="payment-form">
+      <mat-form-field appearance="outline" class="amount-field">
+        <mat-label>Monto (S/)</mat-label>
+        <input matInput type="number" formControlName="amount" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="method-field">
+        <mat-label>Método</mat-label>
+        <mat-select formControlName="paymentMethod">
+          @for (opt of methodOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Fecha</mat-label>
+        <input matInput [matDatepicker]="payDatePicker" formControlName="paymentDate" />
+        <mat-datepicker-toggle matSuffix [for]="payDatePicker" />
+        <mat-datepicker #payDatePicker />
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="registerPayment()" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Abonar
+        }
+      </button>
+    </form>
+  }
+
+  <h3 class="section-title">Historial de abonos</h3>
+  @if (loading()) {
+    <div class="loading"><mat-spinner diameter="32" /></div>
+  } @else if (payments().length === 0) {
+    <div class="empty-state">
+      <mat-icon>payments</mat-icon>
+      <p>Todavía no hay abonos registrados.</p>
+    </div>
+  } @else {
+    <table mat-table [dataSource]="payments()" class="payments-table">
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let p">{{ p.paymentDate }}</td>
+      </ng-container>
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Monto</th>
+        <td mat-cell *matCellDef="let p">S/ {{ p.amount.toFixed(2) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="method">
+        <th mat-header-cell *matHeaderCellDef>Método</th>
+        <td mat-cell *matCellDef="let p">{{ p.paymentMethod }}</td>
+      </ng-container>
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef>Usuario</th>
+        <td mat-cell *matCellDef="let p">{{ p.username }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
   }
 </mat-dialog-content>
 

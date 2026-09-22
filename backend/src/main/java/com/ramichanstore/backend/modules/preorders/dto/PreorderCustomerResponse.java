@@ -21,18 +21,22 @@ public record PreorderCustomerResponse(
         Long customerId, String customerName, String customerPhone, String customerWhatsapp,
         String productSku, String productName, String productMainImageUrl,
         PreorderStatus preorderStatus, LocalDate limitDate, LocalDate estimatedArrivalDate,
-        int quantity, BigDecimal depositAmount, String notes, LocalDateTime createdAt) {
+        int quantity, BigDecimal depositAmount, BigDecimal totalPrice, BigDecimal amountPaid, BigDecimal balanceDue,
+        String notes, LocalDateTime createdAt) {
 
-    public static PreorderCustomerResponse from(PreorderCustomer pc) {
+    /** amountPaid siempre viene de SUM(preorder_customer_payments) — nunca guardado, ver PreorderService. */
+    public static PreorderCustomerResponse from(PreorderCustomer pc, BigDecimal amountPaid) {
         var preorder = pc.getPreorder();
         var product = preorder.getProduct();
         Customer customer = pc.getCustomer();
+        BigDecimal totalPrice = product.getSalePrice().multiply(BigDecimal.valueOf(pc.getQuantity()));
         return new PreorderCustomerResponse(
                 pc.getId(), preorder.getId(),
                 customer.getId(), customer.getFullName(), customer.getPhone(), customer.getWhatsapp(),
                 product.getSku(), product.getName(), mainImageUrl(product),
                 preorder.getStatus(), preorder.getLimitDate(), preorder.getEstimatedArrivalDate(),
-                pc.getQuantity(), pc.getDepositAmount(), pc.getNotes(), pc.getCreatedAt());
+                pc.getQuantity(), pc.getDepositAmount(), totalPrice, amountPaid, totalPrice.subtract(amountPaid),
+                pc.getNotes(), pc.getCreatedAt());
     }
 
     private static String mainImageUrl(Product product) {

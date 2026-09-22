@@ -63,6 +63,7 @@
 .status-chip[data-status='PAID'],
 .status-chip[data-preorder-status='ACTIVE'],
 .status-chip[data-preorder-status='RECEIVED'],
+.status-chip[data-preorder-status='EN_TIENDA'],
 .status-chip[data-preorder-status='DELIVERED'] {
   background: #d9f2e0;
   color: #1e7a3a;
@@ -74,7 +75,8 @@
 }
 
 .status-chip[data-status='PENDING'],
-.status-chip[data-preorder-status='IN_TRANSIT'] {
+.status-chip[data-preorder-status='IN_TRANSIT'],
+.status-chip[data-preorder-status='ENVIADO'] {
   background: #fde8d8;
   color: #b5560d;
 }

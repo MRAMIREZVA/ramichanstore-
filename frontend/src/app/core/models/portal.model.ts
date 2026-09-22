@@ -1,3 +1,5 @@
+import { PreorderStatus } from './preorder.model';
+
 export interface PortalCustomer {
   id: number;
   fullName: string;
@@ -25,7 +27,10 @@ export interface PortalReservation {
   productMainImageUrl: string | null;
   quantity: number;
   depositAmount: number;
-  preorderStatus: string;
+  totalPrice: number;
+  amountPaid: number;
+  balanceDue: number;
+  preorderStatus: PreorderStatus;
   limitDate: string;
   estimatedArrivalDate: string | null;
   reservedAt: string;

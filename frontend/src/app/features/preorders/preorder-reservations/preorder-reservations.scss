@@ -16,7 +16,7 @@
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  min-width: 640px;
+  min-width: 760px;
   margin-bottom: 8px;
 
   button {
@@ -29,7 +29,8 @@
 }
 
 .qty-field,
-.deposit-field {
+.deposit-field,
+.method-field {
   flex: 1;
   min-width: 110px;
 }

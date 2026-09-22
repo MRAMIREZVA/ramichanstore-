@@ -148,7 +148,12 @@ export class ReservationsList implements OnInit {
 
   openDetail(reservation: PreorderReservation): void {
     const data: ReservationDetailData = { reservation };
-    this.dialog.open(ReservationDetailComponent, { data, width: '520px', maxWidth: '95vw' });
+    const ref = this.dialog.open(ReservationDetailComponent, { data, width: '680px', maxWidth: '95vw' });
+    ref.afterClosed().subscribe((changed) => {
+      if (changed) {
+        this.load();
+      }
+    });
   }
 
   cancelReservation(reservation: PreorderReservation): void {

@@ -3,12 +3,15 @@ package com.ramichanstore.backend.modules.preorders.controller;
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.preorders.dto.CustomerReservationResponse;
+import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerPaymentRequest;
+import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerPaymentResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderResponse;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
 import com.ramichanstore.backend.modules.preorders.service.PreorderService;
+import com.ramichanstore.backend.security.SecurityUser;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -96,8 +100,9 @@ public class PreorderController {
     @PostMapping("/{id}/reservations")
     @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
     public ApiResponse<PreorderCustomerResponse> addReservation(
-            @PathVariable Long id, @Valid @RequestBody PreorderCustomerRequest request) {
-        return ApiResponse.ok("Reserva registrada", preorderService.addReservation(id, request));
+            @PathVariable Long id, @Valid @RequestBody PreorderCustomerRequest request,
+            @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Reserva registrada", preorderService.addReservation(id, request, currentUser));
     }
 
     @DeleteMapping("/{id}/reservations/{reservationId}")
@@ -105,5 +110,19 @@ public class PreorderController {
     public ApiResponse<Void> cancelReservation(@PathVariable Long id, @PathVariable Long reservationId) {
         preorderService.cancelReservation(id, reservationId);
         return ApiResponse.ok("Reserva cancelada", null);
+    }
+
+    @GetMapping("/reservations/{reservationId}/payments")
+    @PreAuthorize("hasAuthority('PERM_PREORDER_VIEW')")
+    public ApiResponse<List<PreorderCustomerPaymentResponse>> listPayments(@PathVariable Long reservationId) {
+        return ApiResponse.ok(preorderService.listPayments(reservationId));
+    }
+
+    @PostMapping("/reservations/{reservationId}/payments")
+    @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
+    public ApiResponse<PreorderCustomerPaymentResponse> registerPayment(
+            @PathVariable Long reservationId, @Valid @RequestBody PreorderCustomerPaymentRequest request,
+            @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Abono registrado", preorderService.registerPayment(reservationId, request, currentUser));
     }
 }

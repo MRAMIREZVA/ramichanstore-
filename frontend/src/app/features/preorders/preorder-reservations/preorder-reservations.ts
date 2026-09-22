@@ -8,12 +8,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { Customer } from '../../../core/models/customer.model';
 import { Preorder, PreorderReservation } from '../../../core/models/preorder.model';
+import { PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../core/models/sale.model';
 import { CustomerService } from '../../../core/services/customer.service';
 import { PreorderService } from '../../../core/services/preorder.service';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -35,6 +37,7 @@ export interface PreorderReservationsData {
     MatAutocompleteModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
     MatTableModule,
     MatTooltipModule,
   ],
@@ -60,11 +63,13 @@ export class PreorderReservationsComponent {
   readonly selectedCustomer = signal<Customer | null>(null);
 
   readonly displayedColumns = ['customer', 'quantity', 'deposit', 'date', 'actions'];
+  readonly methodOptions = Object.entries(PAYMENT_METHOD_LABELS) as [PaymentMethod, string][];
 
   readonly form = this.fb.group({
     customerSearch: ['', Validators.required],
     quantity: [1, [Validators.required, Validators.min(1)]],
     depositAmount: [0, [Validators.required, Validators.min(0)]],
+    paymentMethod: ['EFECTIVO' as PaymentMethod, Validators.required],
     notes: [''],
   });
 
@@ -131,6 +136,7 @@ export class PreorderReservationsComponent {
         customerId: customer.id,
         quantity: Number(v.quantity),
         depositAmount: Number(v.depositAmount),
+        paymentMethod: v.paymentMethod as PaymentMethod,
         notes: v.notes || null,
       })
       .subscribe({
@@ -138,7 +144,7 @@ export class PreorderReservationsComponent {
           this.saving.set(false);
           this.changed.set(true);
           this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
-          this.form.reset({ customerSearch: '', quantity: 1, depositAmount: 0, notes: '' });
+          this.form.reset({ customerSearch: '', quantity: 1, depositAmount: 0, paymentMethod: 'EFECTIVO', notes: '' });
           this.selectedCustomer.set(null);
           this.loadReservations();
           this.refreshPreorder();

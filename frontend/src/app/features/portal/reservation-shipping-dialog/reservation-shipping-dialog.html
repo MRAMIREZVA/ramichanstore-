@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Detalles de envío</h2>
+
+<mat-dialog-content>
+  <p class="product-name">{{ data.reservation.productName }}</p>
+
+  <div class="detail-row">
+    <mat-icon>event</mat-icon>
+    <div>
+      <span class="label">Fecha límite de la campaña</span>
+      <span class="value">{{ data.reservation.limitDate }}</span>
+    </div>
+  </div>
+
+  <div class="detail-row">
+    <mat-icon>flight_land</mat-icon>
+    <div>
+      <span class="label">Llegada estimada</span>
+      <span class="value">{{ data.reservation.estimatedArrivalDate || 'Todavía sin definir' }}</span>
+    </div>
+  </div>
+
+  <p class="hint">Estas fechas son estimadas y pueden variar según la disponibilidad del proveedor en Japón.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

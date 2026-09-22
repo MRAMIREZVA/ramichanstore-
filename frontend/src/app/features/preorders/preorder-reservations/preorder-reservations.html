@@ -29,6 +29,14 @@
       <mat-label>Separación (S/)</mat-label>
       <input matInput type="number" formControlName="depositAmount" />
     </mat-form-field>
+    <mat-form-field appearance="outline" class="method-field">
+      <mat-label>Método</mat-label>
+      <mat-select formControlName="paymentMethod">
+        @for (opt of methodOptions; track opt[0]) {
+          <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
     <button mat-flat-button color="primary" (click)="addReservation()" [disabled]="saving() || !selectedCustomer()">
       @if (saving()) {
         <mat-spinner diameter="18" />

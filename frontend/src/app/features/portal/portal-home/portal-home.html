@@ -82,27 +82,81 @@
             <p>No tienes reservas de preventa activas.</p>
           </div>
         } @else {
-          <div class="reservations-grid">
-            @for (r of reservations(); track r.id) {
-              <mat-card class="reservation-card">
-                @if (r.productMainImageUrl) {
-                  <img [src]="resolveImageUrl(r.productMainImageUrl)" [alt]="r.productName" class="reservation-image" />
-                } @else {
-                  <div class="reservation-image placeholder"><mat-icon>image</mat-icon></div>
-                }
-                <div class="reservation-body">
-                  <div class="reservation-name">{{ r.productName }}</div>
-                  <div class="reservation-sub">{{ r.productSku }} · Cant. {{ r.quantity }}</div>
-                  <div class="reservation-row">
-                    <span class="status-chip" [attr.data-preorder-status]="r.preorderStatus">{{ reservationStatusLabel(r.preorderStatus) }}</span>
-                    <span>Separación: S/ {{ r.depositAmount.toFixed(2) }}</span>
+          <div class="preorders-layout">
+            <div class="reservations-list">
+              @for (r of reservations(); track r.id) {
+                <mat-card
+                  class="reservation-card"
+                  [class.selected]="selectedReservation()?.id === r.id"
+                  (click)="selectReservation(r)"
+                >
+                  @if (r.productMainImageUrl) {
+                    <img [src]="resolveImageUrl(r.productMainImageUrl)" [alt]="r.productName" class="reservation-image" />
+                  } @else {
+                    <div class="reservation-image placeholder"><mat-icon>image</mat-icon></div>
+                  }
+                  <div class="reservation-body">
+                    <div class="reservation-name">{{ r.productName }}</div>
+                    <div class="reservation-sub">{{ r.productSku }} · Cant. {{ r.quantity }}</div>
+                    <div class="reservation-row">
+                      <span class="status-chip" [attr.data-preorder-status]="r.preorderStatus">{{ reservationStatusLabel(r.preorderStatus) }}</span>
+                      <span>Separación: S/ {{ r.depositAmount.toFixed(2) }}</span>
+                    </div>
+                    <div class="reservation-dates">
+                      <span>Límite: {{ r.limitDate }}</span>
+                      @if (r.estimatedArrivalDate) {
+                        <span>Llegada estimada: {{ r.estimatedArrivalDate }}</span>
+                      }
+                    </div>
                   </div>
-                  <div class="reservation-dates">
-                    <span>Límite: {{ r.limitDate }}</span>
-                    @if (r.estimatedArrivalDate) {
-                      <span>Llegada estimada: {{ r.estimatedArrivalDate }}</span>
+                </mat-card>
+              }
+            </div>
+
+            @if (selectedReservation(); as sel) {
+              <mat-card class="reservation-detail-panel">
+                @if (sel.preorderStatus === 'CANCELLED') {
+                  <div class="cancelled-banner">
+                    <mat-icon>cancel</mat-icon>
+                    <p>Esta reserva fue cancelada. Si tienes dudas, contáctanos.</p>
+                  </div>
+                } @else {
+                  <div class="detail-status-header">
+                    ESTADO DE TU PREVENTA: <strong>{{ reservationStatusLabel(sel.preorderStatus).toUpperCase() }}</strong>
+                  </div>
+
+                  <div class="stepper">
+                    @for (step of steps; track step.key; let i = $index) {
+                      <div class="step" [attr.data-state]="stepState(i, currentStepIndex(sel))">
+                        <div class="step-icon"><mat-icon>{{ step.icon }}</mat-icon></div>
+                        <span class="step-label">{{ step.label }}</span>
+                        @if (i < steps.length - 1) {
+                          <div class="step-connector"></div>
+                        }
+                      </div>
                     }
                   </div>
+                }
+
+                <div class="actions-section">
+                  <h3>Acciones de Preventa</h3>
+                  <button mat-button (click)="viewShippingDetails(sel)">
+                    <mat-icon>local_shipping</mat-icon>
+                    Ver Detalles de Envío
+                  </button>
+
+                  @if (sel.balanceDue > 0) {
+                    @if (settleBalanceLink(sel); as link) {
+                      <a mat-flat-button color="primary" [href]="link" target="_blank" rel="noopener" class="settle-button">
+                        <mat-icon>payments</mat-icon>
+                        Saldar el Pago Completo (¡S/ {{ sel.amountPaid.toFixed(2) }} Pagados, S/ {{ sel.balanceDue.toFixed(2) }} Restantes!)
+                      </a>
+                    } @else {
+                      <p class="settle-hint">
+                        Saldo pendiente: S/ {{ sel.balanceDue.toFixed(2) }} — contáctanos para coordinar el pago.
+                      </p>
+                    }
+                  }
                 </div>
               </mat-card>
             }

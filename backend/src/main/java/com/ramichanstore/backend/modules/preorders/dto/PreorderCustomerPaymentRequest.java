@@ -2,15 +2,14 @@ package com.ramichanstore.backend.modules.preorders.dto;
 
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
-public record PreorderCustomerRequest(
-        @NotNull(message = "El cliente es obligatorio") Long customerId,
-        @NotNull(message = "La cantidad es obligatoria") @Min(1) Integer quantity,
-        @NotNull(message = "El monto de separación es obligatorio") @DecimalMin(value = "0", inclusive = true) BigDecimal depositAmount,
+public record PreorderCustomerPaymentRequest(
+        @NotNull(message = "El monto es obligatorio") @DecimalMin(value = "0.01") BigDecimal amount,
         @NotNull(message = "El método de pago es obligatorio") PaymentMethod paymentMethod,
+        @NotNull(message = "La fecha de pago es obligatoria") LocalDate paymentDate,
         @Size(max = 500) String notes) {
 }

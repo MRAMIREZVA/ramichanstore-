@@ -7,20 +7,26 @@ import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.customers.entity.Customer;
 import com.ramichanstore.backend.modules.customers.repository.CustomerRepository;
 import com.ramichanstore.backend.modules.preorders.dto.CustomerReservationResponse;
+import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerPaymentRequest;
+import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerPaymentResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderResponse;
 import com.ramichanstore.backend.modules.preorders.entity.Preorder;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderCustomer;
+import com.ramichanstore.backend.modules.preorders.entity.PreorderCustomerPayment;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
+import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerPaymentRepository;
 import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerRepository;
 import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerSpecifications;
 import com.ramichanstore.backend.modules.preorders.repository.PreorderRepository;
 import com.ramichanstore.backend.modules.preorders.repository.PreorderSpecifications;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
+import com.ramichanstore.backend.security.SecurityUser;
 import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +48,7 @@ public class PreorderService {
 
     private final PreorderRepository preorderRepository;
     private final PreorderCustomerRepository preorderCustomerRepository;
+    private final PreorderCustomerPaymentRepository preorderCustomerPaymentRepository;
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final AuditService auditService;
@@ -109,7 +116,7 @@ public class PreorderService {
     public List<PreorderCustomerResponse> listReservations(Long preorderId) {
         findById(preorderId);
         return preorderCustomerRepository.findByPreorderIdOrderByCreatedAtDesc(preorderId).stream()
-                .map(PreorderCustomerResponse::from)
+                .map(pc -> PreorderCustomerResponse.from(pc, preorderCustomerPaymentRepository.sumPaidAmount(pc.getId())))
                 .toList();
     }
 
@@ -135,7 +142,7 @@ public class PreorderService {
         List<PreorderCustomerResponse> content = new ArrayList<>();
         for (PreorderCustomer pc : page.getContent()) {
             try {
-                content.add(PreorderCustomerResponse.from(pc));
+                content.add(PreorderCustomerResponse.from(pc, preorderCustomerPaymentRepository.sumPaidAmount(pc.getId())));
             } catch (EntityNotFoundException ignored) {
                 // ver PortalService.myReservations: mismo caso defensivo.
             }
@@ -163,7 +170,7 @@ public class PreorderService {
     }
 
     @Transactional
-    public PreorderCustomerResponse addReservation(Long preorderId, PreorderCustomerRequest request) {
+    public PreorderCustomerResponse addReservation(Long preorderId, PreorderCustomerRequest request, SecurityUser currentUser) {
         Preorder preorder = findById(preorderId);
         Customer customer = customerRepository.findById(request.customerId())
                 .orElseThrow(() -> ResourceNotFoundException.of("Cliente", request.customerId()));
@@ -184,10 +191,72 @@ public class PreorderService {
         reservation.setNotes(request.notes());
         PreorderCustomer saved = preorderCustomerRepository.save(reservation);
 
+        // El depósito ingresado acá ES el primer abono del ledger — así "total pagado"
+        // siempre es SUM(preorder_customer_payments), sin casos especiales.
+        BigDecimal amountPaid = BigDecimal.ZERO;
+        if (request.depositAmount().compareTo(BigDecimal.ZERO) > 0) {
+            PreorderCustomerPayment initialPayment = new PreorderCustomerPayment();
+            initialPayment.setPreorderCustomer(saved);
+            initialPayment.setAmount(request.depositAmount());
+            initialPayment.setPaymentMethod(request.paymentMethod());
+            initialPayment.setPaymentDate(LocalDate.now());
+            initialPayment.setNotes("Depósito inicial de la reserva");
+            initialPayment.setUserId(currentUser.getId());
+            initialPayment.setUsername(currentUser.getUsername());
+            preorderCustomerPaymentRepository.save(initialPayment);
+            amountPaid = request.depositAmount();
+        }
+
         auditService.log(AuditAction.CREATE, MODULE, "PreorderCustomer", saved.getId().toString(), null,
                 "cliente=%s, cantidad=%d, deposito=%s".formatted(customer.getFullName(), request.quantity(), request.depositAmount()));
 
-        return PreorderCustomerResponse.from(saved);
+        return PreorderCustomerResponse.from(saved, amountPaid);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PreorderCustomerPaymentResponse> listPayments(Long reservationId) {
+        findReservationById(reservationId);
+        return preorderCustomerPaymentRepository.findByPreorderCustomerIdOrderByCreatedAtDesc(reservationId).stream()
+                .map(PreorderCustomerPaymentResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public PreorderCustomerPaymentResponse registerPayment(Long reservationId, PreorderCustomerPaymentRequest request, SecurityUser currentUser) {
+        PreorderCustomer reservation = findReservationById(reservationId);
+
+        BigDecimal alreadyPaid = preorderCustomerPaymentRepository.sumPaidAmount(reservationId);
+        BigDecimal totalPrice = reservation.getPreorder().getProduct().getSalePrice()
+                .multiply(BigDecimal.valueOf(reservation.getQuantity()));
+        BigDecimal balanceDue = totalPrice.subtract(alreadyPaid);
+        if (balanceDue.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("Esta reserva ya está pagada en su totalidad");
+        }
+        if (request.amount().compareTo(balanceDue) > 0) {
+            throw new BusinessRuleException(
+                    "El abono (%s) supera el saldo pendiente (%s)".formatted(request.amount(), balanceDue));
+        }
+
+        PreorderCustomerPayment payment = new PreorderCustomerPayment();
+        payment.setPreorderCustomer(reservation);
+        payment.setAmount(request.amount());
+        payment.setPaymentMethod(request.paymentMethod());
+        payment.setPaymentDate(request.paymentDate());
+        payment.setNotes(request.notes());
+        payment.setUserId(currentUser.getId());
+        payment.setUsername(currentUser.getUsername());
+        PreorderCustomerPayment saved = preorderCustomerPaymentRepository.save(payment);
+
+        auditService.log(AuditAction.CREATE, MODULE, "PreorderCustomerPayment", saved.getId().toString(), null,
+                "reserva=%d, monto=%s, saldoRestante=%s".formatted(reservationId, request.amount(),
+                        balanceDue.subtract(request.amount())));
+
+        return PreorderCustomerPaymentResponse.from(saved);
+    }
+
+    private PreorderCustomer findReservationById(Long reservationId) {
+        return preorderCustomerRepository.findById(reservationId)
+                .orElseThrow(() -> ResourceNotFoundException.of("Reserva", reservationId));
     }
 
     @Transactional

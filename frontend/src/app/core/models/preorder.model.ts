@@ -1,4 +1,15 @@
-export type PreorderStatus = 'COMING_SOON' | 'ACTIVE' | 'SOLD_OUT' | 'IN_TRANSIT' | 'RECEIVED' | 'DELIVERED' | 'CANCELLED';
+import { PaymentMethod } from './sale.model';
+
+export type PreorderStatus =
+  | 'COMING_SOON'
+  | 'ACTIVE'
+  | 'SOLD_OUT'
+  | 'IN_TRANSIT'
+  | 'RECEIVED'
+  | 'EN_TIENDA'
+  | 'ENVIADO'
+  | 'DELIVERED'
+  | 'CANCELLED';
 
 export const PREORDER_STATUS_LABELS: Record<PreorderStatus, string> = {
   COMING_SOON: 'Próximamente',
@@ -6,6 +17,8 @@ export const PREORDER_STATUS_LABELS: Record<PreorderStatus, string> = {
   SOLD_OUT: 'Agotada',
   IN_TRANSIT: 'En camino',
   RECEIVED: 'Recibida',
+  EN_TIENDA: 'En tienda',
+  ENVIADO: 'Enviado',
   DELIVERED: 'Entregada',
   CANCELLED: 'Cancelada',
 };
@@ -74,6 +87,9 @@ export interface PreorderReservation {
   estimatedArrivalDate: string | null;
   quantity: number;
   depositAmount: number;
+  totalPrice: number;
+  amountPaid: number;
+  balanceDue: number;
   notes: string | null;
   createdAt: string;
 }
@@ -82,5 +98,26 @@ export interface PreorderReservationRequest {
   customerId: number;
   quantity: number;
   depositAmount: number;
+  paymentMethod: PaymentMethod;
+  notes: string | null;
+}
+
+/** Abono individual contra una reserva. Ledger inmutable, mismo patrón que SeparationPayment. */
+export interface PreorderReservationPayment {
+  id: number;
+  reservationId: number;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
+  notes: string | null;
+  userId: number;
+  username: string;
+  createdAt: string;
+}
+
+export interface PreorderReservationPaymentRequest {
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
   notes: string | null;
 }

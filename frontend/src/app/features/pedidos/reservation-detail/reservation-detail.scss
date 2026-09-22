@@ -12,12 +12,14 @@
 
 .status-chip[data-preorder-status='ACTIVE'],
 .status-chip[data-preorder-status='RECEIVED'],
+.status-chip[data-preorder-status='EN_TIENDA'],
 .status-chip[data-preorder-status='DELIVERED'] {
   background: #d9f2e0;
   color: #1e7a3a;
 }
 
-.status-chip[data-preorder-status='IN_TRANSIT'] {
+.status-chip[data-preorder-status='IN_TRANSIT'],
+.status-chip[data-preorder-status='ENVIADO'] {
   background: #fde8d8;
   color: #b5560d;
 }
@@ -97,9 +99,75 @@ app-buyer-card {
   color: var(--mat-sys-on-surface-variant);
 }
 
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 14px 0;
+  font-size: 13px;
+
+  .negative {
+    color: var(--mat-sys-error);
+  }
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.payment-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 640px;
+  margin-bottom: 8px;
+
+  button {
+    margin-top: 4px;
+  }
+}
+
+.amount-field,
+.date-field {
+  flex: 1;
+  min-width: 130px;
+}
+
+.method-field {
+  flex: 1;
+  min-width: 140px;
+}
+
+.payments-table {
+  width: 100%;
+}
+
+.loading,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 @media (max-width: 480px) {
   .info-grid {
     grid-template-columns: 1fr;
     min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .payment-form {
+    min-width: 0;
+    flex-wrap: wrap;
   }
 }

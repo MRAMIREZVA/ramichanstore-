@@ -9,6 +9,8 @@ import {
   Preorder,
   PreorderRequest,
   PreorderReservation,
+  PreorderReservationPayment,
+  PreorderReservationPaymentRequest,
   PreorderReservationRequest,
   PreorderStatus,
 } from '../models/preorder.model';
@@ -91,5 +93,16 @@ export class PreorderService {
     if (filters.to) params = params.set('to', filters.to);
 
     return this.http.get<ApiResponse<PageResponse<PreorderReservation>>>(`${this.baseUrl}/reservations/search`, { params });
+  }
+
+  listPayments(reservationId: number): Observable<ApiResponse<PreorderReservationPayment[]>> {
+    return this.http.get<ApiResponse<PreorderReservationPayment[]>>(`${this.baseUrl}/reservations/${reservationId}/payments`);
+  }
+
+  registerPayment(
+    reservationId: number,
+    request: PreorderReservationPaymentRequest,
+  ): Observable<ApiResponse<PreorderReservationPayment>> {
+    return this.http.post<ApiResponse<PreorderReservationPayment>>(`${this.baseUrl}/reservations/${reservationId}/payments`, request);
   }
 }

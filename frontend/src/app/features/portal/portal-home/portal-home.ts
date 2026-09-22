@@ -10,22 +10,16 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 import { DeliveryStatus, PurchaseType } from '../../../core/models/delivery.model';
+import { PREORDER_STATUS_LABELS, PreorderStatus } from '../../../core/models/preorder.model';
 import { PAYMENT_STATUS_LABELS, PaymentStatus, Sale } from '../../../core/models/sale.model';
 import { PortalReservation } from '../../../core/models/portal.model';
 import { PortalDataService } from '../../../core/services/portal-data.service';
+import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { buildDeliveryLookup, deliveryLabelFor, deliveryStatusAttrFor, purchaseKey } from '../../../core/utils/delivery-label';
 import { resolveImageUrl } from '../../../core/utils/image-url';
+import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { PortalSaleDetailComponent, PortalSaleDetailData } from '../portal-sale-detail/portal-sale-detail';
-
-const RESERVATION_STATUS_LABELS: Record<string, string> = {
-  COMING_SOON: 'Próximamente',
-  ACTIVE: 'Preventa activa',
-  SOLD_OUT: 'Agotada',
-  IN_TRANSIT: 'En camino',
-  RECEIVED: 'Recibida',
-  DELIVERED: 'Entregada',
-  CANCELLED: 'Cancelada',
-};
+import { ReservationShippingDialogComponent, ReservationShippingDialogData } from '../reservation-shipping-dialog/reservation-shipping-dialog';
 
 /** Traer hasta esta cantidad de ventas/separaciones del cliente y paginar del lado del cliente al unirlas — a esta escala (una tienda, no un marketplace) es irrelevante en la práctica, ver CLAUDE.md. */
 const FETCH_SIZE = 200;
@@ -42,6 +36,39 @@ interface PortalPurchaseRow {
   deliveryStatusAttr: DeliveryStatus | 'NONE';
   sale: Sale | null;
 }
+
+interface PreorderStep {
+  key: string;
+  label: string;
+  icon: string;
+}
+
+/**
+ * Índice (0-5) del paso de la línea de tiempo que corresponde a cada PreorderStatus.
+ * COMING_SOON/ACTIVE/SOLD_OUT comparten el paso 0 ("reserva confirmada") porque, desde
+ * el punto de vista del cliente que ya reservó, esos 3 estados son "todavía no hay
+ * novedades de envío" — la diferencia entre ellos es de gestión de cupos, no de logística.
+ * CANCELLED no tiene paso: se muestra un aviso aparte en vez de la línea de tiempo.
+ */
+const STEP_INDEX: Partial<Record<PreorderStatus, number>> = {
+  COMING_SOON: 0,
+  ACTIVE: 0,
+  SOLD_OUT: 0,
+  IN_TRANSIT: 1,
+  RECEIVED: 2,
+  EN_TIENDA: 3,
+  ENVIADO: 4,
+  DELIVERED: 5,
+};
+
+const STEPS: PreorderStep[] = [
+  { key: 'RESERVED', label: 'Reserva confirmada', icon: 'check_circle' },
+  { key: 'IN_TRANSIT', label: 'En camino a Perú', icon: 'flight_takeoff' },
+  { key: 'RECEIVED', label: 'Llegada a Perú', icon: 'directions_boat' },
+  { key: 'EN_TIENDA', label: 'En tienda', icon: 'storefront' },
+  { key: 'ENVIADO', label: 'Enviado', icon: 'local_shipping' },
+  { key: 'DELIVERED', label: 'Entregado', icon: 'inventory_2' },
+];
 
 @Component({
   selector: 'app-portal-home',
@@ -62,11 +89,13 @@ interface PortalPurchaseRow {
 })
 export class PortalHome implements OnInit {
   private readonly portalDataService = inject(PortalDataService);
+  private readonly publicCatalogService = inject(PublicCatalogService);
   private readonly dialog = inject(MatDialog);
 
   readonly resolveImageUrl = resolveImageUrl;
   readonly statusLabels = PAYMENT_STATUS_LABELS;
-  readonly reservationStatusLabels = RESERVATION_STATUS_LABELS;
+  readonly reservationStatusLabels = PREORDER_STATUS_LABELS;
+  readonly steps = STEPS;
   readonly purchaseColumns = ['date', 'type', 'summary', 'total', 'status', 'delivery', 'actions'];
 
   readonly loadingBalance = signal(true);
@@ -81,6 +110,11 @@ export class PortalHome implements OnInit {
 
   readonly loadingReservations = signal(true);
   readonly reservations = signal<PortalReservation[]>([]);
+  readonly selectedReservation = signal<PortalReservation | null>(null);
+
+  /** null si el admin no configuró STORE_WHATSAPP en Configuración. */
+  private storeWhatsapp: string | null = null;
+  private storeName = 'RamichanStore';
 
   ngOnInit(): void {
     this.portalDataService.myLoyaltyBalance().subscribe({
@@ -96,9 +130,18 @@ export class PortalHome implements OnInit {
     this.portalDataService.myReservations().subscribe({
       next: (res) => {
         this.reservations.set(res.data);
+        this.selectedReservation.set(res.data[0] ?? null);
         this.loadingReservations.set(false);
       },
       error: () => this.loadingReservations.set(false),
+    });
+
+    this.publicCatalogService.getStoreInfo().subscribe({
+      next: (res) => {
+        this.storeWhatsapp = res.data.whatsapp;
+        this.storeName = res.data.storeName;
+      },
+      error: () => {},
     });
   }
 
@@ -166,7 +209,7 @@ export class PortalHome implements OnInit {
     return this.statusLabels[status];
   }
 
-  reservationStatusLabel(status: string): string {
+  reservationStatusLabel(status: PreorderStatus): string {
     return this.reservationStatusLabels[status] ?? status;
   }
 
@@ -178,5 +221,34 @@ export class PortalHome implements OnInit {
       deliveryStatusAttr: row.deliveryStatusAttr,
     };
     this.dialog.open(PortalSaleDetailComponent, { data, width: '600px', maxWidth: '95vw' });
+  }
+
+  selectReservation(reservation: PortalReservation): void {
+    this.selectedReservation.set(reservation);
+  }
+
+  /** -1 si la preventa fue cancelada: no hay línea de tiempo que mostrar, solo el aviso. */
+  currentStepIndex(reservation: PortalReservation): number {
+    return STEP_INDEX[reservation.preorderStatus] ?? -1;
+  }
+
+  stepState(stepIdx: number, currentIdx: number): 'done' | 'current' | 'upcoming' {
+    if (stepIdx < currentIdx) return 'done';
+    if (stepIdx === currentIdx) return 'current';
+    return 'upcoming';
+  }
+
+  viewShippingDetails(reservation: PortalReservation): void {
+    const data: ReservationShippingDialogData = { reservation };
+    this.dialog.open(ReservationShippingDialogComponent, { data, width: '420px', maxWidth: '95vw' });
+  }
+
+  /** Sin pasarela de pago propia: el botón arma un WhatsApp prearmado a la tienda, mismo patrón que el resto del proyecto. */
+  settleBalanceLink(reservation: PortalReservation): string | null {
+    if (!this.storeWhatsapp) return null;
+    const message =
+      `Hola ${this.storeName}, quiero saldar el pago de mi reserva de "${reservation.productName}" ` +
+      `(#${reservation.id}). Ya pagué S/ ${reservation.amountPaid.toFixed(2)} y me falta S/ ${reservation.balanceDue.toFixed(2)}.`;
+    return whatsAppLink(this.storeWhatsapp, message);
   }
 }

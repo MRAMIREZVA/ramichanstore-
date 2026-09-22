@@ -6,6 +6,7 @@ import com.ramichanstore.backend.modules.deliveries.service.DeliveryService;
 import com.ramichanstore.backend.modules.loyalty.dto.LoyaltyBalanceResponse;
 import com.ramichanstore.backend.modules.loyalty.service.LoyaltyService;
 import com.ramichanstore.backend.modules.portal.dto.PortalReservationResponse;
+import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerPaymentRepository;
 import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerRepository;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
@@ -36,6 +37,7 @@ public class PortalService {
     private final LoyaltyService loyaltyService;
     private final DeliveryService deliveryService;
     private final PreorderCustomerRepository preorderCustomerRepository;
+    private final PreorderCustomerPaymentRepository preorderCustomerPaymentRepository;
 
     @Transactional(readOnly = true)
     public Page<SaleResponse> mySales(Long customerId, Pageable pageable) {
@@ -69,7 +71,7 @@ public class PortalService {
         List<PortalReservationResponse> reservations = new ArrayList<>();
         for (var pc : preorderCustomerRepository.findByCustomerIdOrderByCreatedAtDesc(customerId)) {
             try {
-                reservations.add(PortalReservationResponse.from(pc));
+                reservations.add(PortalReservationResponse.from(pc, preorderCustomerPaymentRepository.sumPaidAmount(pc.getId())));
             } catch (EntityNotFoundException ignored) {
                 // defensivo: una reserva cuya preventa fue eliminada antes de que PreorderService.delete
                 // validara esto (ver esa clase) queda huérfana — se omite en vez de romper la pantalla del cliente.
