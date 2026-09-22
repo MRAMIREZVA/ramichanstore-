@@ -14,6 +14,7 @@ import { forkJoin } from 'rxjs';
 import { Brand, Category, ProductLine, Supplier } from '../../../core/models/catalog.model';
 import { PRODUCT_STATUS_LABELS, Product, ProductRequest, ProductStatus } from '../../../core/models/product.model';
 import { resolveImageUrl } from '../../../core/utils/image-url';
+import { parseIsoDate } from '../../../core/utils/date';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductService } from '../../../core/services/product.service';
 
@@ -88,7 +89,7 @@ export class ProductFormComponent {
     minStock: [this.prefill?.minStock ?? 1, [Validators.required, Validators.min(0)]],
     status: [this.prefill?.status ?? 'AVAILABLE', Validators.required],
     location: [this.isDuplicate ? '' : (this.prefill?.location ?? '')],
-    entryDate: [!this.isDuplicate && this.prefill?.entryDate ? new Date(this.prefill.entryDate) : null],
+    entryDate: [!this.isDuplicate ? parseIsoDate(this.prefill?.entryDate) : null],
     supplierId: [this.prefill?.supplierId ?? null],
     notes: [this.prefill?.notes ?? ''],
   });

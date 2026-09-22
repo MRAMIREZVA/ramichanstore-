@@ -26,6 +26,7 @@ import {
 import { ShipmentHolderService } from '../../../core/services/shipment-holder.service';
 import { ShipmentRecipientService } from '../../../core/services/shipment-recipient.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
+import { parseIsoDate } from '../../../core/utils/date';
 import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
 
 export interface ShipmentFormData {
@@ -128,10 +129,10 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     zenOrderNumber: [this.s?.zenOrderNumber ?? ''],
     shipmentType: [this.s?.shipmentType ?? ('BARCO' as ShipmentType), Validators.required],
     status: [this.s?.status ?? ('PENDIENTE_ENVIO' as ShipmentStatus), Validators.required],
-    departureDate: [this.s?.departureDate ? new Date(this.s.departureDate) : null],
-    arrivalDate: [this.s?.arrivalDate ? new Date(this.s.arrivalDate) : null],
+    departureDate: [parseIsoDate(this.s?.departureDate)],
+    arrivalDate: [parseIsoDate(this.s?.arrivalDate)],
     travelDays: [this.s?.travelDays ?? null],
-    possibleArrivalDate: [this.s?.possibleArrivalDate ? new Date(this.s.possibleArrivalDate) : null],
+    possibleArrivalDate: [parseIsoDate(this.s?.possibleArrivalDate)],
     productCost: [this.s?.productCost ?? null],
     shippingCost: [this.s?.shippingCost ?? null],
     commissionCost: [this.s?.commissionCost ?? null],

@@ -15,6 +15,7 @@ import { PREORDER_STATUS_LABELS, Preorder, PreorderRequest, PreorderStatus } fro
 import { Product } from '../../../core/models/product.model';
 import { PreorderService } from '../../../core/services/preorder.service';
 import { ProductService } from '../../../core/services/product.service';
+import { parseIsoDate } from '../../../core/utils/date';
 
 export interface PreorderFormData {
   preorder: Preorder | null;
@@ -58,11 +59,9 @@ export class PreorderFormComponent {
       Validators.required,
     ],
     minDepositAmount: [this.data.preorder?.minDepositAmount ?? 0, [Validators.required, Validators.min(0)]],
-    startDate: [this.data.preorder ? new Date(this.data.preorder.startDate) : new Date(), Validators.required],
-    limitDate: [this.data.preorder ? new Date(this.data.preorder.limitDate) : null, Validators.required],
-    estimatedArrivalDate: [
-      this.data.preorder?.estimatedArrivalDate ? new Date(this.data.preorder.estimatedArrivalDate) : null,
-    ],
+    startDate: [this.data.preorder ? parseIsoDate(this.data.preorder.startDate) : new Date(), Validators.required],
+    limitDate: [this.data.preorder ? parseIsoDate(this.data.preorder.limitDate) : null, Validators.required],
+    estimatedArrivalDate: [parseIsoDate(this.data.preorder?.estimatedArrivalDate)],
     availableQuantity: [this.data.preorder?.availableQuantity ?? 1, [Validators.required, Validators.min(1)]],
     status: [this.data.preorder?.status ?? 'COMING_SOON', Validators.required],
     notes: ['', Validators.maxLength(500)],

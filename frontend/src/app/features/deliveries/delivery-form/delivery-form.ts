@@ -17,6 +17,7 @@ import { DELIVERY_STATUS_LABELS, Delivery, DeliveryRequest, DeliveryStatus, Pend
 import { DELIVERY_METHOD_LABELS, DeliveryMethod } from '../../../core/models/sale.model';
 import { CustomerService } from '../../../core/services/customer.service';
 import { DeliveryService } from '../../../core/services/delivery.service';
+import { parseIsoDate } from '../../../core/utils/date';
 
 export interface DeliveryFormData {
   delivery: Delivery | null;
@@ -77,7 +78,7 @@ export class DeliveryFormComponent implements OnInit {
     district: [this.data.delivery?.district ?? ''],
     agency: [this.data.delivery?.agency ?? ''],
     courier: [this.data.delivery?.courier ?? ''],
-    scheduledDate: [this.data.delivery ? new Date(this.data.delivery.scheduledDate) : new Date(), Validators.required],
+    scheduledDate: [this.data.delivery ? parseIsoDate(this.data.delivery.scheduledDate) : new Date(), Validators.required],
     status: [this.data.delivery?.status ?? ('PENDING' as DeliveryStatus), Validators.required],
     notes: [this.data.delivery?.notes ?? ''],
   });
