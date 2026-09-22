@@ -105,6 +105,26 @@ export class ShipmentFormComponent implements OnInit {
   ngOnInit(): void {
     this.shipmentHolderService.findAll().subscribe((res) => this.holders.set(res.data));
     this.shipmentRecipientService.findAll().subscribe((res) => this.recipients.set(res.data));
+
+    // "Días de viaje" nunca se escribe a mano: se calcula solo a partir de fecha de
+    // salida/llegada, mismo criterio que transitDays/weightDifference en el backend.
+    this.form.controls.travelDays.disable({ emitEvent: false });
+    this.form.controls.departureDate.valueChanges.subscribe(() => this.recalculateTravelDays());
+    this.form.controls.arrivalDate.valueChanges.subscribe(() => this.recalculateTravelDays());
+    this.recalculateTravelDays();
+  }
+
+  private recalculateTravelDays(): void {
+    const departure = this.form.controls.departureDate.value;
+    const arrival = this.form.controls.arrivalDate.value;
+    if (!departure || !arrival) {
+      this.form.controls.travelDays.setValue(null, { emitEvent: false });
+      return;
+    }
+    const d = typeof departure === 'string' ? new Date(departure) : departure;
+    const a = typeof arrival === 'string' ? new Date(arrival) : arrival;
+    const days = Math.round((a.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+    this.form.controls.travelDays.setValue(days, { emitEvent: false });
   }
 
   updateItem(index: number, patch: Partial<ShipmentItemDraft>): void {
