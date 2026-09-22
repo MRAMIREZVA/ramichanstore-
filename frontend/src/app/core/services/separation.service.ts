@@ -49,6 +49,14 @@ export class SeparationService {
     return this.http.post<ApiResponse<SeparationPayment>>(`${this.baseUrl}/${separationId}/payments`, request);
   }
 
+  updatePayment(separationId: number, paymentId: number, request: SeparationPaymentRequest): Observable<ApiResponse<SeparationPayment>> {
+    return this.http.put<ApiResponse<SeparationPayment>>(`${this.baseUrl}/${separationId}/payments/${paymentId}`, request);
+  }
+
+  deletePayment(separationId: number, paymentId: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${separationId}/payments/${paymentId}`);
+  }
+
   cancel(id: number, reason: string): Observable<ApiResponse<Separation>> {
     return this.http.post<ApiResponse<Separation>>(`${this.baseUrl}/${id}/cancel`, { reason });
   }

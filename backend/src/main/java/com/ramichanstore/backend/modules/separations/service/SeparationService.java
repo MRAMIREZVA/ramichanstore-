@@ -160,6 +160,83 @@ public class SeparationService {
         return PaymentResponse.from(savedPayment);
     }
 
+    /**
+     * Corrige un abono ya registrado (monto/método/fecha/notas) — a diferencia de un
+     * ledger 100% inmutable (InventoryMovement/AuditLog), acá se permite corregir un
+     * error de tipeo del admin. El estado de la separación se recalcula siempre desde
+     * la suma real de abonos después del cambio, nunca queda desincronizado.
+     */
+    @Transactional
+    public PaymentResponse updatePayment(Long separationId, Long paymentId, PaymentRequest request, SecurityUser currentUser) {
+        Separation separation = findById(separationId);
+        if (separation.getStatus() == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("No se pueden modificar abonos de una separación cancelada");
+        }
+        Payment payment = findPayment(separationId, paymentId);
+
+        BigDecimal othersTotal = paymentRepository.sumPaidAmount(separationId).subtract(payment.getAmount());
+        BigDecimal newTotal = othersTotal.add(request.amount());
+        if (newTotal.compareTo(separation.getTotalPrice()) > 0) {
+            throw new BusinessRuleException(
+                    "El abono (%s) supera el saldo pendiente (%s)"
+                            .formatted(request.amount(), separation.getTotalPrice().subtract(othersTotal)));
+        }
+
+        String before = summarizePayment(payment);
+        payment.setAmount(request.amount());
+        payment.setPaymentMethod(request.paymentMethod());
+        payment.setPaymentDate(request.paymentDate());
+        payment.setNotes(request.notes());
+        Payment saved = paymentRepository.save(payment);
+
+        recalculateStatus(separation, newTotal);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "Payment", paymentId.toString(), before, summarizePayment(saved));
+        return PaymentResponse.from(saved);
+    }
+
+    /** Al eliminar un abono, el estado de la separación se recalcula desde la nueva suma (puede bajar de PAID/PARTIAL a PARTIAL/PENDING). */
+    @Transactional
+    public void deletePayment(Long separationId, Long paymentId, SecurityUser currentUser) {
+        Separation separation = findById(separationId);
+        if (separation.getStatus() == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("No se pueden eliminar abonos de una separación cancelada");
+        }
+        Payment payment = findPayment(separationId, paymentId);
+        String before = summarizePayment(payment);
+        paymentRepository.delete(payment);
+
+        recalculateStatus(separation, paymentRepository.sumPaidAmount(separationId));
+
+        auditService.log(AuditAction.DELETE, MODULE, "Payment", paymentId.toString(), before, null);
+    }
+
+    private Payment findPayment(Long separationId, Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> ResourceNotFoundException.of("Abono", paymentId));
+        if (!payment.getSeparation().getId().equals(separationId)) {
+            throw new ResourceNotFoundException("Abono no encontrado en esta separación");
+        }
+        return payment;
+    }
+
+    private void recalculateStatus(Separation separation, BigDecimal totalPaid) {
+        PaymentStatus newStatus;
+        if (totalPaid.compareTo(BigDecimal.ZERO) <= 0) {
+            newStatus = PaymentStatus.PENDING;
+        } else if (totalPaid.compareTo(separation.getTotalPrice()) >= 0) {
+            newStatus = PaymentStatus.PAID;
+        } else {
+            newStatus = PaymentStatus.PARTIAL;
+        }
+        separation.setStatus(newStatus);
+        separationRepository.save(separation);
+    }
+
+    private String summarizePayment(Payment p) {
+        return "monto=%s, metodo=%s, fecha=%s".formatted(p.getAmount(), p.getPaymentMethod(), p.getPaymentDate());
+    }
+
     @Transactional
     public SeparationResponse cancel(Long id, String reason, SecurityUser currentUser) {
         Separation separation = findById(id);
