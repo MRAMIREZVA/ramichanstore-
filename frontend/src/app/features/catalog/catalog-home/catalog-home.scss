@@ -4,7 +4,13 @@
   overflow: hidden;
   margin-bottom: 20px;
   padding: 40px 32px;
-  min-height: 160px;
+  /* Mismo min-height que .has-image (abajo) a propósito: StoreInfo (y con ella
+     bannerUrl) llega async después del primer render — si este valor fuera menor,
+     todo lo de abajo (filtros, grilla) se corre hacia abajo apenas la imagen carga,
+     un salto de layout (CLS) que en mobile hace que un tap rápido sobre un producto
+     termine cayendo sobre el filtro que quedó debajo. Igualando el mínimo desde el
+     arranque, ese salto no existe. */
+  min-height: 220px;
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
@@ -158,12 +164,19 @@
 .thumb {
   position: relative;
   aspect-ratio: 1 / 1;
+  overflow: hidden;
   background: var(--mat-sys-surface-container);
   display: flex;
   align-items: center;
   justify-content: center;
 
+  /* position:absolute saca la imagen del flujo flex — si no, un flex item con
+     min-height:auto por defecto se expande al alto intrínseco de la imagen
+     (su aspect-ratio real) en vez de respetar el aspect-ratio:1/1 del contenedor,
+     dejando tarjetas enormes en pantallas angostas con fotos verticales. */
   img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;

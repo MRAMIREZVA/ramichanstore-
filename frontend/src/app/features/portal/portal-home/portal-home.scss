@@ -39,10 +39,28 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+/* 7 columnas (fecha/tipo/detalle/total/pago/entrega/acciones) no entran en una
+   pantalla angosta sin volverse ilegibles — en vez de que cada celda se parta
+   en varias líneas (lo que pasaba antes, ver CLAUDE.md lección de mobile), se
+   deja scrollear horizontal y la tabla mantiene un ancho mínimo razonable. */
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
 .portal-table {
   width: 100%;
+  min-width: 640px;
   background: var(--mat-sys-surface);
-  border-radius: 12px;
+
+  /* Sin esto, mat-table (flex por celda) sigue partiendo "2026-09-21" o
+     "Separación" en 2 líneas aun con la tabla más ancha que la pantalla —
+     nowrap fuerza a cada celda a su ancho de contenido real, que es lo que
+     efectivamente empuja la tabla más allá de min-width y activa el scroll. */
+  th.mat-mdc-header-cell,
+  td.mat-mdc-cell {
+    white-space: nowrap;
+  }
 }
 
 .status-chip {

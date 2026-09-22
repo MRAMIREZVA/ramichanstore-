@@ -37,10 +37,37 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  min-width: 0;
+}
+
+.customer-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
 }
 
 .portal-content {
   max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px;
+}
+
+@media (max-width: 560px) {
+  /* .label es un <span> propio, no el .mdc-button__label interno de Angular
+     Material — mismo criterio que catalog-layout (ver CLAUDE.md, lección de
+     mobile): "Ver catálogo" completo + el nombre del cliente + el botón de
+     salir no entraban en una pantalla angosta y el header se veía partido en
+     varias líneas. */
+  .user-info .label {
+    display: none;
+  }
+
+  .portal-header {
+    padding: 10px 16px;
+  }
+
+  .customer-name {
+    max-width: 96px;
+  }
 }

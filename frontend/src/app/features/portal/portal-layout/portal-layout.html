@@ -5,11 +5,11 @@
       <span class="brand-name">RamichanStore</span>
     </div>
     <div class="user-info">
-      <a mat-button routerLink="/catalogo">
+      <a mat-button routerLink="/catalogo" aria-label="Ver catálogo">
         <mat-icon>storefront</mat-icon>
-        Ver catálogo
+        <span class="label">Ver catálogo</span>
       </a>
-      <span>{{ customer()?.fullName }}</span>
+      <span class="customer-name">{{ customer()?.fullName }}</span>
       <button mat-icon-button (click)="logout()" matTooltip="Cerrar sesión">
         <mat-icon>logout</mat-icon>
       </button>

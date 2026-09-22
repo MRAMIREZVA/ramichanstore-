@@ -6,9 +6,9 @@
     </a>
     <div class="header-actions">
       @if (contactWhatsAppUrl()) {
-        <a mat-button class="whatsapp-link" [href]="contactWhatsAppUrl()" target="_blank" rel="noopener">
+        <a mat-button class="whatsapp-link" [href]="contactWhatsAppUrl()" target="_blank" rel="noopener" aria-label="Contáctanos">
           <mat-icon>chat</mat-icon>
-          Contáctanos
+          <span class="label">Contáctanos</span>
         </a>
       }
       <a
@@ -17,13 +17,14 @@
         [matBadge]="cartTotalItems() > 0 ? cartTotalItems() : null"
         matBadgeColor="warn"
         matBadgeSize="small"
+        aria-label="Carrito"
       >
         <mat-icon>shopping_cart</mat-icon>
-        Carrito
+        <span class="label">Carrito</span>
       </a>
-      <a mat-button routerLink="/portal/login">
+      <a mat-button routerLink="/portal/login" aria-label="Mis compras">
         <mat-icon>receipt_long</mat-icon>
-        Mis compras
+        <span class="label">Mis compras</span>
       </a>
     </div>
   </header>

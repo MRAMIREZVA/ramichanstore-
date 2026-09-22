@@ -66,7 +66,19 @@
 }
 
 @media (max-width: 560px) {
-  .header-actions span {
+  /* .label es un <span> propio (no el .mdc-button__label interno de Angular Material,
+     al que esta hoja de estilos con view encapsulation no puede llegar) — ver
+     CLAUDE.md, lección de mobile. Sin esto, "Contáctanos"/"Carrito"/"Mis compras"
+     completos no entraban en una pantalla angosta y desbordaban el header. */
+  .header-actions .label {
     display: none;
+  }
+
+  .catalog-header {
+    padding: 10px 16px;
+  }
+
+  .header-actions {
+    gap: 0;
   }
 }
