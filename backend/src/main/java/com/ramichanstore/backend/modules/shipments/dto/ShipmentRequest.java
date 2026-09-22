@@ -24,5 +24,6 @@ public record ShipmentRequest(
         BigDecimal figuresWeight, BigDecimal finalWeight,
         @NotNull(message = "El estado es obligatorio") ShipmentStatus status,
         @Size(max = 500) String notes,
+        boolean wentThroughCustoms, BigDecimal customsTaxAmount,
         @NotEmpty(message = "El embarque debe tener al menos un artículo") @Valid List<ShipmentItemRequest> items) {
 }

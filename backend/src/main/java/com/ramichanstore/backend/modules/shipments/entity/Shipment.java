@@ -106,6 +106,16 @@ public class Shipment extends BaseEntity {
     @Column(length = 500)
     private String notes;
 
+    @Column(name = "went_through_customs", nullable = false)
+    private boolean wentThroughCustoms = false;
+
+    @Column(name = "customs_tax_amount", precision = 10, scale = 2)
+    private BigDecimal customsTaxAmount;
+
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ShipmentItem> items = new ArrayList<>();
+
+    /** Sin cascade: los documentos se gestionan con sus propios endpoints de upload/delete, no vía ShipmentRequest. */
+    @OneToMany(mappedBy = "shipment", fetch = FetchType.LAZY)
+    private List<ShipmentDocument> documents = new ArrayList<>();
 }

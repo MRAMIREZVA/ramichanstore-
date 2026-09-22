@@ -1,8 +1,8 @@
 .shipment-form {
   display: flex;
   flex-direction: column;
-  min-width: 760px;
-  max-width: 940px;
+  min-width: 900px;
+  max-width: 1120px;
 }
 
 .full-width {
@@ -91,6 +91,55 @@
   padding: 0 8px;
 }
 
+.customs-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 8px;
+
+  mat-form-field {
+    flex: 0 1 260px;
+  }
+}
+
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.document-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.document-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.document-file {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
 .code-field {
   flex: 0 0 140px;
 }
@@ -111,7 +160,13 @@
   .grid-4 {
     grid-template-columns: 1fr 1fr;
   }
+  .documents-grid {
+    grid-template-columns: 1fr;
+  }
   .line-row {
+    flex-wrap: wrap;
+  }
+  .customs-row {
     flex-wrap: wrap;
   }
 }

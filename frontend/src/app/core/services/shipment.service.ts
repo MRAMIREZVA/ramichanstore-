@@ -4,7 +4,13 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
-import { Shipment, ShipmentRequest, ShipmentStatus, ShipmentType } from '../models/shipment.model';
+import {
+  Shipment,
+  ShipmentDocumentType,
+  ShipmentRequest,
+  ShipmentStatus,
+  ShipmentType,
+} from '../models/shipment.model';
 
 export interface ShipmentFilters {
   search?: string;
@@ -65,5 +71,20 @@ export class ShipmentService {
   /** Requiere fetch autenticado (blob), no un <img src> directo: a diferencia de las imágenes de producto, esta ruta NO es pública. */
   getItemImageBlob(itemId: number): Observable<Blob> {
     return this.http.get(`${environment.apiBaseUrl}/shipments/items/${itemId}/image/file`, { responseType: 'blob' });
+  }
+
+  uploadDocument(shipmentId: number, type: ShipmentDocumentType, file: File): Observable<ApiResponse<void>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/${shipmentId}/documents/${type}`, form);
+  }
+
+  deleteDocument(shipmentId: number, type: ShipmentDocumentType): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${shipmentId}/documents/${type}`);
+  }
+
+  /** Igual que getItemImageBlob: no es una ruta pública, hay que traerla autenticada como blob. */
+  getDocumentBlob(shipmentId: number, type: ShipmentDocumentType): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${shipmentId}/documents/${type}/file`, { responseType: 'blob' });
   }
 }

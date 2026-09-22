@@ -4,24 +4,30 @@ import com.ramichanstore.backend.audit.AuditAction;
 import com.ramichanstore.backend.audit.AuditService;
 import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
+import com.ramichanstore.backend.modules.shipments.dto.ShipmentDocumentResponse;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentItemRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentItemResponse;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentResponse;
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
+import com.ramichanstore.backend.modules.shipments.entity.ShipmentDocument;
+import com.ramichanstore.backend.modules.shipments.entity.ShipmentDocumentType;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentHolder;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentItem;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentRecipient;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentDocumentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentHolderRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentItemRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
+import com.ramichanstore.backend.security.SecurityUser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,10 +52,15 @@ public class ShipmentService {
     private static final List<String> ALLOWED_CONTENT_TYPES =
             List.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
+    private static final long MAX_DOCUMENT_SIZE_BYTES = 10L * 1024 * 1024;
+    private static final List<String> ALLOWED_DOCUMENT_CONTENT_TYPES =
+            List.of("application/pdf", "image/jpeg", "image/png", "image/webp");
+
     private final ShipmentRepository shipmentRepository;
     private final ShipmentHolderRepository shipmentHolderRepository;
     private final ShipmentRecipientRepository shipmentRecipientRepository;
     private final ShipmentItemRepository shipmentItemRepository;
+    private final ShipmentDocumentRepository shipmentDocumentRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -133,6 +144,8 @@ public class ShipmentService {
         shipment.setFinalWeight(request.finalWeight());
         shipment.setStatus(request.status());
         shipment.setNotes(request.notes());
+        shipment.setWentThroughCustoms(request.wentThroughCustoms());
+        shipment.setCustomsTaxAmount(request.customsTaxAmount());
         reconcileItems(shipment, request.items());
     }
 
@@ -211,6 +224,65 @@ public class ShipmentService {
 
     private ShipmentItem findItemById(Long itemId) {
         return shipmentItemRepository.findById(itemId).orElseThrow(() -> ResourceNotFoundException.of("Artículo de embarque", itemId));
+    }
+
+    /**
+     * Sube (o reemplaza, si ya existía uno del mismo tipo) un documento del embarque.
+     * Un slot único por tipo (ver índice único en V25) — reemplazar es simplemente
+     * actualizar la misma fila en vez de crear una nueva.
+     */
+    @Transactional
+    public ShipmentDocumentResponse uploadDocument(
+            Long shipmentId, ShipmentDocumentType type, MultipartFile file, SecurityUser currentUser) {
+        Shipment shipment = findById(shipmentId);
+
+        if (file.isEmpty()) {
+            throw new BusinessRuleException("El archivo está vacío");
+        }
+        if (file.getSize() > MAX_DOCUMENT_SIZE_BYTES) {
+            throw new BusinessRuleException("El documento no debe superar 10MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_DOCUMENT_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new BusinessRuleException("Formato de documento no soportado (usa PDF, JPG, PNG o WEBP)");
+        }
+
+        ShipmentDocument doc = shipmentDocumentRepository.findByShipmentIdAndDocumentType(shipmentId, type)
+                .orElseGet(() -> {
+                    ShipmentDocument created = new ShipmentDocument();
+                    created.setShipment(shipment);
+                    created.setDocumentType(type);
+                    return created;
+                });
+        doc.setFileName(file.getOriginalFilename());
+        doc.setContentType(contentType);
+        try {
+            doc.setFileData(file.getBytes());
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el archivo del documento", e);
+        }
+        doc.setUploadedAt(LocalDateTime.now());
+        doc.setUploadedBy(currentUser != null ? currentUser.getUsername() : null);
+        ShipmentDocument saved = shipmentDocumentRepository.save(doc);
+        auditService.log(AuditAction.UPDATE, MODULE, "ShipmentDocument", shipmentId + "/" + type, null, "documento subido");
+        return ShipmentDocumentResponse.from(shipmentId, saved);
+    }
+
+    @Transactional
+    public void deleteDocument(Long shipmentId, ShipmentDocumentType type) {
+        ShipmentDocument doc = findDocument(shipmentId, type);
+        shipmentDocumentRepository.delete(doc);
+        auditService.log(AuditAction.UPDATE, MODULE, "ShipmentDocument", shipmentId + "/" + type, null, "documento eliminado");
+    }
+
+    @Transactional(readOnly = true)
+    public ShipmentDocument findDocumentForServing(Long shipmentId, ShipmentDocumentType type) {
+        return findDocument(shipmentId, type);
+    }
+
+    private ShipmentDocument findDocument(Long shipmentId, ShipmentDocumentType type) {
+        return shipmentDocumentRepository.findByShipmentIdAndDocumentType(shipmentId, type)
+                .orElseThrow(() -> ResourceNotFoundException.of("Documento de embarque", shipmentId));
     }
 
     private ShipmentHolder resolveHolder(Long id) {

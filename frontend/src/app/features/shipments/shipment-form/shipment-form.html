@@ -144,6 +144,61 @@
       <p class="hint">Diferencia de peso (calculada): {{ data.shipment!.weightDifference }} g</p>
     }
 
+    <h3 class="section-title">Aduanas</h3>
+    <div class="customs-row">
+      <mat-checkbox formControlName="wentThroughCustoms">Pasó por aduanas con impuestos</mat-checkbox>
+      @if (form.controls.wentThroughCustoms.value) {
+        <mat-form-field appearance="outline">
+          <mat-label>Monto de impuestos pagado (S/)</mat-label>
+          <input matInput type="number" formControlName="customsTaxAmount" />
+        </mat-form-field>
+      }
+    </div>
+
+    <h3 class="section-title">Documentos</h3>
+    @if (!data.shipment) {
+      <p class="hint">Guarda el embarque primero para poder adjuntar documentos.</p>
+    } @else {
+      <div class="documents-grid">
+        @for (type of documentTypes; track type) {
+          @if ((type !== 'DIF' && type !== 'DIF_VOUCHER') || form.controls.wentThroughCustoms.value) {
+            <div class="document-slot">
+              <div class="document-label">{{ documentLabels[type] }}</div>
+              @if (documents()[type].uploading) {
+                <mat-spinner diameter="20" />
+              } @else if (documents()[type].fileName) {
+                <div class="document-file">
+                  <mat-icon>description</mat-icon>
+                  <span class="file-name" [matTooltip]="documents()[type].fileName!">{{ documents()[type].fileName }}</span>
+                  <button mat-icon-button type="button" (click)="viewDocument(type)" matTooltip="Ver">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" (click)="docInput.click()" matTooltip="Reemplazar">
+                    <mat-icon>upload</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" (click)="removeDocument(type)" matTooltip="Quitar">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              } @else {
+                <button mat-stroked-button type="button" (click)="docInput.click()">
+                  <mat-icon>upload_file</mat-icon>
+                  Subir
+                </button>
+              }
+              <input
+                #docInput
+                type="file"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                hidden
+                (change)="onDocumentSelected(type, $event)"
+              />
+            </div>
+          }
+        }
+      </div>
+    }
+
     <h3 class="section-title">Artículos del embarque</h3>
     <div class="lines">
       @for (item of items(); track $index; let i = $index) {

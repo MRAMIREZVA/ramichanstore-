@@ -141,7 +141,7 @@ export class ShipmentsList implements OnInit {
     const data: ShipmentFormData = { shipment };
     const ref = this.dialog.open<ShipmentFormComponent, ShipmentFormData, boolean>(ShipmentFormComponent, {
       data,
-      width: '820px',
+      width: '1160px',
       maxWidth: '95vw',
       autoFocus: false,
     });

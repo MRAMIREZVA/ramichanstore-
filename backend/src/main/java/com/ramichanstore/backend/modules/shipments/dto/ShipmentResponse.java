@@ -22,7 +22,8 @@ public record ShipmentResponse(
         Integer travelDays, LocalDate possibleArrivalDate,
         BigDecimal figuresWeight, BigDecimal finalWeight, BigDecimal weightDifference,
         ShipmentStatus status, String notes,
-        List<ShipmentItemResponse> items) {
+        boolean wentThroughCustoms, BigDecimal customsTaxAmount,
+        List<ShipmentItemResponse> items, List<ShipmentDocumentResponse> documents) {
 
     public static ShipmentResponse from(Shipment s) {
         BigDecimal totalSoles = totalSoles(s);
@@ -41,7 +42,9 @@ public record ShipmentResponse(
                 s.getTravelDays(), s.getPossibleArrivalDate(),
                 s.getFiguresWeight(), s.getFinalWeight(), weightDifference(s),
                 s.getStatus(), s.getNotes(),
-                s.getItems().stream().map(ShipmentItemResponse::from).toList());
+                s.isWentThroughCustoms(), s.getCustomsTaxAmount(),
+                s.getItems().stream().map(ShipmentItemResponse::from).toList(),
+                s.getDocuments().stream().map(d -> ShipmentDocumentResponse.from(s.getId(), d)).toList());
     }
 
     /** Días transcurridos desde que salió hasta que llegó (o hasta hoy si aún no llega) — nunca guardado, siempre calculado. */

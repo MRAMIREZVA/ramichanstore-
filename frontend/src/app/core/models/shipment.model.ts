@@ -67,6 +67,23 @@ export interface ShipmentItemRequest {
   quantity: number;
 }
 
+export type ShipmentDocumentType = 'INVOICE' | 'DIF' | 'DIF_VOUCHER' | 'FACTURA';
+
+export const SHIPMENT_DOCUMENT_TYPE_LABELS: Record<ShipmentDocumentType, string> = {
+  INVOICE: 'Invoice',
+  DIF: 'DIF',
+  DIF_VOUCHER: 'Voucher de pago del DIF',
+  FACTURA: 'Factura',
+};
+
+export interface ShipmentDocument {
+  id: number;
+  documentType: ShipmentDocumentType;
+  fileName: string;
+  url: string;
+  uploadedAt: string;
+}
+
 export interface Shipment {
   id: number;
   code: string;
@@ -96,7 +113,10 @@ export interface Shipment {
   weightDifference: number | null;
   status: ShipmentStatus;
   notes: string | null;
+  wentThroughCustoms: boolean;
+  customsTaxAmount: number | null;
   items: ShipmentItem[];
+  documents: ShipmentDocument[];
 }
 
 export interface ShipmentRequest {
@@ -120,5 +140,7 @@ export interface ShipmentRequest {
   finalWeight: number | null;
   status: ShipmentStatus;
   notes: string | null;
+  wentThroughCustoms: boolean;
+  customsTaxAmount: number | null;
   items: ShipmentItemRequest[];
 }

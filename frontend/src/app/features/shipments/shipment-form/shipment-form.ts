@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,9 +12,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
+  SHIPMENT_DOCUMENT_TYPE_LABELS,
   SHIPMENT_STATUS_LABELS,
   SHIPMENT_TYPE_LABELS,
   Shipment,
+  ShipmentDocumentType,
   ShipmentHolder,
   ShipmentRecipient,
   ShipmentRequest,
@@ -52,6 +55,19 @@ function emptyItem(): ShipmentItemDraft {
   };
 }
 
+/** Invoice/Factura son documentos generales de la compra; DIF/DIF_VOUCHER solo aplican si el embarque pasó por aduanas. */
+const DOCUMENT_TYPES: ShipmentDocumentType[] = ['INVOICE', 'FACTURA', 'DIF', 'DIF_VOUCHER'];
+
+interface DocumentSlot {
+  fileName: string | null;
+  objectUrl: string | null;
+  uploading: boolean;
+}
+
+function emptyDocumentSlot(): DocumentSlot {
+  return { fileName: null, objectUrl: null, uploading: false };
+}
+
 @Component({
   selector: 'app-shipment-form',
   standalone: true,
@@ -59,6 +75,7 @@ function emptyItem(): ShipmentItemDraft {
     ReactiveFormsModule,
     MatDialogModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -100,6 +117,10 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
 
   private readonly s = this.data.shipment;
 
+  readonly documentTypes = DOCUMENT_TYPES;
+  readonly documentLabels = SHIPMENT_DOCUMENT_TYPE_LABELS;
+  readonly documents = signal<Record<ShipmentDocumentType, DocumentSlot>>(this.buildInitialDocuments());
+
   readonly form = this.fb.group({
     code: [this.s?.code ?? '', [Validators.required, Validators.maxLength(50)]],
     holderId: [this.s?.holderId ?? null, Validators.required],
@@ -124,6 +145,8 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     figuresWeight: [this.s?.figuresWeight ?? null],
     finalWeight: [this.s?.finalWeight ?? null],
     notes: [this.s?.notes ?? ''],
+    wentThroughCustoms: [this.s?.wentThroughCustoms ?? false],
+    customsTaxAmount: [this.s?.customsTaxAmount ?? null],
   });
 
   ngOnInit(): void {
@@ -151,12 +174,31 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     this.items().forEach((item, index) => {
       if (item.id && item.imageUrl) this.loadItemImage(index, item.id);
     });
+
+    if (this.s) {
+      for (const type of this.documentTypes) {
+        const doc = this.s.documents.find((d) => d.documentType === type);
+        if (doc) this.loadDocument(type, doc.fileName);
+      }
+    }
   }
 
   ngOnDestroy(): void {
     for (const item of this.items()) {
       if (item.imageObjectUrl) URL.revokeObjectURL(item.imageObjectUrl);
     }
+    for (const slot of Object.values(this.documents())) {
+      if (slot.objectUrl) URL.revokeObjectURL(slot.objectUrl);
+    }
+  }
+
+  private buildInitialDocuments(): Record<ShipmentDocumentType, DocumentSlot> {
+    return {
+      INVOICE: emptyDocumentSlot(),
+      DIF: emptyDocumentSlot(),
+      DIF_VOUCHER: emptyDocumentSlot(),
+      FACTURA: emptyDocumentSlot(),
+    };
   }
 
   private recalculateTravelDays(): void {
@@ -260,6 +302,57 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  private updateDocument(type: ShipmentDocumentType, patch: Partial<DocumentSlot>): void {
+    this.documents.update((docs) => ({ ...docs, [type]: { ...docs[type], ...patch } }));
+  }
+
+  private loadDocument(type: ShipmentDocumentType, fileName: string): void {
+    this.updateDocument(type, { fileName });
+    this.shipmentService.getDocumentBlob(this.s!.id, type).subscribe({
+      next: (blob) => this.updateDocument(type, { objectUrl: URL.createObjectURL(blob) }),
+      error: () => {},
+    });
+  }
+
+  onDocumentSelected(type: ShipmentDocumentType, event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    (event.target as HTMLInputElement).value = '';
+    if (!file || !this.s) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      this.snackBar.open('El documento no debe superar 10MB', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    this.updateDocument(type, { uploading: true });
+    this.shipmentService.uploadDocument(this.s.id, type, file).subscribe({
+      next: () => {
+        const prev = this.documents()[type];
+        if (prev.objectUrl) URL.revokeObjectURL(prev.objectUrl);
+        this.updateDocument(type, { uploading: false, fileName: file.name, objectUrl: URL.createObjectURL(file) });
+      },
+      error: () => this.updateDocument(type, { uploading: false }),
+    });
+  }
+
+  removeDocument(type: ShipmentDocumentType): void {
+    if (!this.s) return;
+    this.updateDocument(type, { uploading: true });
+    this.shipmentService.deleteDocument(this.s.id, type).subscribe({
+      next: () => {
+        const prev = this.documents()[type];
+        if (prev.objectUrl) URL.revokeObjectURL(prev.objectUrl);
+        this.updateDocument(type, { uploading: false, fileName: null, objectUrl: null });
+      },
+      error: () => this.updateDocument(type, { uploading: false }),
+    });
+  }
+
+  viewDocument(type: ShipmentDocumentType): void {
+    const slot = this.documents()[type];
+    if (slot.objectUrl) window.open(slot.objectUrl, '_blank');
+  }
+
   save(): void {
     const validItems = this.items().filter((it) => it.description.trim() && it.quantity > 0);
     if (this.form.invalid || validItems.length === 0) {
@@ -290,6 +383,8 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       finalWeight: v.finalWeight,
       status: v.status!,
       notes: v.notes || null,
+      wentThroughCustoms: v.wentThroughCustoms ?? false,
+      customsTaxAmount: v.customsTaxAmount,
       items: validItems.map((it) => ({
         id: it.id,
         articleCode: it.articleCode.trim() || null,
