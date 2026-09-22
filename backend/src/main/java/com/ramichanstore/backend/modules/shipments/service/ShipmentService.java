@@ -122,10 +122,8 @@ public class ShipmentService {
         shipment.setCommissionCost(request.commissionCost());
         shipment.setDomesticJapanShippingCost(request.domesticJapanShippingCost());
         shipment.setAdditionalCost(request.additionalCost());
-        shipment.setTotalSoles(request.totalSoles());
-        shipment.setTotalDollars(request.totalDollars());
         shipment.setHandlingCost(request.handlingCost());
-        shipment.setFinalCost(request.finalCost());
+        shipment.setExchangeRate(request.exchangeRate());
         shipment.setShipmentType(request.shipmentType());
         shipment.setDepartureDate(request.departureDate());
         shipment.setArrivalDate(request.arrivalDate());

@@ -80,9 +80,10 @@ export interface Shipment {
   commissionCost: number | null;
   domesticJapanShippingCost: number | null;
   additionalCost: number | null;
-  totalSoles: number | null;
-  totalDollars: number | null;
   handlingCost: number | null;
+  exchangeRate: number | null;
+  totalDollars: number | null;
+  totalSoles: number | null;
   finalCost: number | null;
   shipmentType: ShipmentType;
   departureDate: string | null;
@@ -108,10 +109,8 @@ export interface ShipmentRequest {
   commissionCost: number | null;
   domesticJapanShippingCost: number | null;
   additionalCost: number | null;
-  totalSoles: number | null;
-  totalDollars: number | null;
   handlingCost: number | null;
-  finalCost: number | null;
+  exchangeRate: number | null;
   shipmentType: ShipmentType;
   departureDate: string | null;
   arrivalDate: string | null;

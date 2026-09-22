@@ -22,9 +22,10 @@ import org.hibernate.annotations.SQLRestriction;
 
 /**
  * Embarque consolidado desde Japón (digitaliza la planilla Excel que se
- * llevaba a mano). "Días en ruta" y "diferencia de peso" no se guardan: se
- * calculan al leer (ver ShipmentResponse), mismo criterio del resto del
- * proyecto para valores derivables.
+ * llevaba a mano). "Días en ruta", "diferencia de peso" y los 3 totales de
+ * costo (totalDollars/totalSoles/finalCost) no se guardan: se calculan al
+ * leer (ver ShipmentResponse), mismo criterio del resto del proyecto para
+ * valores derivables.
  */
 @Entity
 @Table(name = "shipments")
@@ -69,17 +70,12 @@ public class Shipment extends BaseEntity {
     @Column(name = "additional_cost", precision = 10, scale = 2)
     private BigDecimal additionalCost;
 
-    @Column(name = "total_soles", precision = 10, scale = 2)
-    private BigDecimal totalSoles;
-
-    @Column(name = "total_dollars", precision = 10, scale = 2)
-    private BigDecimal totalDollars;
-
     @Column(name = "handling_cost", precision = 10, scale = 2)
     private BigDecimal handlingCost;
 
-    @Column(name = "final_cost", precision = 10, scale = 2)
-    private BigDecimal finalCost;
+    /** Tipo de cambio US$→S/ de la semana de este embarque (varía embarque a embarque). */
+    @Column(name = "exchange_rate", precision = 10, scale = 4)
+    private BigDecimal exchangeRate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shipment_type", nullable = false, length = 20)

@@ -116,9 +116,10 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     commissionCost: [this.s?.commissionCost ?? null],
     domesticJapanShippingCost: [this.s?.domesticJapanShippingCost ?? null],
     additionalCost: [this.s?.additionalCost ?? null],
-    totalSoles: [this.s?.totalSoles ?? null],
-    totalDollars: [this.s?.totalDollars ?? null],
     handlingCost: [this.s?.handlingCost ?? null],
+    exchangeRate: [this.s?.exchangeRate ?? null],
+    totalDollars: [this.s?.totalDollars ?? null],
+    totalSoles: [this.s?.totalSoles ?? null],
     finalCost: [this.s?.finalCost ?? null],
     figuresWeight: [this.s?.figuresWeight ?? null],
     finalWeight: [this.s?.finalWeight ?? null],
@@ -135,6 +136,17 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     this.form.controls.departureDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.form.controls.arrivalDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.recalculateTravelDays();
+
+    // Total (US$)/Total (S/)/Costo final tampoco se escriben a mano — se calculan
+    // igual que en el backend (ShipmentResponse), mismo criterio que travelDays.
+    this.form.controls.totalDollars.disable({ emitEvent: false });
+    this.form.controls.totalSoles.disable({ emitEvent: false });
+    this.form.controls.finalCost.disable({ emitEvent: false });
+    for (const key of ['productCost', 'shippingCost', 'commissionCost', 'domesticJapanShippingCost',
+      'additionalCost', 'handlingCost', 'exchangeRate'] as const) {
+      this.form.controls[key].valueChanges.subscribe(() => this.recalculateTotals());
+    }
+    this.recalculateTotals();
 
     this.items().forEach((item, index) => {
       if (item.id && item.imageUrl) this.loadItemImage(index, item.id);
@@ -158,6 +170,28 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     const a = typeof arrival === 'string' ? new Date(arrival) : arrival;
     const days = Math.round((a.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
     this.form.controls.travelDays.setValue(days, { emitEvent: false });
+  }
+
+  /**
+   * Costo producto/envío/comisión/envío Japón siempre están en US$ (lo que cobra
+   * el servicio proxy en Japón); costo adicional/gastos movibles ya están en S/
+   * (gastos locales en Perú) — por eso Total (la suma en US$, convertida) los deja
+   * afuera, y Costo final sí los suma, después de la conversión. Mismo cálculo que
+   * ShipmentResponse en el backend (ver CLAUDE.md, Fase 22).
+   */
+  private recalculateTotals(): void {
+    const v = this.form.getRawValue();
+    const dollarFields = [v.productCost, v.shippingCost, v.commissionCost, v.domesticJapanShippingCost];
+    const hasAnyDollarValue = dollarFields.some((n) => n !== null && n !== undefined);
+    const totalDollars = hasAnyDollarValue ? dollarFields.reduce((sum: number, n) => sum + (Number(n) || 0), 0) : null;
+    this.form.controls.totalDollars.setValue(totalDollars, { emitEvent: false });
+
+    const rate = v.exchangeRate;
+    const totalSoles = totalDollars !== null && rate !== null && rate !== undefined ? totalDollars * Number(rate) : null;
+    this.form.controls.totalSoles.setValue(totalSoles, { emitEvent: false });
+
+    const finalCost = totalSoles !== null ? totalSoles + (Number(v.additionalCost) || 0) + (Number(v.handlingCost) || 0) : null;
+    this.form.controls.finalCost.setValue(finalCost, { emitEvent: false });
   }
 
   updateItem(index: number, patch: Partial<ShipmentItemDraft>): void {
@@ -245,10 +279,8 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       commissionCost: v.commissionCost,
       domesticJapanShippingCost: v.domesticJapanShippingCost,
       additionalCost: v.additionalCost,
-      totalSoles: v.totalSoles,
-      totalDollars: v.totalDollars,
       handlingCost: v.handlingCost,
-      finalCost: v.finalCost,
+      exchangeRate: v.exchangeRate,
       shipmentType: v.shipmentType!,
       departureDate: this.toIsoDate(v.departureDate),
       arrivalDate: this.toIsoDate(v.arrivalDate),
