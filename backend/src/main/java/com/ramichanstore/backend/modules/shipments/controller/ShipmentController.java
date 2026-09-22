@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +41,7 @@ public class ShipmentController {
             @RequestParam(required = false) Long holderId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @PageableDefault(size = 20, sort = "departureDate") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "zenOrderNumber", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.ok(PageResponse.from(shipmentService.search(search, status, type, holderId, from, to, pageable)));
     }
 

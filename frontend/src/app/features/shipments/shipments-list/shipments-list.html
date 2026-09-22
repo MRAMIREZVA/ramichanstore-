@@ -61,7 +61,12 @@
       <table mat-table [dataSource]="shipments()" class="shipments-table">
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Código</th>
-          <td mat-cell *matCellDef="let s">{{ s.code }}</td>
+          <td mat-cell *matCellDef="let s">
+            <div>{{ s.code }}</div>
+            @if (s.zenOrderNumber) {
+              <div class="sub">N.º de orden: {{ s.zenOrderNumber }}</div>
+            }
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="holder">
