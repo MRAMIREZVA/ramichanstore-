@@ -173,22 +173,22 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Costo producto/envío/comisión/envío Japón siempre están en US$ (lo que cobra
-   * el servicio proxy en Japón); costo adicional/gastos movibles ya están en S/
-   * (gastos locales en Perú) — por eso Total (la suma en US$, convertida) los deja
-   * afuera, y Costo final sí los suma, después de la conversión. Mismo cálculo que
-   * ShipmentResponse en el backend (ver CLAUDE.md, Fase 22).
+   * Todos los costos (producto/envío/comisión/envío Japón/adicional/gastos
+   * movibles) van en S/ — el tipo de cambio solo convierte Total (S/) a su
+   * equivalente informativo en US$, nunca al revés. Costo final suma todo en
+   * soles, sin conversión. Mismo cálculo que ShipmentResponse en el backend
+   * (ver CLAUDE.md, Fase 22).
    */
   private recalculateTotals(): void {
     const v = this.form.getRawValue();
-    const dollarFields = [v.productCost, v.shippingCost, v.commissionCost, v.domesticJapanShippingCost];
-    const hasAnyDollarValue = dollarFields.some((n) => n !== null && n !== undefined);
-    const totalDollars = hasAnyDollarValue ? dollarFields.reduce((sum: number, n) => sum + (Number(n) || 0), 0) : null;
-    this.form.controls.totalDollars.setValue(totalDollars, { emitEvent: false });
+    const solesFields = [v.productCost, v.shippingCost, v.commissionCost, v.domesticJapanShippingCost];
+    const hasAnySolesValue = solesFields.some((n) => n !== null && n !== undefined);
+    const totalSoles = hasAnySolesValue ? solesFields.reduce((sum: number, n) => sum + (Number(n) || 0), 0) : null;
+    this.form.controls.totalSoles.setValue(totalSoles, { emitEvent: false });
 
     const rate = v.exchangeRate;
-    const totalSoles = totalDollars !== null && rate !== null && rate !== undefined ? totalDollars * Number(rate) : null;
-    this.form.controls.totalSoles.setValue(totalSoles, { emitEvent: false });
+    const totalDollars = totalSoles !== null && rate ? totalSoles / Number(rate) : null;
+    this.form.controls.totalDollars.setValue(totalDollars !== null ? Math.round(totalDollars * 100) / 100 : null, { emitEvent: false });
 
     const finalCost = totalSoles !== null ? totalSoles + (Number(v.additionalCost) || 0) + (Number(v.handlingCost) || 0) : null;
     this.form.controls.finalCost.setValue(finalCost, { emitEvent: false });

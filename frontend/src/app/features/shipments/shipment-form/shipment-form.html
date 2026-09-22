@@ -79,24 +79,24 @@
 
     <h3 class="section-title">Costos</h3>
     <p class="hint">
-      Producto, envío, comisión y envío dentro de Japón van en <strong>US$</strong> (lo que cobra el servicio proxy);
-      costo adicional y gastos movibles ya van en <strong>S/</strong> (gastos locales en Perú).
+      Todos los costos van en <strong>S/</strong>. El tipo de cambio solo convierte el Total a su equivalente
+      informativo en <strong>US$</strong> — no afecta el costo final.
     </p>
     <div class="grid-3">
       <mat-form-field appearance="outline">
-        <mat-label>Costo producto (US$)</mat-label>
+        <mat-label>Costo producto (S/)</mat-label>
         <input matInput type="number" formControlName="productCost" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Costo envío (US$)</mat-label>
+        <mat-label>Costo envío (S/)</mat-label>
         <input matInput type="number" formControlName="shippingCost" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Costo comisión (US$)</mat-label>
+        <mat-label>Costo comisión (S/)</mat-label>
         <input matInput type="number" formControlName="commissionCost" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Envío dentro de Japón (US$)</mat-label>
+        <mat-label>Envío dentro de Japón (S/)</mat-label>
         <input matInput type="number" formControlName="domesticJapanShippingCost" />
       </mat-form-field>
       <mat-form-field appearance="outline">
@@ -113,14 +113,14 @@
         <mat-hint>De la semana de este embarque</mat-hint>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Total (US$)</mat-label>
-        <input matInput type="number" formControlName="totalDollars" readonly />
-        <mat-hint>Calculado: suma de los 4 costos en US$</mat-hint>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
         <mat-label>Total (S/)</mat-label>
         <input matInput type="number" formControlName="totalSoles" readonly />
-        <mat-hint>Calculado: Total (US$) × tipo de cambio</mat-hint>
+        <mat-hint>Calculado: suma de los 4 costos de arriba</mat-hint>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Total (US$)</mat-label>
+        <input matInput type="number" formControlName="totalDollars" readonly />
+        <mat-hint>Calculado: Total (S/) ÷ tipo de cambio</mat-hint>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Costo final (S/)</mat-label>

@@ -4,6 +4,7 @@ import com.ramichanstore.backend.modules.shipments.entity.Shipment;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -24,8 +25,8 @@ public record ShipmentResponse(
         List<ShipmentItemResponse> items) {
 
     public static ShipmentResponse from(Shipment s) {
-        BigDecimal totalDollars = totalDollars(s);
-        BigDecimal totalSoles = totalSoles(totalDollars, s.getExchangeRate());
+        BigDecimal totalSoles = totalSoles(s);
+        BigDecimal totalDollars = totalDollars(totalSoles, s.getExchangeRate());
         return new ShipmentResponse(
                 s.getId(), s.getCode(),
                 s.getHolder().getId(), s.getHolder().getName(),
@@ -60,12 +61,12 @@ public record ShipmentResponse(
     }
 
     /**
-     * Costo producto + envío + comisión + envío dentro de Japón — los 4 costos que
-     * cobra el servicio proxy en Japón, siempre en US$. Costo adicional y gastos
-     * movibles quedan fuera a propósito: son gastos locales en Perú, ya en S/, y
-     * recién se suman en {@link #finalCost}, después de la conversión.
+     * Costo producto + envío + comisión + envío dentro de Japón — los 4 costos base
+     * del embarque, siempre en S/ (igual que costo adicional/gastos movibles). Total
+     * (US$) es solo la conversión informativa de esta suma (ver {@link #totalDollars}),
+     * nunca al revés — todo lo que se ingresa en este módulo ya está en soles.
      */
-    private static BigDecimal totalDollars(Shipment s) {
+    private static BigDecimal totalSoles(Shipment s) {
         if (s.getProductCost() == null && s.getShippingCost() == null
                 && s.getCommissionCost() == null && s.getDomesticJapanShippingCost() == null) {
             return null;
@@ -74,14 +75,15 @@ public record ShipmentResponse(
                 .add(nz(s.getCommissionCost())).add(nz(s.getDomesticJapanShippingCost()));
     }
 
-    private static BigDecimal totalSoles(BigDecimal totalDollars, BigDecimal exchangeRate) {
-        if (totalDollars == null || exchangeRate == null) {
+    /** Equivalente informativo en US$ de Total (S/) — Total (S/) ÷ tipo de cambio. */
+    private static BigDecimal totalDollars(BigDecimal totalSoles, BigDecimal exchangeRate) {
+        if (totalSoles == null || exchangeRate == null || exchangeRate.signum() == 0) {
             return null;
         }
-        return totalDollars.multiply(exchangeRate);
+        return totalSoles.divide(exchangeRate, 2, RoundingMode.HALF_UP);
     }
 
-    /** Costo final = Total (S/) + costo adicional + gastos movibles, todo ya en soles. */
+    /** Costo final = Total (S/) + costo adicional + gastos movibles, todo en soles — sin conversión. */
     private static BigDecimal finalCost(Shipment s, BigDecimal totalSoles) {
         if (totalSoles == null) {
             return null;
