@@ -1,0 +1,168 @@
+<h2 mat-dialog-title>{{ data.shipment ? 'Editar embarque' : 'Nuevo embarque' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="shipment-form">
+    <h3 class="section-title">Identificación</h3>
+    <div class="grid-3">
+      <mat-form-field appearance="outline">
+        <mat-label>Código</mat-label>
+        <input matInput formControlName="code" placeholder="ej. CN10704784JP" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Titular</mat-label>
+        <mat-select formControlName="holderId">
+          @for (h of holders(); track h.id) {
+            <mat-option [value]="h.id">{{ h.name }}@if (h.zenAccount) { &nbsp;({{ h.zenAccount }}) }</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>N.º de orden ZEN</mat-label>
+        <input matInput formControlName="zenOrderNumber" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de envío</mat-label>
+        <mat-select formControlName="shipmentType">
+          @for (opt of typeOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="status">
+          @for (opt of statusOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <h3 class="section-title">Fechas y tiempos</h3>
+    <div class="grid-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de salida</mat-label>
+        <input matInput [matDatepicker]="departurePicker" formControlName="departureDate" />
+        <mat-datepicker-toggle matSuffix [for]="departurePicker" />
+        <mat-datepicker #departurePicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de llegada</mat-label>
+        <input matInput [matDatepicker]="arrivalPicker" formControlName="arrivalDate" />
+        <mat-datepicker-toggle matSuffix [for]="arrivalPicker" />
+        <mat-datepicker #arrivalPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Días de viaje</mat-label>
+        <input matInput type="number" formControlName="travelDays" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Posible llegada</mat-label>
+        <input matInput [matDatepicker]="possiblePicker" formControlName="possibleArrivalDate" />
+        <mat-datepicker-toggle matSuffix [for]="possiblePicker" />
+        <mat-datepicker #possiblePicker />
+      </mat-form-field>
+    </div>
+    @if (data.shipment?.transitDays !== null && data.shipment?.transitDays !== undefined) {
+      <p class="hint">Días en ruta (calculado): {{ data.shipment!.transitDays }}</p>
+    }
+
+    <h3 class="section-title">Costos</h3>
+    <div class="grid-3">
+      <mat-form-field appearance="outline">
+        <mat-label>Costo producto</mat-label>
+        <input matInput type="number" formControlName="productCost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Costo envío</mat-label>
+        <input matInput type="number" formControlName="shippingCost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Costo comisión</mat-label>
+        <input matInput type="number" formControlName="commissionCost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Envío dentro de Japón</mat-label>
+        <input matInput type="number" formControlName="domesticJapanShippingCost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Costo adicional</mat-label>
+        <input matInput type="number" formControlName="additionalCost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Gastos movibles</mat-label>
+        <input matInput type="number" formControlName="handlingCost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Total (S/)</mat-label>
+        <input matInput type="number" formControlName="totalSoles" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Total (US$)</mat-label>
+        <input matInput type="number" formControlName="totalDollars" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Costo final</mat-label>
+        <input matInput type="number" formControlName="finalCost" />
+      </mat-form-field>
+    </div>
+
+    <h3 class="section-title">Pesos</h3>
+    <div class="grid-3">
+      <mat-form-field appearance="outline">
+        <mat-label>Peso figuras (g)</mat-label>
+        <input matInput type="number" formControlName="figuresWeight" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Peso final (g)</mat-label>
+        <input matInput type="number" formControlName="finalWeight" />
+      </mat-form-field>
+    </div>
+    @if (data.shipment?.weightDifference !== null && data.shipment?.weightDifference !== undefined) {
+      <p class="hint">Diferencia de peso (calculada): {{ data.shipment!.weightDifference }} g</p>
+    }
+
+    <h3 class="section-title">Artículos del embarque</h3>
+    <div class="lines">
+      @for (item of items(); track $index; let i = $index) {
+        <div class="line-row">
+          <mat-form-field appearance="outline" class="code-field">
+            <mat-label>Código</mat-label>
+            <input matInput [value]="item.articleCode" (input)="updateItem(i, { articleCode: $any($event.target).value })" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="description-field">
+            <mat-label>Descripción</mat-label>
+            <input matInput [value]="item.description" (input)="updateItem(i, { description: $any($event.target).value })" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="qty-field">
+            <mat-label>Cant.</mat-label>
+            <input matInput type="number" [value]="item.quantity" (input)="updateItem(i, { quantity: +$any($event.target).value })" />
+          </mat-form-field>
+          <button mat-icon-button (click)="removeItem(i)" [disabled]="items().length === 1">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+    <button mat-stroked-button type="button" (click)="addItem()">
+      <mat-icon>add</mat-icon>
+      Agregar artículo
+    </button>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Guardar
+    }
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,120 @@
+<div class="shipments-page">
+  <div class="tab-actions">
+    <p class="tab-hint">Embarques consolidados desde Japón y su detalle de artículos.</p>
+    <button mat-flat-button color="primary" (click)="openCreate()">
+      <mat-icon>add</mat-icon>
+      Nuevo embarque
+    </button>
+  </div>
+
+  <div class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Buscar por código, titular u orden ZEN</mat-label>
+      <input matInput [formControl]="searchControl" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Estado</mat-label>
+      <mat-select [formControl]="statusControl">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (opt of statusLabels | keyvalue; track opt.key) {
+          <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo de envío</mat-label>
+      <mat-select [formControl]="typeControl">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (opt of typeLabels | keyvalue; track opt.key) {
+          <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Salida desde</mat-label>
+      <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
+      <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+      <mat-datepicker #fromPicker />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Salida hasta</mat-label>
+      <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
+      <mat-datepicker-toggle matSuffix [for]="toPicker" />
+      <mat-datepicker #toPicker />
+    </mat-form-field>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading"><mat-spinner diameter="36" /></div>
+    } @else if (shipments().length === 0) {
+      <div class="empty-state">
+        <mat-icon>local_shipping</mat-icon>
+        <p>No se encontraron embarques con estos filtros.</p>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="shipments()" class="shipments-table">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Código</th>
+          <td mat-cell *matCellDef="let s">{{ s.code }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="holder">
+          <th mat-header-cell *matHeaderCellDef>Titular</th>
+          <td mat-cell *matCellDef="let s">
+            <div>{{ s.holderName }}</div>
+            @if (s.holderZenAccount) {
+              <div class="sub">{{ s.holderZenAccount }}</div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let s">{{ typeLabel(s.shipmentType) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dates">
+          <th mat-header-cell *matHeaderCellDef>Salida → Llegada</th>
+          <td mat-cell *matCellDef="let s">{{ s.departureDate || '—' }} → {{ s.arrivalDate || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="finalCost">
+          <th mat-header-cell *matHeaderCellDef>Costo final</th>
+          <td mat-cell *matCellDef="let s">{{ s.finalCost !== null ? 'S/ ' + s.finalCost.toFixed(2) : '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let s">
+            <span class="status-chip" [attr.data-status]="s.status">{{ statusLabel(s.status) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let s">
+            <button mat-icon-button (click)="openEdit(s)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="confirmDelete(s)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize"
+        [pageIndex]="page"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+      />
+    }
+  </div>
+</div>

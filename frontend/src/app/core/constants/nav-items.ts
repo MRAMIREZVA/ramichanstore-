@@ -8,6 +8,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', available: true },
   { label: 'Productos', icon: 'inventory_2', route: '/productos', available: true },
   { label: 'Inventario', icon: 'warehouse', route: '/inventario', available: true },
+  { label: 'Embarques', icon: 'flight_takeoff', route: '/embarques', available: true },
   { label: 'Clientes', icon: 'groups', route: '/clientes', available: true },
   { label: 'Pedidos', icon: 'receipt_long', route: '/pedidos', available: true },
   { label: 'Puntos', icon: 'loyalty', route: '/puntos', available: true },

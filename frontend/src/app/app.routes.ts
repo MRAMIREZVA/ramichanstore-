@@ -32,6 +32,11 @@ export const routes: Routes = [
           import('./features/customers/customers-list/customers-list').then((m) => m.CustomersList),
       },
       {
+        path: 'embarques',
+        loadComponent: () =>
+          import('./features/shipments/shipments-page/shipments-page').then((m) => m.ShipmentsPage),
+      },
+      {
         path: 'pedidos',
         loadComponent: () => import('./features/pedidos/pedidos-page/pedidos-page').then((m) => m.PedidosPage),
       },

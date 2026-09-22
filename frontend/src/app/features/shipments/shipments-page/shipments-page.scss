@@ -1,0 +1,19 @@
+.shipments-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.page-subtitle {
+  margin: 0 0 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.tab-content {
+  padding-top: 20px;
+}
