@@ -14,18 +14,18 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   SHIPMENT_DOCUMENT_TYPE_LABELS,
   SHIPMENT_STATUS_LABELS,
-  SHIPMENT_TYPE_LABELS,
   Shipment,
   ShipmentDocumentType,
   ShipmentHolder,
   ShipmentRecipient,
   ShipmentRequest,
   ShipmentStatus,
-  ShipmentType,
+  ShipmentTypeOption,
 } from '../../../core/models/shipment.model';
 import { ShipmentHolderService } from '../../../core/services/shipment-holder.service';
 import { ShipmentRecipientService } from '../../../core/services/shipment-recipient.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
+import { ShipmentTypeOptionService } from '../../../core/services/shipment-type-option.service';
 import { parseIsoDate } from '../../../core/utils/date';
 import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
 
@@ -93,17 +93,18 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   private readonly shipmentService = inject(ShipmentService);
   private readonly shipmentHolderService = inject(ShipmentHolderService);
   private readonly shipmentRecipientService = inject(ShipmentRecipientService);
+  private readonly shipmentTypeOptionService = inject(ShipmentTypeOptionService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ShipmentFormComponent>);
   private readonly dialog = inject(MatDialog);
   readonly data = inject<ShipmentFormData>(MAT_DIALOG_DATA);
 
-  readonly typeOptions = Object.entries(SHIPMENT_TYPE_LABELS) as [ShipmentType, string][];
   readonly statusOptions = Object.entries(SHIPMENT_STATUS_LABELS) as [ShipmentStatus, string][];
 
   readonly saving = signal(false);
   readonly holders = signal<ShipmentHolder[]>([]);
   readonly recipients = signal<ShipmentRecipient[]>([]);
+  readonly types = signal<ShipmentTypeOption[]>([]);
   readonly items = signal<ShipmentItemDraft[]>(
     this.data.shipment?.items.map((i) => ({
       id: i.id,
@@ -127,7 +128,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     holderId: [this.s?.holderId ?? null, Validators.required],
     recipientId: [this.s?.recipientId ?? null, Validators.required],
     zenOrderNumber: [this.s?.zenOrderNumber ?? ''],
-    shipmentType: [this.s?.shipmentType ?? ('BARCO' as ShipmentType), Validators.required],
+    shipmentTypeId: [this.s?.shipmentTypeId ?? null, Validators.required],
     status: [this.s?.status ?? ('PENDIENTE_ENVIO' as ShipmentStatus), Validators.required],
     departureDate: [parseIsoDate(this.s?.departureDate)],
     arrivalDate: [parseIsoDate(this.s?.arrivalDate)],
@@ -153,6 +154,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.shipmentHolderService.findAll().subscribe((res) => this.holders.set(res.data));
     this.shipmentRecipientService.findAll().subscribe((res) => this.recipients.set(res.data));
+    this.shipmentTypeOptionService.findAll().subscribe((res) => this.types.set(res.data));
 
     // "Días de viaje" nunca se escribe a mano: se calcula solo a partir de fecha de
     // salida/llegada, mismo criterio que transitDays/weightDifference en el backend.
@@ -375,7 +377,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       additionalCost: v.additionalCost,
       handlingCost: v.handlingCost,
       exchangeRate: v.exchangeRate,
-      shipmentType: v.shipmentType!,
+      shipmentTypeId: v.shipmentTypeId!,
       departureDate: this.toIsoDate(v.departureDate),
       arrivalDate: this.toIsoDate(v.arrivalDate),
       travelDays: v.travelDays,

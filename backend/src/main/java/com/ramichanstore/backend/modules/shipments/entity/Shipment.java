@@ -77,9 +77,9 @@ public class Shipment extends BaseEntity {
     @Column(name = "exchange_rate", precision = 10, scale = 4)
     private BigDecimal exchangeRate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "shipment_type", nullable = false, length = 20)
-    private ShipmentType shipmentType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipment_type_id", nullable = false)
+    private ShipmentTypeOption shipmentType;
 
     @Column(name = "departure_date")
     private LocalDate departureDate;

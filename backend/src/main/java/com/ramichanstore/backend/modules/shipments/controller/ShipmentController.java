@@ -5,7 +5,6 @@ import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentResponse;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
-import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import com.ramichanstore.backend.modules.shipments.service.ShipmentService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -37,12 +36,12 @@ public class ShipmentController {
     public ApiResponse<PageResponse<ShipmentResponse>> search(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) ShipmentStatus status,
-            @RequestParam(required = false) ShipmentType type,
+            @RequestParam(required = false) Long typeId,
             @RequestParam(required = false) Long holderId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 20, sort = "zenOrderNumber", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.ok(PageResponse.from(shipmentService.search(search, status, type, holderId, from, to, pageable)));
+        return ApiResponse.ok(PageResponse.from(shipmentService.search(search, status, typeId, holderId, from, to, pageable)));
     }
 
     @GetMapping("/{id}")

@@ -16,13 +16,14 @@ import com.ramichanstore.backend.modules.shipments.entity.ShipmentHolder;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentItem;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentRecipient;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
-import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
+import com.ramichanstore.backend.modules.shipments.entity.ShipmentTypeOption;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentDocumentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentHolderRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentItemRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentTypeOptionRepository;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -59,18 +60,19 @@ public class ShipmentService {
     private final ShipmentRepository shipmentRepository;
     private final ShipmentHolderRepository shipmentHolderRepository;
     private final ShipmentRecipientRepository shipmentRecipientRepository;
+    private final ShipmentTypeOptionRepository shipmentTypeOptionRepository;
     private final ShipmentItemRepository shipmentItemRepository;
     private final ShipmentDocumentRepository shipmentDocumentRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
     public Page<ShipmentResponse> search(
-            String term, ShipmentStatus status, ShipmentType type, Long holderId,
+            String term, ShipmentStatus status, Long typeId, Long holderId,
             LocalDate from, LocalDate to, Pageable pageable) {
         List<Specification<Shipment>> specs = Stream.of(
                         ShipmentSpecifications.search(term),
                         ShipmentSpecifications.hasStatus(status),
-                        ShipmentSpecifications.hasShipmentType(type),
+                        ShipmentSpecifications.hasShipmentType(typeId),
                         ShipmentSpecifications.hasHolder(holderId),
                         ShipmentSpecifications.departureFrom(from),
                         ShipmentSpecifications.departureTo(to))
@@ -135,7 +137,7 @@ public class ShipmentService {
         shipment.setAdditionalCost(request.additionalCost());
         shipment.setHandlingCost(request.handlingCost());
         shipment.setExchangeRate(request.exchangeRate());
-        shipment.setShipmentType(request.shipmentType());
+        shipment.setShipmentType(resolveShipmentType(request.shipmentTypeId()));
         shipment.setDepartureDate(request.departureDate());
         shipment.setArrivalDate(request.arrivalDate());
         shipment.setTravelDays(request.travelDays());
@@ -293,6 +295,11 @@ public class ShipmentService {
     private ShipmentRecipient resolveRecipient(Long id) {
         return shipmentRecipientRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Titular del embarque", id));
+    }
+
+    private ShipmentTypeOption resolveShipmentType(Long id) {
+        return shipmentTypeOptionRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.of("Tipo de envío", id));
     }
 
     private String summarize(Shipment shipment) {

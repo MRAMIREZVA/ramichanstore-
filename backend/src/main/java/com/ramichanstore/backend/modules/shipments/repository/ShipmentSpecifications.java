@@ -2,7 +2,6 @@ package com.ramichanstore.backend.modules.shipments.repository;
 
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
-import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import jakarta.persistence.criteria.JoinType;
 import java.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
@@ -36,11 +35,11 @@ public final class ShipmentSpecifications {
         return (root, query, cb) -> cb.equal(root.get("status"), status);
     }
 
-    public static Specification<Shipment> hasShipmentType(ShipmentType type) {
-        if (type == null) {
+    public static Specification<Shipment> hasShipmentType(Long typeId) {
+        if (typeId == null) {
             return null;
         }
-        return (root, query, cb) -> cb.equal(root.get("shipmentType"), type);
+        return (root, query, cb) -> cb.equal(root.get("shipmentType").get("id"), typeId);
     }
 
     public static Specification<Shipment> hasHolder(Long holderId) {

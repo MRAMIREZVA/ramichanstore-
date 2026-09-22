@@ -1,10 +1,14 @@
-export type ShipmentType = 'EMS' | 'AVIA' | 'BARCO';
+/** Antes un enum fijo; ahora una maestra editable por el admin (ver ShipmentTypeOption). */
+export interface ShipmentTypeOption {
+  id: number;
+  name: string;
+  notes: string | null;
+}
 
-export const SHIPMENT_TYPE_LABELS: Record<ShipmentType, string> = {
-  EMS: 'EMS',
-  AVIA: 'Aéreo',
-  BARCO: 'Marítimo',
-};
+export interface ShipmentTypeOptionRequest {
+  name: string;
+  notes: string | null;
+}
 
 export type ShipmentStatus =
   | 'PENDIENTE_ENVIO'
@@ -102,7 +106,8 @@ export interface Shipment {
   totalDollars: number | null;
   totalSoles: number | null;
   finalCost: number | null;
-  shipmentType: ShipmentType;
+  shipmentTypeId: number;
+  shipmentTypeName: string;
   departureDate: string | null;
   arrivalDate: string | null;
   transitDays: number | null;
@@ -131,7 +136,7 @@ export interface ShipmentRequest {
   additionalCost: number | null;
   handlingCost: number | null;
   exchangeRate: number | null;
-  shipmentType: ShipmentType;
+  shipmentTypeId: number;
   departureDate: string | null;
   arrivalDate: string | null;
   travelDays: number | null;

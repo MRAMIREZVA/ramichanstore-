@@ -1,7 +1,6 @@
 package com.ramichanstore.backend.modules.shipments.dto;
 
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
-import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -19,7 +18,7 @@ public record ShipmentRequest(
         BigDecimal productCost, BigDecimal shippingCost, BigDecimal commissionCost,
         BigDecimal domesticJapanShippingCost, BigDecimal additionalCost, BigDecimal handlingCost,
         BigDecimal exchangeRate,
-        @NotNull(message = "El tipo de envío es obligatorio") ShipmentType shipmentType,
+        @NotNull(message = "El tipo de envío es obligatorio") Long shipmentTypeId,
         LocalDate departureDate, LocalDate arrivalDate, Integer travelDays, LocalDate possibleArrivalDate,
         BigDecimal figuresWeight, BigDecimal finalWeight,
         @NotNull(message = "El estado es obligatorio") ShipmentStatus status,

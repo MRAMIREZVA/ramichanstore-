@@ -16,12 +16,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import {
   SHIPMENT_STATUS_LABELS,
-  SHIPMENT_TYPE_LABELS,
   Shipment,
   ShipmentStatus,
-  ShipmentType,
+  ShipmentTypeOption,
 } from '../../../core/models/shipment.model';
 import { ShipmentFilters, ShipmentService } from '../../../core/services/shipment.service';
+import { ShipmentTypeOptionService } from '../../../core/services/shipment-type-option.service';
 import { toIsoDate } from '../../../core/utils/date';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ShipmentFormComponent, ShipmentFormData } from '../shipment-form/shipment-form';
@@ -49,11 +49,12 @@ import { ShipmentFormComponent, ShipmentFormData } from '../shipment-form/shipme
 })
 export class ShipmentsList implements OnInit {
   private readonly shipmentService = inject(ShipmentService);
+  private readonly shipmentTypeOptionService = inject(ShipmentTypeOptionService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly statusLabels = SHIPMENT_STATUS_LABELS;
-  readonly typeLabels = SHIPMENT_TYPE_LABELS;
+  readonly types = signal<ShipmentTypeOption[]>([]);
   readonly displayedColumns = ['code', 'holder', 'type', 'dates', 'finalCost', 'status', 'actions'];
 
   readonly loading = signal(true);
@@ -62,7 +63,7 @@ export class ShipmentsList implements OnInit {
 
   readonly searchControl = new FormControl('');
   readonly statusControl = new FormControl<ShipmentStatus | null>(null);
-  readonly typeControl = new FormControl<ShipmentType | null>(null);
+  readonly typeControl = new FormControl<number | null>(null);
   readonly fromControl = new FormControl<Date | null>(null);
   readonly toControl = new FormControl<Date | null>(null);
 
@@ -91,6 +92,7 @@ export class ShipmentsList implements OnInit {
       this.load();
     });
 
+    this.shipmentTypeOptionService.findAll().subscribe((res) => this.types.set(res.data));
     this.load();
   }
 
@@ -99,7 +101,7 @@ export class ShipmentsList implements OnInit {
     const filters: ShipmentFilters = {
       search: this.searchControl.value || undefined,
       status: this.statusControl.value,
-      type: this.typeControl.value,
+      typeId: this.typeControl.value,
       from: toIsoDate(this.fromControl.value),
       to: toIsoDate(this.toControl.value),
       page: this.page,
@@ -117,10 +119,6 @@ export class ShipmentsList implements OnInit {
 
   statusLabel(status: ShipmentStatus): string {
     return this.statusLabels[status];
-  }
-
-  typeLabel(type: ShipmentType): string {
-    return this.typeLabels[type];
   }
 
   onPage(event: PageEvent): void {

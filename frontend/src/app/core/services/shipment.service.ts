@@ -9,13 +9,12 @@ import {
   ShipmentDocumentType,
   ShipmentRequest,
   ShipmentStatus,
-  ShipmentType,
 } from '../models/shipment.model';
 
 export interface ShipmentFilters {
   search?: string;
   status?: ShipmentStatus | null;
-  type?: ShipmentType | null;
+  typeId?: number | null;
   holderId?: number | null;
   from?: string | null;
   to?: string | null;
@@ -34,7 +33,7 @@ export class ShipmentService {
       .set('size', filters.size ?? 20);
     if (filters.search) params = params.set('search', filters.search);
     if (filters.status) params = params.set('status', filters.status);
-    if (filters.type) params = params.set('type', filters.type);
+    if (filters.typeId) params = params.set('typeId', filters.typeId);
     if (filters.holderId) params = params.set('holderId', filters.holderId);
     if (filters.from) params = params.set('from', filters.from);
     if (filters.to) params = params.set('to', filters.to);

@@ -11,4 +11,6 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long>, JpaSp
     boolean existsByHolderId(Long holderId);
 
     boolean existsByRecipientId(Long recipientId);
+
+    boolean existsByShipmentTypeId(Long shipmentTypeId);
 }

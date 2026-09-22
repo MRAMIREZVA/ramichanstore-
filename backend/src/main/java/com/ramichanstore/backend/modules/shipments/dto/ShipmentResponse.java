@@ -2,7 +2,6 @@ package com.ramichanstore.backend.modules.shipments.dto;
 
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
-import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -17,7 +16,7 @@ public record ShipmentResponse(
         BigDecimal productCost, BigDecimal shippingCost, BigDecimal commissionCost,
         BigDecimal domesticJapanShippingCost, BigDecimal additionalCost, BigDecimal handlingCost,
         BigDecimal exchangeRate, BigDecimal totalDollars, BigDecimal totalSoles, BigDecimal finalCost,
-        ShipmentType shipmentType,
+        Long shipmentTypeId, String shipmentTypeName,
         LocalDate departureDate, LocalDate arrivalDate, Long transitDays,
         Integer travelDays, LocalDate possibleArrivalDate,
         BigDecimal figuresWeight, BigDecimal finalWeight, BigDecimal weightDifference,
@@ -37,7 +36,7 @@ public record ShipmentResponse(
                 s.getProductCost(), s.getShippingCost(), s.getCommissionCost(),
                 s.getDomesticJapanShippingCost(), s.getAdditionalCost(), s.getHandlingCost(),
                 s.getExchangeRate(), totalDollars, totalSoles, finalCost(s, totalSoles),
-                s.getShipmentType(),
+                s.getShipmentType().getId(), s.getShipmentType().getName(),
                 s.getDepartureDate(), s.getArrivalDate(), transitDays(s),
                 s.getTravelDays(), s.getPossibleArrivalDate(),
                 s.getFiguresWeight(), s.getFinalWeight(), weightDifference(s),
