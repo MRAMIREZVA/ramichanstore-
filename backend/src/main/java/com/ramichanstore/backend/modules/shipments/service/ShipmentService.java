@@ -10,9 +10,11 @@ import com.ramichanstore.backend.modules.shipments.dto.ShipmentResponse;
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentHolder;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentItem;
+import com.ramichanstore.backend.modules.shipments.entity.ShipmentRecipient;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentHolderRepository;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
 import java.time.LocalDate;
@@ -34,6 +36,7 @@ public class ShipmentService {
 
     private final ShipmentRepository shipmentRepository;
     private final ShipmentHolderRepository shipmentHolderRepository;
+    private final ShipmentRecipientRepository shipmentRecipientRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -99,6 +102,7 @@ public class ShipmentService {
     private void applyRequest(Shipment shipment, ShipmentRequest request) {
         shipment.setCode(request.code().trim());
         shipment.setHolder(resolveHolder(request.holderId()));
+        shipment.setRecipient(resolveRecipient(request.recipientId()));
         shipment.setZenOrderNumber(request.zenOrderNumber());
         shipment.setProductCost(request.productCost());
         shipment.setShippingCost(request.shippingCost());
@@ -135,7 +139,13 @@ public class ShipmentService {
     }
 
     private ShipmentHolder resolveHolder(Long id) {
-        return shipmentHolderRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Titular", id));
+        return shipmentHolderRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.of("Titular de cuenta ZEN", id));
+    }
+
+    private ShipmentRecipient resolveRecipient(Long id) {
+        return shipmentRecipientRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.of("Titular del embarque", id));
     }
 
     private String summarize(Shipment shipment) {

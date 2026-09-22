@@ -14,11 +14,13 @@ import {
   SHIPMENT_TYPE_LABELS,
   Shipment,
   ShipmentHolder,
+  ShipmentRecipient,
   ShipmentRequest,
   ShipmentStatus,
   ShipmentType,
 } from '../../../core/models/shipment.model';
 import { ShipmentHolderService } from '../../../core/services/shipment-holder.service';
+import { ShipmentRecipientService } from '../../../core/services/shipment-recipient.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
 
 export interface ShipmentFormData {
@@ -56,6 +58,7 @@ export class ShipmentFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly shipmentService = inject(ShipmentService);
   private readonly shipmentHolderService = inject(ShipmentHolderService);
+  private readonly shipmentRecipientService = inject(ShipmentRecipientService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ShipmentFormComponent>);
   readonly data = inject<ShipmentFormData>(MAT_DIALOG_DATA);
@@ -65,6 +68,7 @@ export class ShipmentFormComponent implements OnInit {
 
   readonly saving = signal(false);
   readonly holders = signal<ShipmentHolder[]>([]);
+  readonly recipients = signal<ShipmentRecipient[]>([]);
   readonly items = signal<ShipmentItemDraft[]>(
     this.data.shipment?.items.map((i) => ({ articleCode: i.articleCode ?? '', description: i.description, quantity: i.quantity })) ?? [
       emptyItem(),
@@ -76,6 +80,7 @@ export class ShipmentFormComponent implements OnInit {
   readonly form = this.fb.group({
     code: [this.s?.code ?? '', [Validators.required, Validators.maxLength(50)]],
     holderId: [this.s?.holderId ?? null, Validators.required],
+    recipientId: [this.s?.recipientId ?? null, Validators.required],
     zenOrderNumber: [this.s?.zenOrderNumber ?? ''],
     shipmentType: [this.s?.shipmentType ?? ('BARCO' as ShipmentType), Validators.required],
     status: [this.s?.status ?? ('PENDIENTE_ENVIO' as ShipmentStatus), Validators.required],
@@ -99,6 +104,7 @@ export class ShipmentFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.shipmentHolderService.findAll().subscribe((res) => this.holders.set(res.data));
+    this.shipmentRecipientService.findAll().subscribe((res) => this.recipients.set(res.data));
   }
 
   updateItem(index: number, patch: Partial<ShipmentItemDraft>): void {
@@ -125,6 +131,7 @@ export class ShipmentFormComponent implements OnInit {
     const request: ShipmentRequest = {
       code: v.code!.trim(),
       holderId: v.holderId!,
+      recipientId: v.recipientId!,
       zenOrderNumber: v.zenOrderNumber || null,
       productCost: v.productCost,
       shippingCost: v.shippingCost,

@@ -3,6 +3,7 @@ package com.ramichanstore.backend.modules.shipments.repository;
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
+import jakarta.persistence.criteria.JoinType;
 import java.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
@@ -18,9 +19,13 @@ public final class ShipmentSpecifications {
             return null;
         }
         String like = "%" + term.toLowerCase() + "%";
+        // LEFT JOIN explícito: recipient puede ser null (embarques de antes de V20) y un
+        // root.get(...) normal haría un INNER JOIN implícito, excluyendo esos embarques
+        // de CUALQUIER búsqueda aunque el término coincida por código/titular ZEN.
         return (root, query, cb) -> cb.or(
                 cb.like(cb.lower(root.get("code")), like),
                 cb.like(cb.lower(root.get("holder").get("name")), like),
+                cb.like(cb.lower(root.join("recipient", JoinType.LEFT).get("name")), like),
                 cb.like(cb.lower(root.get("zenOrderNumber")), like));
     }
 

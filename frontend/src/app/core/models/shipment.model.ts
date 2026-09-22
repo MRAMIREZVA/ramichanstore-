@@ -42,6 +42,18 @@ export interface ShipmentHolderRequest {
   notes: string | null;
 }
 
+/** A nombre de quien va el paquete físicamente (aduanas/envío) — distinto de ShipmentHolder (quien compra con su cuenta ZEN). El nombre SÍ puede repetirse. */
+export interface ShipmentRecipient {
+  id: number;
+  name: string;
+  notes: string | null;
+}
+
+export interface ShipmentRecipientRequest {
+  name: string;
+  notes: string | null;
+}
+
 export interface ShipmentItem {
   id: number;
   articleCode: string | null;
@@ -61,6 +73,8 @@ export interface Shipment {
   holderId: number;
   holderName: string;
   holderZenAccount: string | null;
+  recipientId: number | null;
+  recipientName: string | null;
   zenOrderNumber: string | null;
   productCost: number | null;
   shippingCost: number | null;
@@ -88,6 +102,7 @@ export interface Shipment {
 export interface ShipmentRequest {
   code: string;
   holderId: number;
+  recipientId: number;
   zenOrderNumber: string | null;
   productCost: number | null;
   shippingCost: number | null;

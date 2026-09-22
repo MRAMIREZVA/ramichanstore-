@@ -9,7 +9,7 @@
 
   <div class="filters">
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Buscar por código, titular u orden ZEN</mat-label>
+      <mat-label>Buscar por código, titulares u orden ZEN</mat-label>
       <input matInput [formControl]="searchControl" />
       <mat-icon matSuffix>search</mat-icon>
     </mat-form-field>
@@ -65,11 +65,11 @@
         </ng-container>
 
         <ng-container matColumnDef="holder">
-          <th mat-header-cell *matHeaderCellDef>Titular</th>
+          <th mat-header-cell *matHeaderCellDef>Titulares</th>
           <td mat-cell *matCellDef="let s">
-            <div>{{ s.holderName }}</div>
-            @if (s.holderZenAccount) {
-              <div class="sub">{{ s.holderZenAccount }}</div>
+            <div>{{ s.holderName }}@if (s.holderZenAccount) { &nbsp;({{ s.holderZenAccount }}) }</div>
+            @if (s.recipientName) {
+              <div class="sub">Paquete a: {{ s.recipientName }}</div>
             }
           </td>
         </ng-container>

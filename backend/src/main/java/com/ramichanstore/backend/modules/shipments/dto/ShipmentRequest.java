@@ -13,7 +13,8 @@ import java.util.List;
 
 public record ShipmentRequest(
         @NotBlank(message = "El código es obligatorio") @Size(max = 50) String code,
-        @NotNull(message = "El titular es obligatorio") Long holderId,
+        @NotNull(message = "El titular de la cuenta ZEN es obligatorio") Long holderId,
+        @NotNull(message = "El titular del embarque es obligatorio") Long recipientId,
         @Size(max = 50) String zenOrderNumber,
         BigDecimal productCost, BigDecimal shippingCost, BigDecimal commissionCost,
         BigDecimal domesticJapanShippingCost, BigDecimal additionalCost,

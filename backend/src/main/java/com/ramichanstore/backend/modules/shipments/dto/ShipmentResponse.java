@@ -10,7 +10,9 @@ import java.util.List;
 
 public record ShipmentResponse(
         Long id, String code,
-        Long holderId, String holderName, String holderZenAccount, String zenOrderNumber,
+        Long holderId, String holderName, String holderZenAccount,
+        Long recipientId, String recipientName,
+        String zenOrderNumber,
         BigDecimal productCost, BigDecimal shippingCost, BigDecimal commissionCost,
         BigDecimal domesticJapanShippingCost, BigDecimal additionalCost,
         BigDecimal totalSoles, BigDecimal totalDollars, BigDecimal handlingCost, BigDecimal finalCost,
@@ -24,7 +26,10 @@ public record ShipmentResponse(
     public static ShipmentResponse from(Shipment s) {
         return new ShipmentResponse(
                 s.getId(), s.getCode(),
-                s.getHolder().getId(), s.getHolder().getName(), s.getHolder().getZenAccount(), s.getZenOrderNumber(),
+                s.getHolder().getId(), s.getHolder().getName(), s.getHolder().getZenAccount(),
+                s.getRecipient() != null ? s.getRecipient().getId() : null,
+                s.getRecipient() != null ? s.getRecipient().getName() : null,
+                s.getZenOrderNumber(),
                 s.getProductCost(), s.getShippingCost(), s.getCommissionCost(),
                 s.getDomesticJapanShippingCost(), s.getAdditionalCost(),
                 s.getTotalSoles(), s.getTotalDollars(), s.getHandlingCost(), s.getFinalCost(),

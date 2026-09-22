@@ -1,0 +1,40 @@
+<div class="recipients-page">
+  <div class="tab-actions">
+    <p class="tab-hint">Titulares del embarque: a nombre de quién va el paquete físicamente. Puede repetirse.</p>
+    <button mat-flat-button color="primary" (click)="openCreate()">
+      <mat-icon>add</mat-icon>
+      Nuevo titular
+    </button>
+  </div>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading"><mat-spinner diameter="36" /></div>
+    } @else if (recipients().length === 0) {
+      <div class="empty-state">
+        <mat-icon>person</mat-icon>
+        <p>Todavía no hay titulares de embarque registrados.</p>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="recipients()" class="recipients-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="notes">
+          <th mat-header-cell *matHeaderCellDef>Notas</th>
+          <td mat-cell *matCellDef="let r">{{ r.notes || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button (click)="openEdit(r)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="confirmDelete(r)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+</div>

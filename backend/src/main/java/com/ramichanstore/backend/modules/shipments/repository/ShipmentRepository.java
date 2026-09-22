@@ -9,4 +9,6 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long>, JpaSp
     boolean existsByCodeIgnoreCase(String code);
 
     boolean existsByHolderId(Long holderId);
+
+    boolean existsByRecipientId(Long recipientId);
 }

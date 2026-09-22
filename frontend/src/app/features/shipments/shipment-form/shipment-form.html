@@ -9,12 +9,21 @@
         <input matInput formControlName="code" placeholder="ej. CN10704784JP" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Titular</mat-label>
+        <mat-label>Titular (cuenta ZEN)</mat-label>
         <mat-select formControlName="holderId">
           @for (h of holders(); track h.id) {
             <mat-option [value]="h.id">{{ h.name }}@if (h.zenAccount) { &nbsp;({{ h.zenAccount }}) }</mat-option>
           }
         </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Titular del embarque</mat-label>
+        <mat-select formControlName="recipientId">
+          @for (r of recipients(); track r.id) {
+            <mat-option [value]="r.id">{{ r.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>A nombre de quién va el paquete</mat-hint>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>N.º de orden ZEN</mat-label>

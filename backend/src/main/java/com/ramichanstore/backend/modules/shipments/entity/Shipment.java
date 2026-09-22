@@ -41,6 +41,16 @@ public class Shipment extends BaseEntity {
     @JoinColumn(name = "holder_id", nullable = false)
     private ShipmentHolder holder;
 
+    /**
+     * A nombre de quien va el paquete físicamente (aduanas/envío) — distinto de
+     * {@link #holder} (quien hace la compra con su cuenta ZEN). Nullable a nivel
+     * de columna porque la maestra pudo nacer después de embarques ya existentes
+     * (ver V20); {@code ShipmentRequest} sí lo exige para altas/ediciones nuevas.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipient_id")
+    private ShipmentRecipient recipient;
+
     @Column(name = "zen_order_number", length = 50)
     private String zenOrderNumber;
 
