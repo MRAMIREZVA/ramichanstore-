@@ -138,7 +138,13 @@
         <div class="line-row">
           <div class="item-photo">
             @if (item.imageObjectUrl) {
-              <img [src]="item.imageObjectUrl" alt="Foto del artículo" class="item-thumb" />
+              <img
+                [src]="item.imageObjectUrl"
+                alt="Foto del artículo"
+                class="item-thumb clickable"
+                (click)="viewItemImage(i)"
+                matTooltip="Ver foto en grande"
+              />
             } @else {
               <div class="item-thumb placeholder"><mat-icon>image</mat-icon></div>
             }
@@ -146,6 +152,11 @@
               <mat-spinner diameter="20" class="item-photo-spinner" />
             } @else if (item.id) {
               <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImageSelected(i, $event)" />
+              @if (item.imageObjectUrl) {
+                <button mat-icon-button type="button" (click)="viewItemImage(i)" matTooltip="Ver foto en grande">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              }
               <button mat-icon-button type="button" (click)="fileInput.click()" matTooltip="Subir/reemplazar foto">
                 <mat-icon>photo_camera</mat-icon>
               </button>

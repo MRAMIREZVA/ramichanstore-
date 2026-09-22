@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -23,6 +23,7 @@ import {
 import { ShipmentHolderService } from '../../../core/services/shipment-holder.service';
 import { ShipmentRecipientService } from '../../../core/services/shipment-recipient.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
+import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
 
 export interface ShipmentFormData {
   shipment: Shipment | null;
@@ -76,6 +77,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   private readonly shipmentRecipientService = inject(ShipmentRecipientService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ShipmentFormComponent>);
+  private readonly dialog = inject(MatDialog);
   readonly data = inject<ShipmentFormData>(MAT_DIALOG_DATA);
 
   readonly typeOptions = Object.entries(SHIPMENT_TYPE_LABELS) as [ShipmentType, string][];
@@ -170,6 +172,17 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     const item = this.items()[index];
     if (item?.imageObjectUrl) URL.revokeObjectURL(item.imageObjectUrl);
     this.items.update((items) => items.filter((_, i) => i !== index));
+  }
+
+  viewItemImage(index: number): void {
+    const item = this.items()[index];
+    if (!item?.imageObjectUrl) return;
+    this.dialog.open(ImagePreviewDialogComponent, {
+      data: { imageUrl: item.imageObjectUrl, title: item.description || 'Foto del artículo' },
+      width: '500px',
+      maxWidth: '90vw',
+      autoFocus: false,
+    });
   }
 
   private loadItemImage(index: number, itemId: number): void {

@@ -1,0 +1,31 @@
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 4px 0;
+}
+
+.preview-title {
+  margin-right: auto;
+  padding-left: 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.preview-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px 20px;
+  min-height: 260px;
+  max-height: 80vh;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 75vh;
+  min-width: 120px;
+  min-height: 120px;
+  object-fit: contain;
+  border-radius: 8px;
+}

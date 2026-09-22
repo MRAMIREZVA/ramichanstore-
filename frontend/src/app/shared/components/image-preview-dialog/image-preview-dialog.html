@@ -1,0 +1,12 @@
+<div class="preview-header">
+  @if (data.title) {
+    <span class="preview-title">{{ data.title }}</span>
+  }
+  <button mat-icon-button (click)="close()" class="preview-close">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="preview-content">
+  <img [src]="data.imageUrl" alt="Vista previa" class="preview-image" />
+</mat-dialog-content>

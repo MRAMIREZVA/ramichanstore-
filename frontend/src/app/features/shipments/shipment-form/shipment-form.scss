@@ -68,6 +68,10 @@
   flex-shrink: 0;
 }
 
+.item-thumb.clickable {
+  cursor: pointer;
+}
+
 .item-thumb.placeholder {
   display: flex;
   align-items: center;
