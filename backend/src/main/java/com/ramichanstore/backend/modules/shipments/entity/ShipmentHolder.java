@@ -21,9 +21,6 @@ public class ShipmentHolder extends BaseEntity {
     @Column(nullable = false, unique = true, length = 150)
     private String name;
 
-    @Column(name = "zen_account", length = 50)
-    private String zenAccount;
-
     @Column(length = 255)
     private String notes;
 }

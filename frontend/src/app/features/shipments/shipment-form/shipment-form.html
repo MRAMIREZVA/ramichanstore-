@@ -12,7 +12,7 @@
         <mat-label>Titular (cuenta ZEN)</mat-label>
         <mat-select formControlName="holderId">
           @for (h of holders(); track h.id) {
-            <mat-option [value]="h.id">{{ h.name }}@if (h.zenAccount) { &nbsp;({{ h.zenAccount }}) }</mat-option>
+            <mat-option [value]="h.id">{{ h.name }}</mat-option>
           }
         </mat-select>
       </mat-form-field>

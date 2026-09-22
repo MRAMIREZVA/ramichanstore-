@@ -32,13 +32,11 @@ export const SHIPMENT_STATUS_LABELS: Record<ShipmentStatus, string> = {
 export interface ShipmentHolder {
   id: number;
   name: string;
-  zenAccount: string | null;
   notes: string | null;
 }
 
 export interface ShipmentHolderRequest {
   name: string;
-  zenAccount: string | null;
   notes: string | null;
 }
 
@@ -72,7 +70,6 @@ export interface Shipment {
   code: string;
   holderId: number;
   holderName: string;
-  holderZenAccount: string | null;
   recipientId: number | null;
   recipientName: string | null;
   zenOrderNumber: string | null;

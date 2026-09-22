@@ -23,7 +23,7 @@ export class ShipmentHoldersList implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly displayedColumns = ['name', 'zenAccount', 'notes', 'actions'];
+  readonly displayedColumns = ['name', 'notes', 'actions'];
   readonly loading = signal(true);
   readonly holders = signal<ShipmentHolder[]>([]);
 

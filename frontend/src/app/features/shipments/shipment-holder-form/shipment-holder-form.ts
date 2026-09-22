@@ -24,7 +24,6 @@ export class ShipmentHolderFormComponent {
 
   readonly form = this.fb.group({
     name: [this.data.holder?.name ?? '', [Validators.required, Validators.maxLength(150)]],
-    zenAccount: [this.data.holder?.zenAccount ?? '', Validators.maxLength(50)],
     notes: [this.data.holder?.notes ?? '', Validators.maxLength(255)],
   });
 
@@ -36,7 +35,6 @@ export class ShipmentHolderFormComponent {
     const v = this.form.getRawValue();
     const request: ShipmentHolderRequest = {
       name: v.name!,
-      zenAccount: v.zenAccount || null,
       notes: v.notes || null,
     };
     this.dialogRef.close(request);

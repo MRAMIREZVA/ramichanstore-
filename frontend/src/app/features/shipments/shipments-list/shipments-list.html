@@ -67,7 +67,7 @@
         <ng-container matColumnDef="holder">
           <th mat-header-cell *matHeaderCellDef>Titulares</th>
           <td mat-cell *matCellDef="let s">
-            <div>{{ s.holderName }}@if (s.holderZenAccount) { &nbsp;({{ s.holderZenAccount }}) }</div>
+            <div>{{ s.holderName }}</div>
             @if (s.recipientName) {
               <div class="sub">Paquete a: {{ s.recipientName }}</div>
             }

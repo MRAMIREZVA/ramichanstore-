@@ -21,10 +21,6 @@
           <th mat-header-cell *matHeaderCellDef>Nombre</th>
           <td mat-cell *matCellDef="let h">{{ h.name }}</td>
         </ng-container>
-        <ng-container matColumnDef="zenAccount">
-          <th mat-header-cell *matHeaderCellDef>Cuenta ZEN</th>
-          <td mat-cell *matCellDef="let h">{{ h.zenAccount || '—' }}</td>
-        </ng-container>
         <ng-container matColumnDef="notes">
           <th mat-header-cell *matHeaderCellDef>Notas</th>
           <td mat-cell *matCellDef="let h">{{ h.notes || '—' }}</td>

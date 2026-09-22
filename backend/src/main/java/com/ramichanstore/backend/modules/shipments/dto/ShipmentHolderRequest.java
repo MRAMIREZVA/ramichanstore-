@@ -5,6 +5,5 @@ import jakarta.validation.constraints.Size;
 
 public record ShipmentHolderRequest(
         @NotBlank(message = "El nombre es obligatorio") @Size(max = 150) String name,
-        @Size(max = 50) String zenAccount,
         @Size(max = 255) String notes) {
 }

@@ -66,7 +66,6 @@ public class ShipmentHolderService {
 
     private void applyRequest(ShipmentHolder holder, ShipmentHolderRequest request) {
         holder.setName(request.name());
-        holder.setZenAccount(request.zenAccount());
         holder.setNotes(request.notes());
     }
 }
