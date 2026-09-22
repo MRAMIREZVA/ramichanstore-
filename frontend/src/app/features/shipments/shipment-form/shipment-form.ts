@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   SHIPMENT_STATUS_LABELS,
   SHIPMENT_TYPE_LABELS,
@@ -28,13 +29,26 @@ export interface ShipmentFormData {
 }
 
 interface ShipmentItemDraft {
+  id: number | null;
   articleCode: string;
   description: string;
   quantity: number;
+  imageUrl: string | null;
+  /** Object URL local (blob) para mostrar la foto ya subida — la ruta del backend no es pública, no sirve como [src] directo. */
+  imageObjectUrl: string | null;
+  uploadingImage: boolean;
 }
 
 function emptyItem(): ShipmentItemDraft {
-  return { articleCode: '', description: '', quantity: 1 };
+  return {
+    id: null,
+    articleCode: '',
+    description: '',
+    quantity: 1,
+    imageUrl: null,
+    imageObjectUrl: null,
+    uploadingImage: false,
+  };
 }
 
 @Component({
@@ -50,11 +64,12 @@ function emptyItem(): ShipmentItemDraft {
     MatDatepickerModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
   ],
   templateUrl: './shipment-form.html',
   styleUrl: './shipment-form.scss',
 })
-export class ShipmentFormComponent implements OnInit {
+export class ShipmentFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly shipmentService = inject(ShipmentService);
   private readonly shipmentHolderService = inject(ShipmentHolderService);
@@ -70,9 +85,15 @@ export class ShipmentFormComponent implements OnInit {
   readonly holders = signal<ShipmentHolder[]>([]);
   readonly recipients = signal<ShipmentRecipient[]>([]);
   readonly items = signal<ShipmentItemDraft[]>(
-    this.data.shipment?.items.map((i) => ({ articleCode: i.articleCode ?? '', description: i.description, quantity: i.quantity })) ?? [
-      emptyItem(),
-    ],
+    this.data.shipment?.items.map((i) => ({
+      id: i.id,
+      articleCode: i.articleCode ?? '',
+      description: i.description,
+      quantity: i.quantity,
+      imageUrl: i.imageUrl,
+      imageObjectUrl: null,
+      uploadingImage: false,
+    })) ?? [emptyItem()],
   );
 
   private readonly s = this.data.shipment;
@@ -112,6 +133,16 @@ export class ShipmentFormComponent implements OnInit {
     this.form.controls.departureDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.form.controls.arrivalDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.recalculateTravelDays();
+
+    this.items().forEach((item, index) => {
+      if (item.id && item.imageUrl) this.loadItemImage(index, item.id);
+    });
+  }
+
+  ngOnDestroy(): void {
+    for (const item of this.items()) {
+      if (item.imageObjectUrl) URL.revokeObjectURL(item.imageObjectUrl);
+    }
   }
 
   private recalculateTravelDays(): void {
@@ -136,7 +167,50 @@ export class ShipmentFormComponent implements OnInit {
   }
 
   removeItem(index: number): void {
+    const item = this.items()[index];
+    if (item?.imageObjectUrl) URL.revokeObjectURL(item.imageObjectUrl);
     this.items.update((items) => items.filter((_, i) => i !== index));
+  }
+
+  private loadItemImage(index: number, itemId: number): void {
+    this.shipmentService.getItemImageBlob(itemId).subscribe({
+      next: (blob) => this.updateItem(index, { imageObjectUrl: URL.createObjectURL(blob) }),
+      error: () => {},
+    });
+  }
+
+  onImageSelected(index: number, event: Event): void {
+    const item = this.items()[index];
+    const file = (event.target as HTMLInputElement).files?.[0];
+    (event.target as HTMLInputElement).value = '';
+    if (!file || !item?.id) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.snackBar.open('La imagen no debe superar 5MB', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    this.updateItem(index, { uploadingImage: true });
+    this.shipmentService.uploadItemImage(item.id, file).subscribe({
+      next: () => {
+        if (item.imageObjectUrl) URL.revokeObjectURL(item.imageObjectUrl);
+        this.updateItem(index, { uploadingImage: false, imageObjectUrl: URL.createObjectURL(file), imageUrl: 'set' });
+      },
+      error: () => this.updateItem(index, { uploadingImage: false }),
+    });
+  }
+
+  removeItemImage(index: number): void {
+    const item = this.items()[index];
+    if (!item?.id) return;
+    this.updateItem(index, { uploadingImage: true });
+    this.shipmentService.deleteItemImage(item.id).subscribe({
+      next: () => {
+        if (item.imageObjectUrl) URL.revokeObjectURL(item.imageObjectUrl);
+        this.updateItem(index, { uploadingImage: false, imageObjectUrl: null, imageUrl: null });
+      },
+      error: () => this.updateItem(index, { uploadingImage: false }),
+    });
   }
 
   save(): void {
@@ -172,6 +246,7 @@ export class ShipmentFormComponent implements OnInit {
       status: v.status!,
       notes: v.notes || null,
       items: validItems.map((it) => ({
+        id: it.id,
         articleCode: it.articleCode.trim() || null,
         description: it.description.trim(),
         quantity: Number(it.quantity),

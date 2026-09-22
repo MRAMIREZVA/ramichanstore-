@@ -51,4 +51,19 @@ export class ShipmentService {
   delete(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
   }
+
+  uploadItemImage(itemId: number, file: File): Observable<ApiResponse<void>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<ApiResponse<void>>(`${environment.apiBaseUrl}/shipments/items/${itemId}/image`, form);
+  }
+
+  deleteItemImage(itemId: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${environment.apiBaseUrl}/shipments/items/${itemId}/image`);
+  }
+
+  /** Requiere fetch autenticado (blob), no un <img src> directo: a diferencia de las imágenes de producto, esta ruta NO es pública. */
+  getItemImageBlob(itemId: number): Observable<Blob> {
+    return this.http.get(`${environment.apiBaseUrl}/shipments/items/${itemId}/image/file`, { responseType: 'blob' });
+  }
 }

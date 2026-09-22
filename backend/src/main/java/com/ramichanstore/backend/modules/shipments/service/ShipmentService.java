@@ -5,6 +5,7 @@ import com.ramichanstore.backend.audit.AuditService;
 import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentItemRequest;
+import com.ramichanstore.backend.modules.shipments.dto.ShipmentItemResponse;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentResponse;
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
@@ -14,12 +15,18 @@ import com.ramichanstore.backend.modules.shipments.entity.ShipmentRecipient;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentType;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentHolderRepository;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentItemRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +34,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +42,14 @@ public class ShipmentService {
 
     private static final String MODULE = "SHIPMENTS";
 
+    private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final List<String> ALLOWED_CONTENT_TYPES =
+            List.of("image/jpeg", "image/png", "image/webp", "image/gif");
+
     private final ShipmentRepository shipmentRepository;
     private final ShipmentHolderRepository shipmentHolderRepository;
     private final ShipmentRecipientRepository shipmentRecipientRepository;
+    private final ShipmentItemRepository shipmentItemRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -122,20 +135,84 @@ public class ShipmentService {
         shipment.setFinalWeight(request.finalWeight());
         shipment.setStatus(request.status());
         shipment.setNotes(request.notes());
-        replaceItems(shipment, request.items());
+        reconcileItems(shipment, request.items());
     }
 
-    /** Sin índice único en shipment_items — a diferencia de DeliveryItem, un reemplazo simple (clear + agregar) no choca con nada. */
-    private void replaceItems(Shipment shipment, List<ShipmentItemRequest> requestedItems) {
-        shipment.getItems().clear();
+    /**
+     * Reconcilia por diferencia en vez de clear()+agregar: un artículo ya existente
+     * (viene con id) se actualiza en el mismo row para no perder su imagen subida;
+     * solo se borran los que ya no vienen en la lista y solo se crean los nuevos
+     * (sin id). Mismo patrón que DeliveryService.applyRequest (ver CLAUDE.md, lección
+     * de Fase 17) — necesario acá porque, a diferencia de antes, el id del artículo
+     * ahora sí importa (image upload/delete apunta a un itemId estable).
+     */
+    private void reconcileItems(Shipment shipment, List<ShipmentItemRequest> requestedItems) {
+        Map<Long, ShipmentItem> existingById = shipment.getItems().stream()
+                .filter(i -> i.getId() != null)
+                .collect(Collectors.toMap(ShipmentItem::getId, i -> i));
+        Set<Long> keepIds = requestedItems.stream()
+                .map(ShipmentItemRequest::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        shipment.getItems().removeIf(i -> i.getId() != null && !keepIds.contains(i.getId()));
+
         for (ShipmentItemRequest itemRequest : requestedItems) {
-            ShipmentItem item = new ShipmentItem();
-            item.setShipment(shipment);
+            ShipmentItem item = itemRequest.id() != null ? existingById.get(itemRequest.id()) : null;
+            if (item == null) {
+                item = new ShipmentItem();
+                item.setShipment(shipment);
+                shipment.getItems().add(item);
+            }
             item.setArticleCode(itemRequest.articleCode());
             item.setDescription(itemRequest.description());
             item.setQuantity(itemRequest.quantity());
-            shipment.getItems().add(item);
         }
+    }
+
+    @Transactional
+    public ShipmentItemResponse uploadItemImage(Long itemId, MultipartFile file) {
+        ShipmentItem item = findItemById(itemId);
+
+        if (file.isEmpty()) {
+            throw new BusinessRuleException("El archivo está vacío");
+        }
+        if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
+            throw new BusinessRuleException("La imagen no debe superar 5MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new BusinessRuleException("Formato de imagen no soportado (usa JPG, PNG, WEBP o GIF)");
+        }
+
+        item.setImageFileName(file.getOriginalFilename());
+        item.setImageContentType(contentType);
+        try {
+            item.setImageData(file.getBytes());
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el archivo de imagen", e);
+        }
+        ShipmentItem saved = shipmentItemRepository.save(item);
+        auditService.log(AuditAction.UPDATE, MODULE, "ShipmentItem", itemId.toString(), null, "imagen subida");
+        return ShipmentItemResponse.from(saved);
+    }
+
+    @Transactional
+    public void deleteItemImage(Long itemId) {
+        ShipmentItem item = findItemById(itemId);
+        item.setImageData(null);
+        item.setImageFileName(null);
+        item.setImageContentType(null);
+        shipmentItemRepository.save(item);
+        auditService.log(AuditAction.UPDATE, MODULE, "ShipmentItem", itemId.toString(), null, "imagen eliminada");
+    }
+
+    @Transactional(readOnly = true)
+    public ShipmentItem findItemForServing(Long itemId) {
+        return findItemById(itemId);
+    }
+
+    private ShipmentItem findItemById(Long itemId) {
+        return shipmentItemRepository.findById(itemId).orElseThrow(() -> ResourceNotFoundException.of("Artículo de embarque", itemId));
     }
 
     private ShipmentHolder resolveHolder(Long id) {

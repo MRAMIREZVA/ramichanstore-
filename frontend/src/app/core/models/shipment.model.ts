@@ -57,9 +57,11 @@ export interface ShipmentItem {
   articleCode: string | null;
   description: string;
   quantity: number;
+  imageUrl: string | null;
 }
 
 export interface ShipmentItemRequest {
+  id: number | null;
   articleCode: string | null;
   description: string;
   quantity: number;

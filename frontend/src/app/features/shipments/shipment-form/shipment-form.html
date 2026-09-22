@@ -136,6 +136,30 @@
     <div class="lines">
       @for (item of items(); track $index; let i = $index) {
         <div class="line-row">
+          <div class="item-photo">
+            @if (item.imageObjectUrl) {
+              <img [src]="item.imageObjectUrl" alt="Foto del artículo" class="item-thumb" />
+            } @else {
+              <div class="item-thumb placeholder"><mat-icon>image</mat-icon></div>
+            }
+            @if (item.uploadingImage) {
+              <mat-spinner diameter="20" class="item-photo-spinner" />
+            } @else if (item.id) {
+              <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImageSelected(i, $event)" />
+              <button mat-icon-button type="button" (click)="fileInput.click()" matTooltip="Subir/reemplazar foto">
+                <mat-icon>photo_camera</mat-icon>
+              </button>
+              @if (item.imageObjectUrl) {
+                <button mat-icon-button type="button" (click)="removeItemImage(i)" matTooltip="Quitar foto">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            } @else {
+              <span class="item-photo-hint" matTooltip="Guarda el embarque primero para poder subir la foto">
+                <mat-icon>info</mat-icon>
+              </span>
+            }
+          </div>
           <mat-form-field appearance="outline" class="code-field">
             <mat-label>Código</mat-label>
             <input matInput [value]="item.articleCode" (input)="updateItem(i, { articleCode: $any($event.target).value })" />

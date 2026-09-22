@@ -51,6 +51,42 @@
   align-items: flex-start;
 }
 
+.item-photo {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding-top: 4px;
+  position: relative;
+}
+
+.item-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.item-thumb.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-outline);
+}
+
+.item-photo-spinner {
+  margin: 0 8px;
+}
+
+.item-photo-hint {
+  display: flex;
+  align-items: center;
+  color: var(--mat-sys-outline);
+  padding: 0 8px;
+}
+
 .code-field {
   flex: 0 0 140px;
 }

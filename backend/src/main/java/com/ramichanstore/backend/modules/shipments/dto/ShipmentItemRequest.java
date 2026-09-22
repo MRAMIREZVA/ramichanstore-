@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record ShipmentItemRequest(
+        Long id,
         @Size(max = 50) String articleCode,
         @NotBlank(message = "La descripción es obligatoria") @Size(max = 300) String description,
         @NotNull(message = "La cantidad es obligatoria") @Min(1) Integer quantity) {
