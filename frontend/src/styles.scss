@@ -6,6 +6,17 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+// Tailwind SOLO para catálogo público y portal de clientes (Fase 29) — se
+// importan theme.css + utilities.css a propósito, sin preflight.css (el
+// reset de base de Tailwind): el panel admin (28 fases sobre Angular
+// Material) nunca usa clases de Tailwind, pero preflight resetea elementos
+// HTML base (h1, p, button, table...) de forma GLOBAL sin importar quién lo
+// use, así que se omite para no arriesgar ningún estilo ya existente ahí.
+// (@use de Sass debe ir antes que cualquier otra regla, incluido @import —
+// por eso este bloque va después del @use de Material, no antes.)
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
 // Identidad RamichanStore: violeta índigo (marca) + acento cálido naranja/coral
 // para llamadas a la acción (botones primarios, badges "Próximamente").
 html {
@@ -50,4 +61,30 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 .announcement-dialog-panel .mat-mdc-dialog-container {
   --mdc-dialog-container-color: transparent;
+}
+
+// Tipografía de marca (Fase 29) — solo catálogo público y portal de
+// clientes; el panel admin sigue con Roboto (default de Material) sin
+// tocar. El toggle body.catalog-scope/.portal-scope (agregado por
+// catalog-layout.ts/portal-layout.ts en ngOnInit, quitado en ngOnDestroy)
+// hace falta porque un mat-dialog/mat-select abierto desde estas pantallas
+// se renderiza en el cdk-overlay-container, que cuelga de <body> — NO es
+// descendiente de .catalog-shell/.portal-shell, así que sin el toggle esos
+// overlays se verían con la tipografía por defecto en vez de la de marca.
+.catalog-shell,
+.portal-shell,
+body.catalog-scope,
+body.portal-scope {
+  font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.catalog-shell h1,
+.catalog-shell h2,
+.catalog-shell h3,
+.portal-shell h1,
+.portal-shell h2,
+.portal-shell h3,
+body.catalog-scope .mat-mdc-dialog-title,
+body.portal-scope .mat-mdc-dialog-title {
+  font-family: 'Poppins', 'Inter', Roboto, sans-serif;
 }

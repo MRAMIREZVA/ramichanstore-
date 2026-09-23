@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,7 +17,7 @@ import { AnnouncementPopupComponent } from '../announcement-popup/announcement-p
   templateUrl: './catalog-layout.html',
   styleUrl: './catalog-layout.scss',
 })
-export class CatalogLayout implements OnInit {
+export class CatalogLayout implements OnInit, OnDestroy {
   private readonly catalogService = inject(PublicCatalogService);
   private readonly cartService = inject(CartService);
   private readonly dialog = inject(MatDialog);
@@ -28,6 +28,11 @@ export class CatalogLayout implements OnInit {
   readonly contactWhatsAppUrl = signal<string | null>(null);
 
   ngOnInit(): void {
+    // Un mat-dialog/mat-select abierto desde acá se renderiza en el
+    // cdk-overlay-container (cuelga de <body>, no de .catalog-shell) — este
+    // toggle es lo que hace que esos overlays también usen la tipografía de
+    // marca (ver styles.scss, Fase 29).
+    document.body.classList.add('catalog-scope');
     this.catalogService.getStoreInfo().subscribe({
       next: (res) => {
         if (res.data.whatsapp) {
@@ -38,6 +43,10 @@ export class CatalogLayout implements OnInit {
       },
       error: () => {},
     });
+  }
+
+  ngOnDestroy(): void {
+    document.body.classList.remove('catalog-scope');
   }
 
   /**

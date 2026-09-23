@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,9 +12,20 @@ import { PortalAuthService } from '../../../core/services/portal-auth.service';
   templateUrl: './portal-layout.html',
   styleUrl: './portal-layout.scss',
 })
-export class PortalLayout {
+export class PortalLayout implements OnInit, OnDestroy {
   private readonly portalAuthService = inject(PortalAuthService);
   readonly customer = this.portalAuthService.currentCustomer;
+
+  ngOnInit(): void {
+    // Mismo motivo que CatalogLayout: un mat-dialog/mat-select abierto desde
+    // acá se renderiza fuera de .portal-shell (en el cdk-overlay-container,
+    // que cuelga de <body>) — ver styles.scss, Fase 29.
+    document.body.classList.add('portal-scope');
+  }
+
+  ngOnDestroy(): void {
+    document.body.classList.remove('portal-scope');
+  }
 
   logout(): void {
     this.portalAuthService.logout();
