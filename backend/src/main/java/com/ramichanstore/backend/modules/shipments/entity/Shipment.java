@@ -67,9 +67,6 @@ public class Shipment extends BaseEntity {
     @Column(name = "domestic_japan_shipping_cost", precision = 10, scale = 2)
     private BigDecimal domesticJapanShippingCost;
 
-    @Column(name = "additional_cost", precision = 10, scale = 2)
-    private BigDecimal additionalCost;
-
     @Column(name = "handling_cost", precision = 10, scale = 2)
     private BigDecimal handlingCost;
 

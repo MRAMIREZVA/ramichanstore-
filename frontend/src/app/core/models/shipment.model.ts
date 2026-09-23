@@ -133,7 +133,6 @@ export interface ShipmentRequest {
   shippingCost: number | null;
   commissionCost: number | null;
   domesticJapanShippingCost: number | null;
-  additionalCost: number | null;
   handlingCost: number | null;
   exchangeRate: number | null;
   shipmentTypeId: number;

@@ -24,9 +24,16 @@ public record ShipmentResponse(
         boolean wentThroughCustoms, BigDecimal customsTaxAmount,
         List<ShipmentItemResponse> items, List<ShipmentDocumentResponse> documents) {
 
-    public static ShipmentResponse from(Shipment s) {
+    /**
+     * additionalCostPercent viene de SHIPMENT_ADDITIONAL_COST_PERCENT (settings, V28) — un
+     * único valor general para todos los embarques, nunca guardado por embarque. additionalCost
+     * (y por lo tanto finalCost) se derivan de él + totalSoles de ESTE embarque en cada lectura,
+     * mismo criterio que totalSoles/totalDollars/finalCost desde V24.
+     */
+    public static ShipmentResponse from(Shipment s, BigDecimal additionalCostPercent) {
         BigDecimal totalSoles = totalSoles(s);
         BigDecimal totalDollars = totalDollars(totalSoles, s.getExchangeRate());
+        BigDecimal additionalCost = computeAdditionalCost(totalSoles, additionalCostPercent);
         return new ShipmentResponse(
                 s.getId(), s.getCode(),
                 s.getHolder().getId(), s.getHolder().getName(),
@@ -34,8 +41,8 @@ public record ShipmentResponse(
                 s.getRecipient() != null ? s.getRecipient().getName() : null,
                 s.getZenOrderNumber(),
                 s.getProductCost(), s.getShippingCost(), s.getCommissionCost(),
-                s.getDomesticJapanShippingCost(), s.getAdditionalCost(), s.getHandlingCost(),
-                s.getExchangeRate(), totalDollars, totalSoles, finalCost(s, totalSoles),
+                s.getDomesticJapanShippingCost(), additionalCost, s.getHandlingCost(),
+                s.getExchangeRate(), totalDollars, totalSoles, finalCost(s, totalSoles, additionalCost),
                 s.getShipmentType().getId(), s.getShipmentType().getName(),
                 s.getDepartureDate(), s.getArrivalDate(), transitDays(s),
                 s.getTravelDays(), s.getPossibleArrivalDate(),
@@ -85,12 +92,23 @@ public record ShipmentResponse(
         return totalSoles.divide(exchangeRate, 2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Costo adicional = Total (S/) de ESTE embarque × SHIPMENT_ADDITIONAL_COST_PERCENT
+     * (settings, un solo valor general — ver V28), nunca un monto tipeado por embarque.
+     */
+    private static BigDecimal computeAdditionalCost(BigDecimal totalSoles, BigDecimal percent) {
+        if (totalSoles == null || percent == null) {
+            return null;
+        }
+        return totalSoles.multiply(percent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+    }
+
     /** Costo final = Total (S/) + costo adicional + gastos movibles, todo en soles — sin conversión. */
-    private static BigDecimal finalCost(Shipment s, BigDecimal totalSoles) {
+    private static BigDecimal finalCost(Shipment s, BigDecimal totalSoles, BigDecimal additionalCost) {
         if (totalSoles == null) {
             return null;
         }
-        return totalSoles.add(nz(s.getAdditionalCost())).add(nz(s.getHandlingCost()));
+        return totalSoles.add(nz(additionalCost)).add(nz(s.getHandlingCost()));
     }
 
     private static BigDecimal nz(BigDecimal value) {

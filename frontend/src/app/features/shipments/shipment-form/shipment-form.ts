@@ -22,6 +22,7 @@ import {
   ShipmentStatus,
   ShipmentTypeOption,
 } from '../../../core/models/shipment.model';
+import { SettingService } from '../../../core/services/setting.service';
 import { ShipmentHolderService } from '../../../core/services/shipment-holder.service';
 import { ShipmentRecipientService } from '../../../core/services/shipment-recipient.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
@@ -94,6 +95,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   private readonly shipmentHolderService = inject(ShipmentHolderService);
   private readonly shipmentRecipientService = inject(ShipmentRecipientService);
   private readonly shipmentTypeOptionService = inject(ShipmentTypeOptionService);
+  private readonly settingService = inject(SettingService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ShipmentFormComponent>);
   private readonly dialog = inject(MatDialog);
@@ -105,6 +107,8 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   readonly holders = signal<ShipmentHolder[]>([]);
   readonly recipients = signal<ShipmentRecipient[]>([]);
   readonly types = signal<ShipmentTypeOption[]>([]);
+  /** SHIPMENT_ADDITIONAL_COST_PERCENT (Configuración) — un solo valor general, ver CLAUDE.md Fase 31. */
+  readonly additionalCostPercent = signal<number | null>(null);
   readonly items = signal<ShipmentItemDraft[]>(
     this.data.shipment?.items.map((i) => ({
       id: i.id,
@@ -155,6 +159,14 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     this.shipmentHolderService.findAll().subscribe((res) => this.holders.set(res.data));
     this.shipmentRecipientService.findAll().subscribe((res) => this.recipients.set(res.data));
     this.shipmentTypeOptionService.findAll().subscribe((res) => this.types.set(res.data));
+    this.settingService.findAll().subscribe({
+      next: (res) => {
+        const setting = res.data.find((s) => s.key === 'SHIPMENT_ADDITIONAL_COST_PERCENT');
+        this.additionalCostPercent.set(setting ? Number(setting.value) : null);
+        this.recalculateTotals();
+      },
+      error: () => {},
+    });
 
     // "Días de viaje" nunca se escribe a mano: se calcula solo a partir de fecha de
     // salida/llegada, mismo criterio que transitDays/weightDifference en el backend.
@@ -163,13 +175,15 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     this.form.controls.arrivalDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.recalculateTravelDays();
 
-    // Total (US$)/Total (S/)/Costo final tampoco se escriben a mano — se calculan
-    // igual que en el backend (ShipmentResponse), mismo criterio que travelDays.
+    // Costo adicional/Total (US$)/Total (S/)/Costo final tampoco se escriben a mano — se
+    // calculan igual que en el backend (ShipmentResponse), mismo criterio que travelDays.
+    // Costo adicional = Total (S/) × SHIPMENT_ADDITIONAL_COST_PERCENT (un % general, ver arriba).
+    this.form.controls.additionalCost.disable({ emitEvent: false });
     this.form.controls.totalDollars.disable({ emitEvent: false });
     this.form.controls.totalSoles.disable({ emitEvent: false });
     this.form.controls.finalCost.disable({ emitEvent: false });
     for (const key of ['productCost', 'shippingCost', 'commissionCost', 'domesticJapanShippingCost',
-      'additionalCost', 'handlingCost', 'exchangeRate'] as const) {
+      'handlingCost', 'exchangeRate'] as const) {
       this.form.controls[key].valueChanges.subscribe(() => this.recalculateTotals());
     }
     this.recalculateTotals();
@@ -222,7 +236,8 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
    * movibles) van en S/ — el tipo de cambio solo convierte Total (S/) a su
    * equivalente informativo en US$, nunca al revés. Costo final suma todo en
    * soles, sin conversión. Mismo cálculo que ShipmentResponse en el backend
-   * (ver CLAUDE.md, Fase 22).
+   * (ver CLAUDE.md, Fase 22). Costo adicional = Total (S/) × porcentaje
+   * general (Fase 31) — ya no se tipea por embarque.
    */
   private recalculateTotals(): void {
     const v = this.form.getRawValue();
@@ -235,7 +250,11 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     const totalDollars = totalSoles !== null && rate ? totalSoles / Number(rate) : null;
     this.form.controls.totalDollars.setValue(totalDollars !== null ? Math.round(totalDollars * 100) / 100 : null, { emitEvent: false });
 
-    const finalCost = totalSoles !== null ? totalSoles + (Number(v.additionalCost) || 0) + (Number(v.handlingCost) || 0) : null;
+    const percent = this.additionalCostPercent();
+    const additionalCost = totalSoles !== null && percent !== null ? Math.round(totalSoles * percent) / 100 : null;
+    this.form.controls.additionalCost.setValue(additionalCost, { emitEvent: false });
+
+    const finalCost = totalSoles !== null ? totalSoles + (additionalCost ?? 0) + (Number(v.handlingCost) || 0) : null;
     this.form.controls.finalCost.setValue(finalCost, { emitEvent: false });
   }
 
@@ -374,7 +393,6 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       shippingCost: v.shippingCost,
       commissionCost: v.commissionCost,
       domesticJapanShippingCost: v.domesticJapanShippingCost,
-      additionalCost: v.additionalCost,
       handlingCost: v.handlingCost,
       exchangeRate: v.exchangeRate,
       shipmentTypeId: v.shipmentTypeId!,

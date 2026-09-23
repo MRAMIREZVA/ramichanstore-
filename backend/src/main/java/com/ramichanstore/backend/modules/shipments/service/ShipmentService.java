@@ -24,9 +24,11 @@ import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientR
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentTypeOptionRepository;
+import com.ramichanstore.backend.modules.settings.service.SettingService;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -63,6 +65,7 @@ public class ShipmentService {
     private final ShipmentTypeOptionRepository shipmentTypeOptionRepository;
     private final ShipmentItemRepository shipmentItemRepository;
     private final ShipmentDocumentRepository shipmentDocumentRepository;
+    private final SettingService settingService;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -79,12 +82,18 @@ public class ShipmentService {
                 .filter(Objects::nonNull)
                 .toList();
         Specification<Shipment> spec = specs.isEmpty() ? null : Specification.allOf(specs);
-        return shipmentRepository.findAll(spec, pageable).map(ShipmentResponse::from);
+        BigDecimal percent = additionalCostPercent();
+        return shipmentRepository.findAll(spec, pageable).map(s -> ShipmentResponse.from(s, percent));
     }
 
     @Transactional(readOnly = true)
     public ShipmentResponse findResponseById(Long id) {
-        return ShipmentResponse.from(findById(id));
+        return ShipmentResponse.from(findById(id), additionalCostPercent());
+    }
+
+    /** SHIPMENT_ADDITIONAL_COST_PERCENT — un solo valor general para todos los embarques (ver V28). */
+    private BigDecimal additionalCostPercent() {
+        return settingService.getNumber("SHIPMENT_ADDITIONAL_COST_PERCENT");
     }
 
     @Transactional(readOnly = true)
@@ -101,7 +110,7 @@ public class ShipmentService {
         applyRequest(shipment, request);
         Shipment saved = shipmentRepository.save(shipment);
         auditService.log(AuditAction.CREATE, MODULE, "Shipment", saved.getId().toString(), null, summarize(saved));
-        return ShipmentResponse.from(saved);
+        return ShipmentResponse.from(saved, additionalCostPercent());
     }
 
     @Transactional
@@ -114,7 +123,7 @@ public class ShipmentService {
         applyRequest(shipment, request);
         Shipment saved = shipmentRepository.save(shipment);
         auditService.log(AuditAction.UPDATE, MODULE, "Shipment", id.toString(), before, summarize(saved));
-        return ShipmentResponse.from(saved);
+        return ShipmentResponse.from(saved, additionalCostPercent());
     }
 
     @Transactional
@@ -134,7 +143,6 @@ public class ShipmentService {
         shipment.setShippingCost(request.shippingCost());
         shipment.setCommissionCost(request.commissionCost());
         shipment.setDomesticJapanShippingCost(request.domesticJapanShippingCost());
-        shipment.setAdditionalCost(request.additionalCost());
         shipment.setHandlingCost(request.handlingCost());
         shipment.setExchangeRate(request.exchangeRate());
         shipment.setShipmentType(resolveShipmentType(request.shipmentTypeId()));
