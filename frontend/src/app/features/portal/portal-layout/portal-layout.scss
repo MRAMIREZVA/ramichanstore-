@@ -48,7 +48,10 @@
 }
 
 .portal-content {
-  max-width: 960px;
+  /* 1280px en vez de 960px: con las columnas Pagado/Saldo (Fase 27) la tabla de
+     "Mis compras" pasó a 9 columnas y necesitaba scroll horizontal aun en
+     pantallas anchas, con mucho espacio vacío a los costados sin usarse. */
+  max-width: 1280px;
   margin: 0 auto;
   padding: 24px 16px;
 }
