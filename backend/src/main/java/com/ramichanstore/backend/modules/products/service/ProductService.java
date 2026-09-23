@@ -49,11 +49,13 @@ public class ProductService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> search(String term, Long categoryId, Long brandId, ProductStatus status, Pageable pageable) {
+    public Page<ProductResponse> search(
+            String term, Long categoryId, Long brandId, String franchise, ProductStatus status, Pageable pageable) {
         List<Specification<Product>> specs = Stream.of(
                         ProductSpecifications.search(term),
                         ProductSpecifications.hasCategory(categoryId),
                         ProductSpecifications.hasBrand(brandId),
+                        ProductSpecifications.hasFranchise(franchise),
                         ProductSpecifications.hasStatus(status))
                 .filter(Objects::nonNull)
                 .toList();

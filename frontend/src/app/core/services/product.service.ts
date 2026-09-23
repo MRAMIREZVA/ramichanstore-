@@ -10,6 +10,7 @@ export interface ProductFilters {
   search?: string;
   categoryId?: number | null;
   brandId?: number | null;
+  franchise?: string | null;
   status?: ProductStatus | null;
   page?: number;
   size?: number;
@@ -27,9 +28,14 @@ export class ProductService {
     if (filters.search) params = params.set('search', filters.search);
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.brandId) params = params.set('brandId', filters.brandId);
+    if (filters.franchise) params = params.set('franchise', filters.franchise);
     if (filters.status) params = params.set('status', filters.status);
 
     return this.http.get<ApiResponse<PageResponse<Product>>>(this.baseUrl, { params });
+  }
+
+  findFranchises(): Observable<ApiResponse<string[]>> {
+    return this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/franchises`);
   }
 
   findById(id: number): Observable<ApiResponse<Product>> {

@@ -56,10 +56,12 @@ export class ProductsList implements OnInit {
   readonly totalElements = signal(0);
   readonly categories = signal<Category[]>([]);
   readonly brands = signal<Brand[]>([]);
+  readonly franchises = signal<string[]>([]);
 
   readonly searchControl = new FormControl('');
   readonly categoryControl = new FormControl<number | null>(null);
   readonly brandControl = new FormControl<number | null>(null);
+  readonly franchiseControl = new FormControl<string | null>(null);
   readonly statusControl = new FormControl<ProductStatus | null>(null);
 
   page = 0;
@@ -68,6 +70,7 @@ export class ProductsList implements OnInit {
   ngOnInit(): void {
     this.catalogService.getCategories().subscribe((res) => this.categories.set(res.data));
     this.catalogService.getBrands().subscribe((res) => this.brands.set(res.data));
+    this.productService.findFranchises().subscribe((res) => this.franchises.set(res.data));
 
     this.searchControl.valueChanges.pipe(debounceTime(350), distinctUntilChanged()).subscribe(() => {
       this.page = 0;
@@ -78,6 +81,10 @@ export class ProductsList implements OnInit {
       this.load();
     });
     this.brandControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
+    this.franchiseControl.valueChanges.subscribe(() => {
       this.page = 0;
       this.load();
     });
@@ -95,6 +102,7 @@ export class ProductsList implements OnInit {
       search: this.searchControl.value ?? undefined,
       categoryId: this.categoryControl.value,
       brandId: this.brandControl.value,
+      franchise: this.franchiseControl.value,
       status: this.statusControl.value,
       page: this.page,
       size: this.pageSize,

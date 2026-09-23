@@ -7,6 +7,7 @@ import com.ramichanstore.backend.modules.products.dto.ProductResponse;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -34,10 +35,17 @@ public class ProductController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) String franchise,
             @RequestParam(required = false) ProductStatus status,
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
-        var page = productService.search(search, categoryId, brandId, status, pageable);
+        var page = productService.search(search, categoryId, brandId, franchise, status, pageable);
         return ApiResponse.ok(PageResponse.from(page));
+    }
+
+    @GetMapping("/franchises")
+    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
+    public ApiResponse<List<String>> findFranchises() {
+        return ApiResponse.ok(productService.findDistinctFranchises());
     }
 
     @GetMapping("/{id}")
