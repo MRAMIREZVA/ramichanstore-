@@ -104,12 +104,11 @@
                       <span class="status-chip" [attr.data-preorder-status]="r.preorderStatus">{{ reservationStatusLabel(r.preorderStatus) }}</span>
                       <span>Separación: S/ {{ r.depositAmount.toFixed(2) }}</span>
                     </div>
-                    <div class="reservation-dates">
-                      <span>Límite: {{ r.limitDate }}</span>
-                      @if (r.estimatedArrivalDate) {
+                    @if (r.estimatedArrivalDate) {
+                      <div class="reservation-dates">
                         <span>Llegada estimada: {{ r.estimatedArrivalDate }}</span>
-                      }
-                    </div>
+                      </div>
+                    }
                   </div>
                 </mat-card>
               }
