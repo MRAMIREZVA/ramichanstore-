@@ -53,6 +53,13 @@ public class Delivery extends BaseEntity {
     @Column(length = 100)
     private String district;
 
+    /** Los 25 departamentos del Perú, fijos — el frontend los ofrece como combo cerrado para que las estadísticas de "de dónde son los clientes" no se fragmenten por variaciones de tipeo. */
+    @Column(length = 100)
+    private String department;
+
+    @Column(length = 100)
+    private String province;
+
     @Column(length = 150)
     private String agency;
 

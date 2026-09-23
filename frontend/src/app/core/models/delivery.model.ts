@@ -41,6 +41,8 @@ export interface Delivery {
   deliveryType: DeliveryMethod;
   address: string | null;
   district: string | null;
+  department: string | null;
+  province: string | null;
   agency: string | null;
   courier: string | null;
   scheduledDate: string;
@@ -55,6 +57,8 @@ export interface DeliveryRequest {
   deliveryType: DeliveryMethod;
   address: string | null;
   district: string | null;
+  department: string | null;
+  province: string | null;
   agency: string | null;
   courier: string | null;
   scheduledDate: string;

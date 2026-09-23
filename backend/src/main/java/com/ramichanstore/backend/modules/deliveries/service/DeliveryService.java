@@ -186,6 +186,8 @@ public class DeliveryService {
         delivery.setDeliveryType(request.deliveryType());
         delivery.setAddress(request.address());
         delivery.setDistrict(request.district());
+        delivery.setDepartment(request.department());
+        delivery.setProvince(request.province());
         delivery.setAgency(request.agency());
         delivery.setCourier(request.courier());
         delivery.setScheduledDate(request.scheduledDate());

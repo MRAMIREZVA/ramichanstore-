@@ -57,6 +57,19 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
+        <mat-label>Departamento</mat-label>
+        <mat-select formControlName="department">
+          <mat-option [value]="null">Sin especificar</mat-option>
+          @for (dep of departments; track dep) {
+            <mat-option [value]="dep">{{ dep }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Provincia</mat-label>
+        <input matInput formControlName="province" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label>Distrito</mat-label>
         <input matInput formControlName="district" />
       </mat-form-field>

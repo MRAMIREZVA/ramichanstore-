@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { PERU_DEPARTMENTS } from '../../../core/constants/peru-departments';
 import { Customer } from '../../../core/models/customer.model';
 import { DELIVERY_STATUS_LABELS, Delivery, DeliveryRequest, DeliveryStatus, PendingPurchase } from '../../../core/models/delivery.model';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod } from '../../../core/models/sale.model';
@@ -57,6 +58,7 @@ export class DeliveryFormComponent implements OnInit {
 
   readonly deliveryTypeOptions = Object.entries(DELIVERY_METHOD_LABELS) as [DeliveryMethod, string][];
   readonly statusOptions = Object.entries(DELIVERY_STATUS_LABELS) as [DeliveryStatus, string][];
+  readonly departments = PERU_DEPARTMENTS;
 
   readonly saving = signal(false);
   readonly searchingCustomer = signal(false);
@@ -76,6 +78,8 @@ export class DeliveryFormComponent implements OnInit {
     deliveryType: [this.data.delivery?.deliveryType ?? ('DELIVERY' as DeliveryMethod), Validators.required],
     address: [this.data.delivery?.address ?? ''],
     district: [this.data.delivery?.district ?? ''],
+    department: [this.data.delivery?.department ?? null],
+    province: [this.data.delivery?.province ?? ''],
     agency: [this.data.delivery?.agency ?? ''],
     courier: [this.data.delivery?.courier ?? ''],
     scheduledDate: [this.data.delivery ? parseIsoDate(this.data.delivery.scheduledDate) : new Date(), Validators.required],
@@ -180,6 +184,8 @@ export class DeliveryFormComponent implements OnInit {
       deliveryType: v.deliveryType as DeliveryMethod,
       address: v.address || null,
       district: v.district || null,
+      department: v.department || null,
+      province: v.province || null,
       agency: v.agency || null,
       courier: v.courier || null,
       scheduledDate: this.toIsoDate(v.scheduledDate as Date),

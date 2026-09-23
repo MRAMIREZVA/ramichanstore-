@@ -11,7 +11,8 @@ public record DeliveryResponse(
         Long id,
         Long customerId, String customerName, String customerPhone, String customerWhatsapp,
         List<DeliveryItemResponse> items, BigDecimal totalAmount,
-        DeliveryMethod deliveryType, String address, String district, String agency, String courier,
+        DeliveryMethod deliveryType, String address, String district, String department, String province,
+        String agency, String courier,
         LocalDate scheduledDate, DeliveryStatus status, String notes) {
 
     public static DeliveryResponse from(Delivery d) {
@@ -22,7 +23,8 @@ public record DeliveryResponse(
                 d.getId(),
                 customer.getId(), customer.getFullName(), customer.getPhone(), customer.getWhatsapp(),
                 items, totalAmount,
-                d.getDeliveryType(), d.getAddress(), d.getDistrict(), d.getAgency(), d.getCourier(),
+                d.getDeliveryType(), d.getAddress(), d.getDistrict(), d.getDepartment(), d.getProvince(),
+                d.getAgency(), d.getCourier(),
                 d.getScheduledDate(), d.getStatus(), d.getNotes());
     }
 }

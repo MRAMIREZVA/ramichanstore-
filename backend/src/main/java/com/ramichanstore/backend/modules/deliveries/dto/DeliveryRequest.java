@@ -14,6 +14,8 @@ public record DeliveryRequest(
         @NotNull(message = "El tipo de entrega es obligatorio") DeliveryMethod deliveryType,
         @Size(max = 255) String address,
         @Size(max = 100) String district,
+        @Size(max = 100) String department,
+        @Size(max = 100) String province,
         @Size(max = 150) String agency,
         @Size(max = 150) String courier,
         @NotNull(message = "La fecha programada es obligatoria") LocalDate scheduledDate,
