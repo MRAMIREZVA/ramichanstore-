@@ -17,6 +17,13 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
+// Token de Tailwind para usar `font-display` en templates de catálogo/portal
+// cuando se quiere Poppins deliberadamente en un elemento que no es h1/h2/h3
+// (esos ya lo heredan solos, ver regla `.catalog-shell h1...` más abajo).
+@theme {
+  --font-display: 'Poppins', 'Inter', Roboto, sans-serif;
+}
+
 // Identidad RamichanStore: violeta índigo (marca) + acento cálido naranja/coral
 // para llamadas a la acción (botones primarios, badges "Próximamente").
 html {

@@ -1,29 +1,16 @@
-.hero-banner {
-  position: relative;
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  padding: 40px 32px;
-  /* Mismo min-height que .has-image (abajo) a propósito: StoreInfo (y con ella
-     bannerUrl) llega async después del primer render — si este valor fuera menor,
-     todo lo de abajo (filtros, grilla) se corre hacia abajo apenas la imagen carga,
-     un salto de layout (CLS) que en mobile hace que un tap rápido sobre un producto
-     termine cayendo sobre el filtro que quedó debajo. Igualando el mínimo desde el
-     arranque, ese salto no existe. */
-  min-height: 220px;
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
-  color: white;
+// Fase 30 (rediseño con Tailwind): el layout/tipografía/espaciado de esta
+// pantalla ahora vive en el HTML como clases de utilidad de Tailwind. Este
+// archivo solo tiene lo que Tailwind no puede expresar limpio (el degradado
+// decorativo del hero) — y a propósito NO repite ninguna propiedad que ya
+// esté puesta como clase de Tailwind en el mismo elemento: las utilidades de
+// Tailwind se importan dentro de un `@layer` (ver styles.scss), y en CSS una
+// capa SIEMPRE pierde contra una regla sin capa como esta, sin importar
+// especificidad — si esta hoja repitiera, por ejemplo, `min-height` para
+// `.hero-banner`, la utilidad de Tailwind `min-h-[220px]` del HTML dejaría
+// de tener efecto aunque se vea "correcta" en el código.
 
-  /* Con imagen propia (tipo portada de Facebook, bien ancha) el banner necesita más
-     alto para no recortarla tanto — se usa aspect-ratio en vez de una altura fija
-     para que se mantenga proporcional en cualquier ancho de pantalla. */
-  &.has-image {
-    aspect-ratio: 2.7 / 1;
-    min-height: 220px;
-    max-height: 480px;
-  }
+.hero-banner {
+  background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
 
   &::before {
     content: '';
@@ -34,161 +21,23 @@
     pointer-events: none;
   }
 
-  &.has-image::before {
-    /* Con foto propia, se cambia el degradado decorativo por un velo oscuro para que el texto siga legible. */
-    background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 70%);
+  /* Con imagen propia (tipo portada de Facebook, bien ancha) el banner necesita más
+     alto para no recortarla tanto — se usa aspect-ratio en vez de una altura fija
+     para que se mantenga proporcional en cualquier ancho de pantalla. min-height se
+     repite a propósito (la utilidad Tailwind min-h-[220px] del HTML está en el DIV
+     de contenido de adentro, no en .hero-banner — un hijo con min-height no fuerza
+     a crecer a un padre cuya altura ya está fijada por aspect-ratio, así que en
+     pantallas angostas el aspect-ratio 2.7/1 solo daría ~144px sin este piso). */
+  &.has-image {
+    aspect-ratio: 2.7 / 1;
+    min-height: 220px;
+    max-height: 480px;
+
+    &::before {
+      /* Con foto propia, se cambia el degradado decorativo por un velo oscuro para que el texto siga legible. */
+      background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 70%);
+    }
   }
-}
-
-.hero-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hero-content {
-  position: relative;
-  max-width: 560px;
-}
-
-.hero-eyebrow {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(255, 255, 255, 0.16);
-  padding: 3px 10px;
-  border-radius: 999px;
-  margin-bottom: 10px;
-}
-
-.hero-title {
-  margin: 0 0 8px;
-  font-size: 32px;
-  font-weight: 800;
-}
-
-.hero-subtitle {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.9;
-  line-height: 1.5;
-}
-
-@media (max-width: 560px) {
-  .hero-banner {
-    padding: 28px 20px;
-  }
-  .hero-title {
-    font-size: 24px;
-  }
-}
-
-.page-title {
-  margin: 0 0 16px;
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.franchise-section {
-  margin-bottom: 28px;
-}
-
-.franchise-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-
-  h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-  }
-}
-
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-
-  .search-field {
-    flex: 1 1 280px;
-  }
-
-  mat-form-field:not(.search-field) {
-    flex: 0 1 200px;
-  }
-
-  .preorder-toggle {
-    display: flex;
-    align-items: center;
-    flex: 0 0 auto;
-  }
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  padding: 60px;
-}
-
-.empty {
-  text-align: center;
-  padding: 60px 0;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.product-card {
-  cursor: pointer;
-  overflow: hidden;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
-}
-
-.thumb {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  background: var(--mat-sys-surface-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* position:absolute saca la imagen del flujo flex — si no, un flex item con
-     min-height:auto por defecto se expande al alto intrínseco de la imagen
-     (su aspect-ratio real) en vez de respetar el aspect-ratio:1/1 del contenedor,
-     dejando tarjetas enormes en pantallas angostas con fotos verticales. */
-  img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-}
-
-.placeholder-icon {
-  font-size: 40px;
-  width: 40px;
-  height: 40px;
-  color: var(--mat-sys-outline);
 }
 
 .stock-badge {
@@ -207,59 +56,5 @@
   &.out {
     background: var(--mat-sys-error-container);
     color: var(--mat-sys-on-error-container);
-  }
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 12px 12px;
-  gap: 2px;
-}
-
-.brand-name {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.product-name {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.character {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.price-row {
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.price {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--mat-sys-primary);
-}
-
-.add-to-cart-btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
   }
 }
