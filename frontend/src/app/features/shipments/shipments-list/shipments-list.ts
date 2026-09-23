@@ -55,7 +55,7 @@ export class ShipmentsList implements OnInit {
 
   readonly statusLabels = SHIPMENT_STATUS_LABELS;
   readonly types = signal<ShipmentTypeOption[]>([]);
-  readonly displayedColumns = ['code', 'holder', 'type', 'dates', 'finalCost', 'status', 'actions'];
+  readonly displayedColumns = ['code', 'holder', 'type', 'dates', 'transit', 'weight', 'finalCost', 'status', 'actions'];
 
   readonly loading = signal(true);
   readonly shipments = signal<Shipment[]>([]);

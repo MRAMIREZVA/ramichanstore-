@@ -89,6 +89,27 @@
           <td mat-cell *matCellDef="let s">{{ s.departureDate || '—' }} → {{ s.arrivalDate || '—' }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="transit">
+          <th mat-header-cell *matHeaderCellDef>Días tránsito</th>
+          <td mat-cell *matCellDef="let s">{{ s.transitDays !== null ? s.transitDays + ' días' : '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="weight">
+          <th mat-header-cell *matHeaderCellDef>Peso</th>
+          <td mat-cell *matCellDef="let s">
+            @if (s.finalWeight !== null) {
+              <div>{{ s.finalWeight }} g</div>
+            } @else if (s.figuresWeight !== null) {
+              <div>{{ s.figuresWeight }} g</div>
+            } @else {
+              <div>—</div>
+            }
+            @if (s.weightDifference !== null) {
+              <div class="sub">Dif: {{ s.weightDifference > 0 ? '+' : '' }}{{ s.weightDifference }} g</div>
+            }
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="finalCost">
           <th mat-header-cell *matHeaderCellDef>Costo final</th>
           <td mat-cell *matCellDef="let s">{{ s.finalCost !== null ? 'S/ ' + s.finalCost.toFixed(2) : '—' }}</td>
