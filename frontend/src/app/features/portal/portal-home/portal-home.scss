@@ -39,10 +39,11 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-/* 7 columnas (fecha/tipo/detalle/total/pago/entrega/acciones) no entran en una
-   pantalla angosta sin volverse ilegibles — en vez de que cada celda se parta
-   en varias líneas (lo que pasaba antes, ver CLAUDE.md lección de mobile), se
-   deja scrollear horizontal y la tabla mantiene un ancho mínimo razonable. */
+/* 9 columnas (fecha/tipo/detalle/total/pagado/saldo/pago/entrega/acciones) no
+   entran en una pantalla angosta sin volverse ilegibles — en vez de que cada
+   celda se parta en varias líneas (lo que pasaba antes, ver CLAUDE.md lección
+   de mobile), se deja scrollear horizontal y la tabla mantiene un ancho
+   mínimo razonable. */
 .table-scroll {
   overflow-x: auto;
   border-radius: 12px;
@@ -61,6 +62,11 @@
   td.mat-mdc-cell {
     white-space: nowrap;
   }
+}
+
+.negative {
+  color: var(--mat-sys-error);
+  font-weight: 600;
 }
 
 .status-chip {

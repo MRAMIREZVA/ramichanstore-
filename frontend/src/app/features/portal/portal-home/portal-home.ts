@@ -31,6 +31,8 @@ interface PortalPurchaseRow {
   date: string;
   summary: string;
   total: number;
+  amountPaid: number;
+  balanceDue: number;
   paymentStatus: PaymentStatus;
   deliveryLabel: string;
   deliveryStatusAttr: DeliveryStatus | 'NONE';
@@ -96,7 +98,7 @@ export class PortalHome implements OnInit {
   readonly statusLabels = PAYMENT_STATUS_LABELS;
   readonly reservationStatusLabels = PREORDER_STATUS_LABELS;
   readonly steps = STEPS;
-  readonly purchaseColumns = ['date', 'type', 'summary', 'total', 'status', 'delivery', 'actions'];
+  readonly purchaseColumns = ['date', 'type', 'summary', 'total', 'paid', 'balance', 'status', 'delivery', 'actions'];
 
   readonly loadingBalance = signal(true);
   readonly pointsBalance = signal(0);
@@ -157,12 +159,17 @@ export class PortalHome implements OnInit {
 
         const saleRows: PortalPurchaseRow[] = sales.data.content.map((s) => {
           const delivery = deliveryLookup.get(purchaseKey('VENTA', s.id));
+          // Una venta no tiene ledger de abonos parciales como una separación: se paga completa o queda pendiente.
+          // No se anula el saldo en CANCELLED — mismo criterio que SeparationResponse en el backend (totalPrice - amountPaid siempre), para que ambos tipos de fila se vean consistentes.
+          const amountPaid = s.paymentStatus === 'PAID' ? s.total : 0;
           return {
             type: 'VENTA',
             id: s.id,
             date: s.saleDate,
             summary: `${s.items.length} producto(s)`,
             total: s.total,
+            amountPaid,
+            balanceDue: s.total - amountPaid,
             paymentStatus: s.paymentStatus,
             deliveryLabel: deliveryLabelFor(delivery, s.paymentStatus),
             deliveryStatusAttr: deliveryStatusAttrFor(delivery, s.paymentStatus),
@@ -177,6 +184,8 @@ export class PortalHome implements OnInit {
             date: s.separationDate,
             summary: s.productName,
             total: s.totalPrice,
+            amountPaid: s.amountPaid,
+            balanceDue: s.balanceDue,
             paymentStatus: s.status,
             deliveryLabel: deliveryLabelFor(delivery, s.status),
             deliveryStatusAttr: deliveryStatusAttrFor(delivery, s.status),
