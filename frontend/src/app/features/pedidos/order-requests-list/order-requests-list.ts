@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../core/models/sale.model';
 import { ORDER_REQUEST_STATUS_LABELS, OrderRequest, OrderRequestStatus } from '../../../core/models/order-request.model';
 import { OrderRequestFilters, OrderRequestService } from '../../../core/services/order-request.service';
+import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import {
   RejectOrderRequestDialogComponent,
@@ -93,6 +94,24 @@ export class OrderRequestsList implements OnInit {
 
   itemsSummary(order: OrderRequest): string {
     return `${order.items.length} producto(s)`;
+  }
+
+  /**
+   * Alerta "básica" pedida por el dueño: cuando llega un pedido web, el admin puede avisarle
+   * al cliente por WhatsApp de una vez, con el detalle, para arrancar la venta/separación/
+   * preventa — mismo patrón `whatsAppLink()` que ya usan Sales/Separations/Reservations
+   * (Fase 15), aplicado acá donde todavía no existía ningún contacto directo con el cliente.
+   */
+  contactWhatsAppLink(order: OrderRequest): string {
+    const lines = order.items.map((it) => `• ${it.quantity} x ${it.productName} — S/ ${it.subtotal.toFixed(2)}`);
+    const message =
+      `Hola ${order.guestName}, te escribimos de RamichanStore por tu pedido web #${order.id}:\n\n` +
+      `${lines.join('\n')}\n\n` +
+      `Total: S/ ${order.total.toFixed(2)}\n` +
+      `Pago preferido: ${this.paymentMethodLabel(order.preferredPaymentMethod)}\n` +
+      `Entrega: ${this.deliveryMethodLabel(order.deliveryMethod)}\n\n` +
+      `Para arrancar tu compra/separación/preventa, cuéntanos cómo prefieres coordinar el pago.`;
+    return whatsAppLink(order.guestWhatsapp || order.guestPhone, message);
   }
 
   statusLabel(status: OrderRequestStatus): string {
