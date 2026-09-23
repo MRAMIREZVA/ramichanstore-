@@ -16,6 +16,7 @@ import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestItem;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
 import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRepository;
 import com.ramichanstore.backend.modules.products.entity.Product;
+import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.sales.dto.SaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
@@ -65,9 +66,24 @@ public class OrderRequestService {
         orderRequest.setNotes(request.notes());
         orderRequest.setStatus(OrderRequestStatus.PENDING);
 
+        boolean cartHasPreorder = false;
+        boolean cartHasStock = false;
         for (CartItemRequest cartItem : request.items()) {
             // findPublicById (no findById): un producto descontinuado no es comprable, ni por un pedido web.
             Product product = productService.findPublicById(cartItem.productId());
+            // Un pedido web se convierte SIEMPRE en una sola Sale (ver convertToSale) — no hay forma de que
+            // resulte mitad-venta mitad-reserva de preventa, así que no se acepta un carrito mixto. El
+            // frontend ya bloquea esto al agregar al carrito (CartService.add); esta es la validación de
+            // fondo, por si alguien llama al endpoint público directo sin pasar por esa UI.
+            if (product.getStatus() == ProductStatus.PREORDER) {
+                cartHasPreorder = true;
+            } else {
+                cartHasStock = true;
+            }
+            if (cartHasPreorder && cartHasStock) {
+                throw new BusinessRuleException("No se puede mezclar productos en preventa con productos en stock en el mismo pedido");
+            }
+
             BigDecimal unitPrice = product.getSalePrice();
             OrderRequestItem item = new OrderRequestItem();
             item.setOrderRequest(orderRequest);

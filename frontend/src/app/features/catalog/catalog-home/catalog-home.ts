@@ -15,6 +15,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { mixedCartMessage } from '../../../core/models/cart.model';
 import { PRODUCT_STATUS_LABELS, ProductStatus } from '../../../core/models/product.model';
 import { CatalogFilterOption, PublicProduct, StoreInfo } from '../../../core/models/public-catalog.model';
 import { CartService } from '../../../core/services/cart.service';
@@ -160,7 +161,11 @@ export class CatalogHome implements OnInit {
   addToCart(product: PublicProduct, event: Event): void {
     event.stopPropagation();
     if (!product.inStock) return;
-    this.cartService.add(product, 1);
+    const result = this.cartService.add(product, 1);
+    if (!result.ok) {
+      this.snackBar.open(mixedCartMessage(result.cartHasPreorder), 'Cerrar', { duration: 4000 });
+      return;
+    }
     this.snackBar.open(`${product.name} agregado al carrito`, 'Cerrar', { duration: 2500 });
   }
 
