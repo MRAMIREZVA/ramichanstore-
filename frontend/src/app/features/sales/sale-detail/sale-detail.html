@@ -4,6 +4,26 @@
 </h2>
 
 <mat-dialog-content>
+  @if (data.sale.paymentStatus !== 'CANCELLED') {
+    <div class="status-editor">
+      <mat-form-field appearance="outline" class="status-field">
+        <mat-label>Estado de pago</mat-label>
+        <mat-select [formControl]="statusControl">
+          @for (opt of statusOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button
+        mat-stroked-button
+        color="primary"
+        [disabled]="statusControl.value === data.sale.paymentStatus || savingStatus()"
+        (click)="saveStatus()"
+      >
+        Guardar estado
+      </button>
+    </div>
+  }
   @if (data.sale.customerName) {
     <app-buyer-card
       [customerName]="data.sale.customerName"

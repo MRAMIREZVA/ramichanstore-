@@ -179,6 +179,31 @@ public class SaleService {
         return SaleResponse.from(saved);
     }
 
+    /**
+     * Transición manual de estado de pago para una venta ya creada (ej. de PENDING a PAID cuando
+     * el cliente confirma el Yape/transferencia) — la única forma de cambiarlo hasta ahora era
+     * al crearla, sin poder corregirlo después. CANCELLED queda excluido a propósito: esa
+     * transición solo pasa por {@link #cancel}, que además revierte stock y puntos; una venta ya
+     * cancelada tampoco se puede "reactivar" por acá.
+     */
+    @Transactional
+    public SaleResponse updatePaymentStatus(Long id, PaymentStatus newStatus) {
+        Sale sale = findById(id);
+        if (sale.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("No se puede cambiar el estado de pago de una venta cancelada");
+        }
+        if (newStatus == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("Para cancelar una venta usa la opción 'Cancelar venta' (revierte stock y puntos)");
+        }
+
+        PaymentStatus before = sale.getPaymentStatus();
+        sale.setPaymentStatus(newStatus);
+        Sale saved = saleRepository.save(sale);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "Sale", id.toString(), before.toString(), newStatus.toString());
+        return SaleResponse.from(saved);
+    }
+
     private int calculatePoints(Customer customer, BigDecimal total) {
         if (customer == null) {
             return 0;

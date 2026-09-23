@@ -5,6 +5,7 @@ import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.sales.dto.CancelSaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
+import com.ramichanstore.backend.modules.sales.dto.UpdateSalePaymentStatusRequest;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
@@ -20,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,5 +63,11 @@ public class SaleController {
     public ApiResponse<SaleResponse> cancel(
             @PathVariable Long id, @Valid @RequestBody CancelSaleRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
         return ApiResponse.ok("Venta cancelada", saleService.cancel(id, request.reason(), currentUser));
+    }
+
+    @PutMapping("/{id}/payment-status")
+    @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
+    public ApiResponse<SaleResponse> updatePaymentStatus(@PathVariable Long id, @Valid @RequestBody UpdateSalePaymentStatusRequest request) {
+        return ApiResponse.ok("Estado de pago actualizado", saleService.updatePaymentStatus(id, request.status()));
     }
 }

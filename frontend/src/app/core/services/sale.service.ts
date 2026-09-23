@@ -48,4 +48,9 @@ export class SaleService {
   cancel(id: number, reason: string): Observable<ApiResponse<Sale>> {
     return this.http.post<ApiResponse<Sale>>(`${this.baseUrl}/${id}/cancel`, { reason });
   }
+
+  /** PENDING/PARTIAL/PAID solamente — para cancelar una venta usa cancel(), que revierte stock y puntos. */
+  updatePaymentStatus(id: number, status: PaymentStatus): Observable<ApiResponse<Sale>> {
+    return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/payment-status`, { status });
+  }
 }

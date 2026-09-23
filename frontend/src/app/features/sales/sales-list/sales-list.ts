@@ -188,7 +188,16 @@ export class SalesList implements OnInit {
 
   openDetail(sale: Sale): void {
     const data: SaleDetailData = { sale };
-    this.dialog.open(SaleDetailComponent, { data, width: '640px', maxWidth: '95vw' });
+    const ref = this.dialog.open<SaleDetailComponent, SaleDetailData, boolean>(SaleDetailComponent, {
+      data,
+      width: '640px',
+      maxWidth: '95vw',
+    });
+    ref.afterClosed().subscribe((changed) => {
+      if (changed) {
+        this.load();
+      }
+    });
   }
 
   cancelSale(sale: Sale): void {
