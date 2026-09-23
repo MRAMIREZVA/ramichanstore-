@@ -102,6 +102,8 @@ export interface Shipment {
   domesticJapanShippingCost: number | null;
   additionalCost: number | null;
   handlingCost: number | null;
+  /** Opcional — no todos los barcos pagan aduana. Solo suma a finalCost, nunca a totalSoles. */
+  customsCharge: number | null;
   exchangeRate: number | null;
   totalDollars: number | null;
   totalSoles: number | null;
@@ -134,6 +136,7 @@ export interface ShipmentRequest {
   commissionCost: number | null;
   domesticJapanShippingCost: number | null;
   handlingCost: number | null;
+  customsCharge: number | null;
   exchangeRate: number | null;
   shipmentTypeId: number;
   departureDate: string | null;

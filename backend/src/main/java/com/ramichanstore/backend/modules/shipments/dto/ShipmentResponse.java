@@ -15,6 +15,7 @@ public record ShipmentResponse(
         String zenOrderNumber,
         BigDecimal productCost, BigDecimal shippingCost, BigDecimal commissionCost,
         BigDecimal domesticJapanShippingCost, BigDecimal additionalCost, BigDecimal handlingCost,
+        BigDecimal customsCharge,
         BigDecimal exchangeRate, BigDecimal totalDollars, BigDecimal totalSoles, BigDecimal finalCost,
         Long shipmentTypeId, String shipmentTypeName,
         LocalDate departureDate, LocalDate arrivalDate, Long transitDays,
@@ -42,6 +43,7 @@ public record ShipmentResponse(
                 s.getZenOrderNumber(),
                 s.getProductCost(), s.getShippingCost(), s.getCommissionCost(),
                 s.getDomesticJapanShippingCost(), additionalCost, s.getHandlingCost(),
+                s.getCustomsCharge(),
                 s.getExchangeRate(), totalDollars, totalSoles, finalCost(s, totalSoles, additionalCost),
                 s.getShipmentType().getId(), s.getShipmentType().getName(),
                 s.getDepartureDate(), s.getArrivalDate(), transitDays(s),
@@ -103,12 +105,16 @@ public record ShipmentResponse(
         return totalSoles.multiply(percent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 
-    /** Costo final = Total (S/) + costo adicional + gastos movibles, todo en soles — sin conversión. */
+    /**
+     * Costo final = Total (S/) + costo adicional + gastos movibles + cobro de aduanas, todo
+     * en soles — sin conversión. Cobro de aduanas es opcional (no todos los barcos pagan) y
+     * distinto del monto informativo de la sección Aduanas, que nunca entra acá (Fase 23).
+     */
     private static BigDecimal finalCost(Shipment s, BigDecimal totalSoles, BigDecimal additionalCost) {
         if (totalSoles == null) {
             return null;
         }
-        return totalSoles.add(nz(additionalCost)).add(nz(s.getHandlingCost()));
+        return totalSoles.add(nz(additionalCost)).add(nz(s.getHandlingCost())).add(nz(s.getCustomsCharge()));
     }
 
     private static BigDecimal nz(BigDecimal value) {

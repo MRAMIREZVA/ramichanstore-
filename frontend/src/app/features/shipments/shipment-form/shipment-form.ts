@@ -144,6 +144,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     domesticJapanShippingCost: [this.s?.domesticJapanShippingCost ?? null],
     additionalCost: [this.s?.additionalCost ?? null],
     handlingCost: [this.s?.handlingCost ?? null],
+    customsCharge: [this.s?.customsCharge ?? null],
     exchangeRate: [this.s?.exchangeRate ?? null],
     totalDollars: [this.s?.totalDollars ?? null],
     totalSoles: [this.s?.totalSoles ?? null],
@@ -183,7 +184,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     this.form.controls.totalSoles.disable({ emitEvent: false });
     this.form.controls.finalCost.disable({ emitEvent: false });
     for (const key of ['productCost', 'shippingCost', 'commissionCost', 'domesticJapanShippingCost',
-      'handlingCost', 'exchangeRate'] as const) {
+      'handlingCost', 'customsCharge', 'exchangeRate'] as const) {
       this.form.controls[key].valueChanges.subscribe(() => this.recalculateTotals());
     }
     this.recalculateTotals();
@@ -254,7 +255,9 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     const additionalCost = totalSoles !== null && percent !== null ? Math.round(totalSoles * percent) / 100 : null;
     this.form.controls.additionalCost.setValue(additionalCost, { emitEvent: false });
 
-    const finalCost = totalSoles !== null ? totalSoles + (additionalCost ?? 0) + (Number(v.handlingCost) || 0) : null;
+    const finalCost = totalSoles !== null
+      ? totalSoles + (additionalCost ?? 0) + (Number(v.handlingCost) || 0) + (Number(v.customsCharge) || 0)
+      : null;
     this.form.controls.finalCost.setValue(finalCost, { emitEvent: false });
   }
 
@@ -394,6 +397,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       commissionCost: v.commissionCost,
       domesticJapanShippingCost: v.domesticJapanShippingCost,
       handlingCost: v.handlingCost,
+      customsCharge: v.customsCharge,
       exchangeRate: v.exchangeRate,
       shipmentTypeId: v.shipmentTypeId!,
       departureDate: this.toIsoDate(v.departureDate),

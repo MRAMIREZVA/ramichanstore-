@@ -70,6 +70,14 @@ public class Shipment extends BaseEntity {
     @Column(name = "handling_cost", precision = 10, scale = 2)
     private BigDecimal handlingCost;
 
+    /**
+     * Monto opcional que suma SOLO al Costo final (no al Total (S/)), igual que Gastos
+     * movibles — no todos los barcos pagan aduana. Distinto del monto informativo
+     * customsTaxAmount de la sección Aduanas (que no entra en ningún total, ver Fase 23).
+     */
+    @Column(name = "customs_charge", precision = 10, scale = 2)
+    private BigDecimal customsCharge;
+
     /** Tipo de cambio US$→S/ de la semana de este embarque (varía embarque a embarque). */
     @Column(name = "exchange_rate", precision = 10, scale = 4)
     private BigDecimal exchangeRate;

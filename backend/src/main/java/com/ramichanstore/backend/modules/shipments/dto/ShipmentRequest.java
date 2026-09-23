@@ -16,7 +16,7 @@ public record ShipmentRequest(
         @NotNull(message = "El titular del embarque es obligatorio") Long recipientId,
         @Size(max = 50) String zenOrderNumber,
         BigDecimal productCost, BigDecimal shippingCost, BigDecimal commissionCost,
-        BigDecimal domesticJapanShippingCost, BigDecimal handlingCost,
+        BigDecimal domesticJapanShippingCost, BigDecimal handlingCost, BigDecimal customsCharge,
         BigDecimal exchangeRate,
         @NotNull(message = "El tipo de envío es obligatorio") Long shipmentTypeId,
         LocalDate departureDate, LocalDate arrivalDate, Integer travelDays, LocalDate possibleArrivalDate,

@@ -144,6 +144,7 @@ public class ShipmentService {
         shipment.setCommissionCost(request.commissionCost());
         shipment.setDomesticJapanShippingCost(request.domesticJapanShippingCost());
         shipment.setHandlingCost(request.handlingCost());
+        shipment.setCustomsCharge(request.customsCharge());
         shipment.setExchangeRate(request.exchangeRate());
         shipment.setShipmentType(resolveShipmentType(request.shipmentTypeId()));
         shipment.setDepartureDate(request.departureDate());
