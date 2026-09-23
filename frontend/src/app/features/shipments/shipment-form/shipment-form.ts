@@ -34,6 +34,11 @@ export interface ShipmentFormData {
   shipment: Shipment | null;
 }
 
+/** Evita artefactos de punto flotante (ej. 1067.1599999999999) en los campos calculados de solo lectura. */
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 interface ShipmentItemDraft {
   id: number | null;
   articleCode: string;
@@ -244,19 +249,20 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     const v = this.form.getRawValue();
     const solesFields = [v.productCost, v.shippingCost, v.commissionCost, v.domesticJapanShippingCost];
     const hasAnySolesValue = solesFields.some((n) => n !== null && n !== undefined);
-    const totalSoles = hasAnySolesValue ? solesFields.reduce((sum: number, n) => sum + (Number(n) || 0), 0) : null;
+    const totalSolesRaw = hasAnySolesValue ? solesFields.reduce((sum: number, n) => sum + (Number(n) || 0), 0) : null;
+    const totalSoles = totalSolesRaw !== null ? round2(totalSolesRaw) : null;
     this.form.controls.totalSoles.setValue(totalSoles, { emitEvent: false });
 
     const rate = v.exchangeRate;
-    const totalDollars = totalSoles !== null && rate ? totalSoles / Number(rate) : null;
-    this.form.controls.totalDollars.setValue(totalDollars !== null ? Math.round(totalDollars * 100) / 100 : null, { emitEvent: false });
+    const totalDollars = totalSoles !== null && rate ? round2(totalSoles / Number(rate)) : null;
+    this.form.controls.totalDollars.setValue(totalDollars, { emitEvent: false });
 
     const percent = this.additionalCostPercent();
-    const additionalCost = totalSoles !== null && percent !== null ? Math.round(totalSoles * percent) / 100 : null;
+    const additionalCost = totalSoles !== null && percent !== null ? round2((totalSoles * percent) / 100) : null;
     this.form.controls.additionalCost.setValue(additionalCost, { emitEvent: false });
 
     const finalCost = totalSoles !== null
-      ? totalSoles + (additionalCost ?? 0) + (Number(v.handlingCost) || 0) + (Number(v.customsCharge) || 0)
+      ? round2(totalSoles + (additionalCost ?? 0) + (Number(v.handlingCost) || 0) + (Number(v.customsCharge) || 0))
       : null;
     this.form.controls.finalCost.setValue(finalCost, { emitEvent: false });
   }
