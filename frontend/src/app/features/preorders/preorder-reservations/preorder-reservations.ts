@@ -62,16 +62,22 @@ export class PreorderReservationsComponent {
   readonly customerOptions = signal<Customer[]>([]);
   readonly selectedCustomer = signal<Customer | null>(null);
 
-  readonly displayedColumns = ['customer', 'quantity', 'deposit', 'date', 'actions'];
+  readonly displayedColumns = ['customer', 'quantity', 'price', 'deposit', 'date', 'actions'];
   readonly methodOptions = Object.entries(PAYMENT_METHOD_LABELS) as [PaymentMethod, string][];
 
   readonly form = this.fb.group({
     customerSearch: ['', Validators.required],
     quantity: [1, [Validators.required, Validators.min(1)]],
+    unitPrice: [this.data.preorder.salePrice, [Validators.required, Validators.min(0)]],
     depositAmount: [0, [Validators.required, Validators.min(0)]],
     paymentMethod: ['EFECTIVO' as PaymentMethod, Validators.required],
     notes: [''],
   });
+
+  /** Edición del precio de una reserva ya creada — algunos clientes tienen precio de preventa/descuento vs. precio de catálogo. */
+  readonly editingPriceId = signal<number | null>(null);
+  readonly priceDraft = signal(0);
+  readonly savingPrice = signal(false);
 
   constructor() {
     this.loadReservations();
@@ -135,6 +141,7 @@ export class PreorderReservationsComponent {
       .addReservation(this.preorder().id, {
         customerId: customer.id,
         quantity: Number(v.quantity),
+        unitPrice: Number(v.unitPrice),
         depositAmount: Number(v.depositAmount),
         paymentMethod: v.paymentMethod as PaymentMethod,
         notes: v.notes || null,
@@ -144,13 +151,45 @@ export class PreorderReservationsComponent {
           this.saving.set(false);
           this.changed.set(true);
           this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
-          this.form.reset({ customerSearch: '', quantity: 1, depositAmount: 0, paymentMethod: 'EFECTIVO', notes: '' });
+          this.form.reset({
+            customerSearch: '',
+            quantity: 1,
+            unitPrice: this.preorder().salePrice,
+            depositAmount: 0,
+            paymentMethod: 'EFECTIVO',
+            notes: '',
+          });
           this.selectedCustomer.set(null);
           this.loadReservations();
           this.refreshPreorder();
         },
         error: () => this.saving.set(false),
       });
+  }
+
+  startEditPrice(reservation: PreorderReservation): void {
+    this.editingPriceId.set(reservation.id);
+    this.priceDraft.set(reservation.unitPrice);
+  }
+
+  cancelEditPrice(): void {
+    this.editingPriceId.set(null);
+  }
+
+  savePrice(reservation: PreorderReservation): void {
+    const unitPrice = Number(this.priceDraft());
+    if (Number.isNaN(unitPrice) || unitPrice < 0) return;
+    this.savingPrice.set(true);
+    this.preorderService.updateReservationPrice(reservation.id, { unitPrice }).subscribe({
+      next: (res) => {
+        this.savingPrice.set(false);
+        this.editingPriceId.set(null);
+        this.changed.set(true);
+        this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+        this.loadReservations();
+      },
+      error: () => this.savingPrice.set(false),
+    });
   }
 
   cancelReservation(reservation: PreorderReservation): void {

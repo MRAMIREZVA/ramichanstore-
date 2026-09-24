@@ -20,7 +20,7 @@ public record PortalReservationResponse(
     public static PortalReservationResponse from(PreorderCustomer pc, BigDecimal amountPaid) {
         var preorder = pc.getPreorder();
         var product = preorder.getProduct();
-        BigDecimal totalPrice = product.getSalePrice().multiply(BigDecimal.valueOf(pc.getQuantity()));
+        BigDecimal totalPrice = pc.getUnitPrice().multiply(BigDecimal.valueOf(pc.getQuantity()));
         return new PortalReservationResponse(
                 pc.getId(),
                 product.getSku(), product.getName(), mainImageUrl(product),

@@ -188,6 +188,8 @@ public class PreorderService {
         reservation.setCustomer(customer);
         reservation.setQuantity(request.quantity());
         reservation.setDepositAmount(request.depositAmount());
+        // Precio de catálogo vigente si no se especifica uno propio (ver Javadoc de PreorderCustomerRequest).
+        reservation.setUnitPrice(request.unitPrice() != null ? request.unitPrice() : preorder.getProduct().getSalePrice());
         reservation.setNotes(request.notes());
         PreorderCustomer saved = preorderCustomerRepository.save(reservation);
 
@@ -226,8 +228,7 @@ public class PreorderService {
         PreorderCustomer reservation = findReservationById(reservationId);
 
         BigDecimal alreadyPaid = preorderCustomerPaymentRepository.sumPaidAmount(reservationId);
-        BigDecimal totalPrice = reservation.getPreorder().getProduct().getSalePrice()
-                .multiply(BigDecimal.valueOf(reservation.getQuantity()));
+        BigDecimal totalPrice = reservation.getUnitPrice().multiply(BigDecimal.valueOf(reservation.getQuantity()));
         BigDecimal balanceDue = totalPrice.subtract(alreadyPaid);
         if (balanceDue.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessRuleException("Esta reserva ya está pagada en su totalidad");
@@ -252,6 +253,27 @@ public class PreorderService {
                         balanceDue.subtract(request.amount())));
 
         return PreorderCustomerPaymentResponse.from(saved);
+    }
+
+    /**
+     * Corrige el precio unitario de una reserva ya creada (ej. se tipeó mal, o se decide dar el
+     * precio de preventa a un cliente que ya había reservado al de catálogo). No bloquea si ya
+     * hay abonos registrados — el saldo simplemente se recalcula con el nuevo precio (puede
+     * quedar en negativo si el cliente ya pagó de más respecto al precio corregido, igual que
+     * un ajuste de precio en una venta puede dejar puntos de más/de menos).
+     */
+    @Transactional
+    public PreorderCustomerResponse updateUnitPrice(Long reservationId, BigDecimal unitPrice) {
+        PreorderCustomer reservation = findReservationById(reservationId);
+        BigDecimal before = reservation.getUnitPrice();
+        reservation.setUnitPrice(unitPrice);
+        PreorderCustomer saved = preorderCustomerRepository.save(reservation);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "PreorderCustomer", reservationId.toString(),
+                "precio=" + before, "precio=" + unitPrice);
+
+        BigDecimal amountPaid = preorderCustomerPaymentRepository.sumPaidAmount(reservationId);
+        return PreorderCustomerResponse.from(saved, amountPaid);
     }
 
     private PreorderCustomer findReservationById(Long reservationId) {

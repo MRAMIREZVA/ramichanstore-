@@ -112,7 +112,7 @@ export class PreordersList implements OnInit {
     const data: PreorderReservationsData = { preorder };
     const ref = this.dialog.open<PreorderReservationsComponent, PreorderReservationsData, boolean>(
       PreorderReservationsComponent,
-      { data, width: '760px', maxWidth: '95vw', autoFocus: false },
+      { data, width: '900px', maxWidth: '95vw', autoFocus: false },
     );
     ref.afterClosed().subscribe((changed) => {
       if (changed) {

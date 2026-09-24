@@ -26,6 +26,34 @@
   </div>
 
   <div class="summary">
+    <span>
+      Precio unitario:
+      @if (editingPrice()) {
+        <span class="price-edit">
+          <span class="currency-prefix">S/</span>
+          <input
+            type="number"
+            step="0.01"
+            class="item-price-input"
+            [value]="priceDraft()"
+            (input)="priceDraft.set($any($event.target).valueAsNumber)"
+          />
+          <button mat-icon-button (click)="savePrice()" [disabled]="savingPrice()" matTooltip="Guardar precio">
+            <mat-icon>check</mat-icon>
+          </button>
+          <button mat-icon-button (click)="cancelEditPrice()" [disabled]="savingPrice()" matTooltip="Cancelar">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
+      } @else {
+        <strong>S/ {{ reservation().unitPrice.toFixed(2) }}</strong>
+        @if (reservation().preorderStatus !== 'CANCELLED') {
+          <button mat-icon-button (click)="startEditPrice()" matTooltip="Corregir precio">
+            <mat-icon>edit</mat-icon>
+          </button>
+        }
+      }
+    </span>
     <span>Total: <strong>S/ {{ reservation().totalPrice.toFixed(2) }}</strong></span>
     <span>Pagado: <strong>S/ {{ reservation().amountPaid.toFixed(2) }}</strong></span>
     <span [class.negative]="reservation().balanceDue > 0">Saldo: <strong>S/ {{ reservation().balanceDue.toFixed(2) }}</strong></span>

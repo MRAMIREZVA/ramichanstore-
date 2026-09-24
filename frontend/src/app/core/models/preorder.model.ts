@@ -86,6 +86,7 @@ export interface PreorderReservation {
   limitDate: string;
   estimatedArrivalDate: string | null;
   quantity: number;
+  unitPrice: number;
   depositAmount: number;
   totalPrice: number;
   amountPaid: number;
@@ -97,9 +98,15 @@ export interface PreorderReservation {
 export interface PreorderReservationRequest {
   customerId: number;
   quantity: number;
+  unitPrice: number | null;
   depositAmount: number;
   paymentMethod: PaymentMethod;
   notes: string | null;
+}
+
+/** Corrige el precio unitario de una reserva ya creada — ver PreorderService.updateUnitPrice. */
+export interface UpdateReservationPriceRequest {
+  unitPrice: number;
 }
 
 /** Abono individual contra una reserva. Ledger inmutable, mismo patrón que SeparationPayment. */

@@ -37,6 +37,15 @@ public class PreorderCustomer extends BaseEntity {
     @Column(name = "deposit_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal depositAmount;
 
+    /**
+     * Snapshot del precio al momento de reservar (igual criterio que unitPrice en sale_details) —
+     * permite que dos reservas de la MISMA campaña tengan precios distintos (ej. un cliente con
+     * precio de preventa/descuento y otro que reserva después pagando el precio de catálogo
+     * vigente). Corregible después vía PreorderService.updateUnitPrice.
+     */
+    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitPrice;
+
     @Column(length = 500)
     private String notes;
 }

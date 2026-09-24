@@ -9,6 +9,7 @@ import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderResponse;
+import com.ramichanstore.backend.modules.preorders.dto.UpdateReservationPriceRequest;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
 import com.ramichanstore.backend.modules.preorders.service.PreorderService;
 import com.ramichanstore.backend.security.SecurityUser;
@@ -124,5 +125,12 @@ public class PreorderController {
             @PathVariable Long reservationId, @Valid @RequestBody PreorderCustomerPaymentRequest request,
             @AuthenticationPrincipal SecurityUser currentUser) {
         return ApiResponse.ok("Abono registrado", preorderService.registerPayment(reservationId, request, currentUser));
+    }
+
+    @PutMapping("/reservations/{reservationId}/price")
+    @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
+    public ApiResponse<PreorderCustomerResponse> updateReservationPrice(
+            @PathVariable Long reservationId, @Valid @RequestBody UpdateReservationPriceRequest request) {
+        return ApiResponse.ok("Precio actualizado", preorderService.updateUnitPrice(reservationId, request.unitPrice()));
     }
 }

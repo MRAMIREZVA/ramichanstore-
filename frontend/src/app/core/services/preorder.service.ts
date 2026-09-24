@@ -13,6 +13,7 @@ import {
   PreorderReservationPaymentRequest,
   PreorderReservationRequest,
   PreorderStatus,
+  UpdateReservationPriceRequest,
 } from '../models/preorder.model';
 
 export interface PreorderFilters {
@@ -104,5 +105,12 @@ export class PreorderService {
     request: PreorderReservationPaymentRequest,
   ): Observable<ApiResponse<PreorderReservationPayment>> {
     return this.http.post<ApiResponse<PreorderReservationPayment>>(`${this.baseUrl}/reservations/${reservationId}/payments`, request);
+  }
+
+  updateReservationPrice(
+    reservationId: number,
+    request: UpdateReservationPriceRequest,
+  ): Observable<ApiResponse<PreorderReservation>> {
+    return this.http.put<ApiResponse<PreorderReservation>>(`${this.baseUrl}/reservations/${reservationId}/price`, request);
   }
 }

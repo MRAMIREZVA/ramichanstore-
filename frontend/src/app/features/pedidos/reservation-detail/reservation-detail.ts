@@ -70,8 +70,38 @@ export class ReservationDetailComponent {
     notes: [''],
   });
 
+  /** Corrige el precio unitario de la reserva — algunos clientes tienen precio de preventa/descuento vs. catálogo. */
+  readonly editingPrice = signal(false);
+  readonly priceDraft = signal(0);
+  readonly savingPrice = signal(false);
+
   constructor() {
     this.loadPayments();
+  }
+
+  startEditPrice(): void {
+    this.priceDraft.set(this.reservation().unitPrice);
+    this.editingPrice.set(true);
+  }
+
+  cancelEditPrice(): void {
+    this.editingPrice.set(false);
+  }
+
+  savePrice(): void {
+    const unitPrice = Number(this.priceDraft());
+    if (Number.isNaN(unitPrice) || unitPrice < 0) return;
+    this.savingPrice.set(true);
+    this.preorderService.updateReservationPrice(this.reservation().id, { unitPrice }).subscribe({
+      next: (res) => {
+        this.savingPrice.set(false);
+        this.editingPrice.set(false);
+        this.changed.set(true);
+        this.reservation.set(res.data);
+        this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+      },
+      error: () => this.savingPrice.set(false),
+    });
   }
 
   loadPayments(): void {
