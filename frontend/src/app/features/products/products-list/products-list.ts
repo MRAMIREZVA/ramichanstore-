@@ -129,6 +129,17 @@ export class ProductsList implements OnInit {
     return this.statusLabels[status];
   }
 
+  /** Punto de color por categoría, para escanear la columna de un vistazo — hash determinista, no depende del orden en que llegue la lista. */
+  private readonly categoryPalette = ['#6D4AFF', '#2CA9C9', '#D64BA0', '#4C6EF5', '#A67C52', '#5B6472'];
+
+  categoryColor(categoryName: string): string {
+    let hash = 0;
+    for (let i = 0; i < categoryName.length; i++) {
+      hash = (hash * 31 + categoryName.charCodeAt(i)) >>> 0;
+    }
+    return this.categoryPalette[hash % this.categoryPalette.length];
+  }
+
   hasActiveFilters(): boolean {
     return !!(
       this.searchControl.value ||
