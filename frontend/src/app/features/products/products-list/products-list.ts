@@ -10,6 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Brand, Category, ProductLine } from '../../../core/models/catalog.model';
@@ -26,6 +27,7 @@ import { ProductFormComponent, ProductFormData } from '../product-form/product-f
   imports: [
     ReactiveFormsModule,
     KeyValuePipe,
+    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
@@ -47,6 +49,7 @@ export class ProductsList implements OnInit {
 
   readonly statusLabels = PRODUCT_STATUS_LABELS;
   readonly resolveImageUrl = resolveImageUrl;
+  readonly displayedColumns = ['image', 'product', 'category', 'price', 'stock', 'status', 'actions'];
 
   readonly loading = signal(true);
   readonly products = signal<Product[]>([]);
