@@ -11,7 +11,6 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import {
@@ -26,13 +25,39 @@ import { toIsoDate } from '../../../core/utils/date';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ShipmentFormComponent, ShipmentFormData } from '../shipment-form/shipment-form';
 
+/**
+ * Agrupación de los 9 `ShipmentStatus` en 4 "carriles" visuales para la línea de tiempo de la tarjeta.
+ * Copia EXACTA de los grupos ya establecidos en los selectores `.status-chip[data-status=...]`
+ * de este mismo componente (Fase 19) — no es un orden cronológico inventado, es el mismo criterio
+ * de color que el admin ya conoce (verde=positivo, ámbar=en curso, morado=aún no sale, rojo=atención).
+ */
+type StatusTier = 'pending' | 'transit' | 'attention' | 'done';
+
+const STATUS_TIER: Record<ShipmentStatus, StatusTier> = {
+  PENDIENTE_ENVIO: 'pending',
+  EN_COTIZACION_ENVIO: 'pending',
+  PENDIENTE_PAGO: 'pending',
+  EN_CAMINO: 'transit',
+  LLEGO_A_SERPOST: 'transit',
+  OBSERVADO_ADUANAS: 'attention',
+  LISTO_PARA_DELIVERY: 'done',
+  EN_TIENDA: 'done',
+  LLEGO_A_PERU: 'done',
+};
+
+const TIER_PROGRESS: Record<StatusTier, number> = {
+  pending: 15,
+  transit: 55,
+  attention: 55,
+  done: 100,
+};
+
 @Component({
   selector: 'app-shipments-list',
   standalone: true,
   imports: [
     ReactiveFormsModule,
     KeyValuePipe,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
@@ -55,7 +80,6 @@ export class ShipmentsList implements OnInit {
 
   readonly statusLabels = SHIPMENT_STATUS_LABELS;
   readonly types = signal<ShipmentTypeOption[]>([]);
-  readonly displayedColumns = ['code', 'holder', 'type', 'dates', 'transit', 'weight', 'finalCost', 'status', 'actions'];
 
   readonly loading = signal(true);
   readonly shipments = signal<Shipment[]>([]);
@@ -119,6 +143,61 @@ export class ShipmentsList implements OnInit {
 
   statusLabel(status: ShipmentStatus): string {
     return this.statusLabels[status];
+  }
+
+  statusTier(status: ShipmentStatus): StatusTier {
+    return STATUS_TIER[status];
+  }
+
+  timelineProgress(status: ShipmentStatus): number {
+    return TIER_PROGRESS[STATUS_TIER[status]];
+  }
+
+  /** Ícono del tipo de envío por heurística de texto — la maestra de tipos es texto libre editable (Fase 25). */
+  typeIcon(typeName: string): string {
+    const n = (typeName || '').toLowerCase();
+    if (n.includes('aér') || n.includes('aer') || n.includes('avi')) return 'flight';
+    if (n.includes('marít') || n.includes('marit') || n.includes('barco')) return 'directions_boat';
+    return 'inventory_2';
+  }
+
+  /** Ícono del nodo de progreso en la línea de tiempo, según el carril del estado. */
+  timelineNodeIcon(status: ShipmentStatus, typeName: string): string {
+    const tier = this.statusTier(status);
+    if (tier === 'done') return 'check';
+    if (tier === 'attention') return 'priority_high';
+    return this.typeIcon(typeName);
+  }
+
+  /**
+   * Formatea una fecha "YYYY-MM-DD" a "DD/MM/YYYY" sin pasar por `Date` —
+   * evita el bug de corrimiento de un día documentado en la Fase 24 (nunca `new Date(iso)` para un date-only).
+   */
+  formatDate(iso: string | null): string {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  /** Texto del extremo "Perú" de la línea de tiempo — varía según si ya llegó, está observado, o solo hay estimado. */
+  arrivalLabel(s: Shipment): string {
+    const tier = this.statusTier(s.status);
+    if (tier === 'done') {
+      return s.arrivalDate ? `Llegó ${this.formatDate(s.arrivalDate)}` : 'Llegó';
+    }
+    if (tier === 'attention') {
+      return 'Observado';
+    }
+    if (s.arrivalDate) return `Llegó ${this.formatDate(s.arrivalDate)}`;
+    if (s.possibleArrivalDate) return `Estimado ${this.formatDate(s.possibleArrivalDate)}`;
+    return 'Por confirmar';
+  }
+
+  /** Peso a mostrar: el final si ya se pesó de vuelta, si no el de las figuras al salir. */
+  weightLabel(s: Shipment): string {
+    if (s.finalWeight !== null) return `${s.finalWeight} g`;
+    if (s.figuresWeight !== null) return `${s.figuresWeight} g`;
+    return '—';
   }
 
   onPage(event: PageEvent): void {

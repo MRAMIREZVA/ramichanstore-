@@ -58,81 +58,83 @@
         <p>No se encontraron embarques con estos filtros.</p>
       </div>
     } @else {
-      <table mat-table [dataSource]="shipments()" class="shipments-table">
-        <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef>Código</th>
-          <td mat-cell *matCellDef="let s">
-            <div>{{ s.code }}</div>
-            @if (s.zenOrderNumber) {
-              <div class="sub">N.º de orden: {{ s.zenOrderNumber }}</div>
-            }
-          </td>
-        </ng-container>
+      <div class="shipments-grid">
+        @for (s of shipments(); track s.id) {
+          <div class="shipment-card" [attr.data-tier]="statusTier(s.status)">
+            <div class="card-header">
+              <div class="code-block">
+                <span class="type-avatar"><mat-icon>{{ typeIcon(s.shipmentTypeName) }}</mat-icon></span>
+                <div class="code-text">
+                  <div class="code">{{ s.code }}</div>
+                  @if (s.zenOrderNumber) {
+                    <div class="sub">N.º de orden {{ s.zenOrderNumber }}</div>
+                  }
+                </div>
+              </div>
+              <span class="status-chip" [attr.data-status]="s.status">{{ statusLabel(s.status) }}</span>
+            </div>
 
-        <ng-container matColumnDef="holder">
-          <th mat-header-cell *matHeaderCellDef>Titulares</th>
-          <td mat-cell *matCellDef="let s">
-            <div>{{ s.holderName }}</div>
-            @if (s.recipientName) {
-              <div class="sub">Paquete a: {{ s.recipientName }}</div>
-            }
-          </td>
-        </ng-container>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Titular</span>
+                <span class="info-value">{{ s.holderName }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Paquete a</span>
+                <span class="info-value">{{ s.recipientName || '—' }}</span>
+              </div>
+            </div>
 
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Tipo</th>
-          <td mat-cell *matCellDef="let s">{{ s.shipmentTypeName }}</td>
-        </ng-container>
+            <div class="timeline">
+              <div class="timeline-track">
+                <div class="timeline-fill" [attr.data-tier]="statusTier(s.status)" [style.width.%]="timelineProgress(s.status)"></div>
+                <span class="timeline-dot start"></span>
+                <span class="timeline-dot end" [class.filled]="statusTier(s.status) === 'done'"></span>
+                <span
+                  class="timeline-node"
+                  [attr.data-tier]="statusTier(s.status)"
+                  [style.left]="'calc(' + timelineProgress(s.status) + '% - 11px)'"
+                >
+                  <mat-icon>{{ timelineNodeIcon(s.status, s.shipmentTypeName) }}</mat-icon>
+                </span>
+              </div>
+              <div class="timeline-labels">
+                <div class="timeline-label">
+                  <span class="place">Japón</span>
+                  <span class="date">{{ formatDate(s.departureDate) }}</span>
+                </div>
+                <div class="timeline-label end">
+                  <span class="place">Perú</span>
+                  <span class="date" [attr.data-tier]="statusTier(s.status)">{{ arrivalLabel(s) }}</span>
+                </div>
+              </div>
+            </div>
 
-        <ng-container matColumnDef="dates">
-          <th mat-header-cell *matHeaderCellDef>Salida → Llegada</th>
-          <td mat-cell *matCellDef="let s">{{ s.departureDate || '—' }} → {{ s.arrivalDate || '—' }}</td>
-        </ng-container>
+            <div class="stats-row">
+              <div class="stat">
+                <span class="stat-label">Tránsito</span>
+                <span class="stat-value">{{ s.transitDays !== null ? s.transitDays + ' días' : '—' }}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Peso</span>
+                <span class="stat-value">{{ weightLabel(s) }}</span>
+                @if (s.weightDifference !== null) {
+                  <span class="stat-sub">Dif: {{ s.weightDifference > 0 ? '+' : '' }}{{ s.weightDifference }} g</span>
+                }
+              </div>
+              <div class="stat">
+                <span class="stat-label">Costo final</span>
+                <span class="stat-value">{{ s.finalCost !== null ? 'S/ ' + s.finalCost.toFixed(2) : '—' }}</span>
+              </div>
+            </div>
 
-        <ng-container matColumnDef="transit">
-          <th mat-header-cell *matHeaderCellDef>Días tránsito</th>
-          <td mat-cell *matCellDef="let s">{{ s.transitDays !== null ? s.transitDays + ' días' : '—' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="weight">
-          <th mat-header-cell *matHeaderCellDef>Peso</th>
-          <td mat-cell *matCellDef="let s">
-            @if (s.finalWeight !== null) {
-              <div>{{ s.finalWeight }} g</div>
-            } @else if (s.figuresWeight !== null) {
-              <div>{{ s.figuresWeight }} g</div>
-            } @else {
-              <div>—</div>
-            }
-            @if (s.weightDifference !== null) {
-              <div class="sub">Dif: {{ s.weightDifference > 0 ? '+' : '' }}{{ s.weightDifference }} g</div>
-            }
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="finalCost">
-          <th mat-header-cell *matHeaderCellDef>Costo final</th>
-          <td mat-cell *matCellDef="let s">{{ s.finalCost !== null ? 'S/ ' + s.finalCost.toFixed(2) : '—' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Estado</th>
-          <td mat-cell *matCellDef="let s">
-            <span class="status-chip" [attr.data-status]="s.status">{{ statusLabel(s.status) }}</span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let s">
-            <button mat-icon-button (click)="openEdit(s)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button (click)="confirmDelete(s)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
+            <div class="card-actions">
+              <button mat-icon-button (click)="openEdit(s)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="confirmDelete(s)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+            </div>
+          </div>
+        }
+      </div>
 
       <mat-paginator
         [length]="totalElements()"
