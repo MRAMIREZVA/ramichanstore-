@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>{{ data.products.length }} producto(s) en stock mínimo o por debajo</h2>
+
+<mat-dialog-content>
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar por nombre o SKU</mat-label>
+    <input matInput [formControl]="searchControl" />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  @if (filtered().length === 0) {
+    <div class="empty-state">
+      <mat-icon>inventory_2</mat-icon>
+      <p>Ningún producto coincide con la búsqueda.</p>
+    </div>
+  } @else {
+    <div class="product-list">
+      @for (p of filtered(); track p.id) {
+        <div class="product-row">
+          <div class="product-info">
+            <div class="product-name">{{ p.name }}</div>
+            <div class="product-sub">{{ p.sku }} · Stock {{ p.currentStock }}/{{ p.minStock }}</div>
+          </div>
+          <button
+            mat-stroked-button
+            color="primary"
+            (click)="registerMovement(p)"
+            [matTooltip]="'Registrar ingreso para ' + p.name"
+          >
+            <mat-icon>add</mat-icon>
+            Ingreso
+          </button>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

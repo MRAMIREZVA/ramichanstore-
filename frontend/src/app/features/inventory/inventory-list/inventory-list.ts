@@ -18,6 +18,7 @@ import { InventoryMovement, MOVEMENT_TYPE_LABELS, MovementType } from '../../../
 import { Product } from '../../../core/models/product.model';
 import { InventoryFilters, InventoryService } from '../../../core/services/inventory.service';
 import { ProductService } from '../../../core/services/product.service';
+import { LowStockDialogComponent, LowStockDialogData } from '../low-stock-dialog/low-stock-dialog';
 import { MovementFormComponent, MovementFormData } from '../movement-form/movement-form';
 
 @Component({
@@ -151,6 +152,21 @@ export class InventoryList implements OnInit {
     this.page = event.pageIndex;
     this.pageSize = event.pageSize;
     this.load();
+  }
+
+  openLowStockDialog(): void {
+    const data: LowStockDialogData = { products: this.lowStockProducts() };
+    const ref = this.dialog.open<LowStockDialogComponent, LowStockDialogData, Product | null>(LowStockDialogComponent, {
+      data,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
+    ref.afterClosed().subscribe((product) => {
+      if (product) {
+        this.openMovementForm(product);
+      }
+    });
   }
 
   openMovementForm(product: Product | null = null): void {

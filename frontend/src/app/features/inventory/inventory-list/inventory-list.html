@@ -15,14 +15,9 @@
       <mat-icon>warning</mat-icon>
       <div class="low-stock-body">
         <strong>{{ lowStockProducts().length }} producto(s) en stock mínimo o por debajo</strong>
-        <div class="low-stock-chips">
-          @for (p of lowStockProducts(); track p.id) {
-            <button type="button" class="low-stock-chip" (click)="openMovementForm(p)" [matTooltip]="'Registrar ingreso para ' + p.name">
-              {{ p.sku }} · {{ p.name }} ({{ p.currentStock }}/{{ p.minStock }})
-            </button>
-          }
-        </div>
+        <span class="low-stock-hint">Revísalos y registra un ingreso antes de que se agoten.</span>
       </div>
+      <button mat-stroked-button class="low-stock-btn" (click)="openLowStockDialog()">Ver productos</button>
     </div>
   }
 
