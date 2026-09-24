@@ -160,9 +160,9 @@ app-buyer-card {
 
 .payment-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: flex-start;
-  min-width: 640px;
   margin-bottom: 8px;
 
   button {
@@ -200,12 +200,5 @@ app-buyer-card {
   .info-grid {
     grid-template-columns: 1fr;
     min-width: 0;
-  }
-}
-
-@media (max-width: 720px) {
-  .payment-form {
-    min-width: 0;
-    flex-wrap: wrap;
   }
 }

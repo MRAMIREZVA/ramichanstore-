@@ -14,9 +14,9 @@
 
 .reservation-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: flex-start;
-  min-width: 860px;
   margin-bottom: 8px;
 
   button {
@@ -26,6 +26,7 @@
 
 .customer-field {
   flex: 2;
+  min-width: 200px;
 }
 
 .qty-field,
@@ -111,9 +112,3 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-@media (max-width: 720px) {
-  .reservation-form {
-    min-width: 0;
-    flex-wrap: wrap;
-  }
-}
