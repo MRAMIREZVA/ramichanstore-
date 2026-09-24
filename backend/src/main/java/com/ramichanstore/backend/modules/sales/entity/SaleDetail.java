@@ -16,9 +16,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Línea de detalle de una venta. Hijo inmutable de {@link Sale} (cascade ALL +
- * orphanRemoval desde el padre, sin ciclo de vida propio — igual que
- * ProductImage). unitPrice/unitCost son snapshots del momento de la venta.
+ * Línea de detalle de una venta. Hijo sin ciclo de vida propio de {@link Sale} (cascade ALL +
+ * orphanRemoval desde el padre — igual que ProductImage). unitCost es un snapshot inmutable del
+ * momento de la venta (nunca se toca después). unitPrice/discount SÍ se pueden corregir después
+ * de creada (ej. un error de tipeo) vía SaleService.updateItems — producto y cantidad quedan
+ * siempre fijos, así que nunca hace falta ajustar stock por una corrección de precio.
  */
 @Entity
 @Table(name = "sale_details")

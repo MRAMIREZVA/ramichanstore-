@@ -5,6 +5,7 @@ import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.sales.dto.CancelSaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
+import com.ramichanstore.backend.modules.sales.dto.UpdateSaleItemsRequest;
 import com.ramichanstore.backend.modules.sales.dto.UpdateSalePaymentStatusRequest;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
@@ -69,5 +70,12 @@ public class SaleController {
     @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
     public ApiResponse<SaleResponse> updatePaymentStatus(@PathVariable Long id, @Valid @RequestBody UpdateSalePaymentStatusRequest request) {
         return ApiResponse.ok("Estado de pago actualizado", saleService.updatePaymentStatus(id, request.status()));
+    }
+
+    @PutMapping("/{id}/items")
+    @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
+    public ApiResponse<SaleResponse> updateItems(
+            @PathVariable Long id, @Valid @RequestBody UpdateSaleItemsRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Venta actualizada", saleService.updateItems(id, request.items(), currentUser));
     }
 }

@@ -69,11 +69,37 @@
     </ng-container>
     <ng-container matColumnDef="unitPrice">
       <th mat-header-cell *matHeaderCellDef>P. unitario</th>
-      <td mat-cell *matCellDef="let it">S/ {{ it.unitPrice.toFixed(2) }}</td>
+      <td mat-cell *matCellDef="let it">
+        @if (data.sale.paymentStatus !== 'CANCELLED') {
+          <span class="currency-prefix">S/</span>
+          <input
+            type="number"
+            step="0.01"
+            class="item-price-input"
+            [value]="draftFor(it.id).unitPrice"
+            (input)="updateDraft(it.id, 'unitPrice', $any($event.target).value)"
+          />
+        } @else {
+          S/ {{ it.unitPrice.toFixed(2) }}
+        }
+      </td>
     </ng-container>
     <ng-container matColumnDef="discount">
       <th mat-header-cell *matHeaderCellDef>Desc.</th>
-      <td mat-cell *matCellDef="let it">S/ {{ it.discount.toFixed(2) }}</td>
+      <td mat-cell *matCellDef="let it">
+        @if (data.sale.paymentStatus !== 'CANCELLED') {
+          <span class="currency-prefix">S/</span>
+          <input
+            type="number"
+            step="0.01"
+            class="item-price-input"
+            [value]="draftFor(it.id).discount"
+            (input)="updateDraft(it.id, 'discount', $any($event.target).value)"
+          />
+        } @else {
+          S/ {{ it.discount.toFixed(2) }}
+        }
+      </td>
     </ng-container>
     <ng-container matColumnDef="subtotal">
       <th mat-header-cell *matHeaderCellDef>Subtotal</th>
@@ -82,6 +108,15 @@
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>
+
+  @if (data.sale.paymentStatus !== 'CANCELLED') {
+    <div class="items-editor-actions">
+      <p class="hint">¿Error en el precio de una figura? Corrígelo arriba — recalcula total, ganancia y puntos.</p>
+      <button mat-stroked-button color="primary" [disabled]="!itemsDirty() || savingItems()" (click)="saveItems()">
+        Guardar cambios
+      </button>
+    </div>
+  }
 
   <div class="totals">
     <span>Subtotal: S/ {{ data.sale.subtotal.toFixed(2) }}</span>

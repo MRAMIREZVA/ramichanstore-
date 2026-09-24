@@ -15,6 +15,7 @@ import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.sales.dto.SaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
+import com.ramichanstore.backend.modules.sales.dto.UpdateSaleItemsRequest;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
@@ -27,7 +28,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -177,6 +180,87 @@ public class SaleService {
 
         auditService.log(AuditAction.UPDATE, MODULE, "Sale", id.toString(), before, "CANCELLED: " + reason);
         return SaleResponse.from(saved);
+    }
+
+    /**
+     * Corrige precio unitario/descuento de una o más líneas ya creadas (ej. un error de tipeo
+     * al registrar la venta) — producto y cantidad quedan fijos, así que nunca hace falta tocar
+     * stock/inventario. Recalcula subtotal/total/ganancia de la venta completa a partir de TODAS
+     * sus líneas (no solo las corregidas), y reconcilia el ledger de puntos: revierte los puntos
+     * viejos y genera los nuevos — mismos métodos de {@link LoyaltyService} que ya usan
+     * {@link #create} y {@link #cancel}, sin duplicar lógica. Bloqueada en una venta CANCELLED,
+     * igual que {@link #updatePaymentStatus}.
+     *
+     * <p><b>Los puntos nuevos se recalculan con la MISMA tasa efectiva de la venta original
+     * (puntos ÷ total al momento de crearla), nunca con el {@code LOYALTY_POINTS_PER_SOL}
+     * actual</b> (ver {@link #rescalePoints}) — si se usara el setting vigente, cambiarlo más
+     * adelante por cualquier motivo ajeno haría que corregir el precio de una venta vieja
+     * aplicara retroactivamente una tasa que nunca estuvo vigente cuando el cliente compró.</p>
+     */
+    @Transactional
+    public SaleResponse updateItems(Long id, List<UpdateSaleItemsRequest.Item> items, SecurityUser currentUser) {
+        Sale sale = findById(id);
+        if (sale.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("No se puede editar una venta cancelada");
+        }
+        String before = summarize(sale);
+        BigDecimal originalTotal = sale.getTotal();
+        int originalPoints = sale.getPointsGenerated();
+
+        Map<Long, SaleDetail> detailsById = sale.getItems().stream()
+                .collect(Collectors.toMap(SaleDetail::getId, detail -> detail));
+        for (UpdateSaleItemsRequest.Item item : items) {
+            SaleDetail detail = detailsById.get(item.detailId());
+            if (detail == null) {
+                throw new BusinessRuleException("La línea indicada no pertenece a esta venta");
+            }
+            BigDecimal lineGross = item.unitPrice().multiply(BigDecimal.valueOf(detail.getQuantity()));
+            BigDecimal lineSubtotal = lineGross.subtract(item.discount()).setScale(2, RoundingMode.HALF_UP);
+            if (lineSubtotal.compareTo(BigDecimal.ZERO) < 0) {
+                throw new BusinessRuleException(
+                        "El descuento no puede superar el importe de la línea de '" + detail.getProduct().getName() + "'");
+            }
+            detail.setUnitPrice(item.unitPrice());
+            detail.setDiscount(item.discount());
+            detail.setSubtotal(lineSubtotal);
+        }
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal totalCost = BigDecimal.ZERO;
+        for (SaleDetail detail : sale.getItems()) {
+            subtotal = subtotal.add(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getQuantity())));
+            total = total.add(detail.getSubtotal());
+            totalCost = totalCost.add(
+                    detail.getUnitCost().multiply(BigDecimal.valueOf(detail.getQuantity())).setScale(2, RoundingMode.HALF_UP));
+        }
+        sale.setSubtotal(subtotal.setScale(2, RoundingMode.HALF_UP));
+        sale.setTotal(total.setScale(2, RoundingMode.HALF_UP));
+        sale.setTotalCost(totalCost);
+        sale.setProfit(sale.getTotal().subtract(totalCost).setScale(2, RoundingMode.HALF_UP));
+
+        loyaltyService.reverseSaleEarnedPoints(sale, currentUser);
+        sale.setPointsGenerated(rescalePoints(originalPoints, originalTotal, sale.getTotal()));
+
+        Sale saved = saleRepository.save(sale);
+        loyaltyService.registerSaleEarnedPoints(saved, currentUser);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "Sale", id.toString(), before, summarize(saved));
+        return SaleResponse.from(saved);
+    }
+
+    /**
+     * newTotal × (originalPoints ÷ originalTotal), redondeado hacia abajo — preserva la tasa
+     * puntos/sol que estuvo vigente cuando se creó la venta, en vez de recalcular con
+     * LOYALTY_POINTS_PER_SOL vigente HOY (ver Javadoc de {@link #updateItems}).
+     */
+    private int rescalePoints(int originalPoints, BigDecimal originalTotal, BigDecimal newTotal) {
+        if (originalPoints <= 0 || originalTotal == null || originalTotal.signum() <= 0) {
+            return 0;
+        }
+        return newTotal.multiply(BigDecimal.valueOf(originalPoints))
+                .divide(originalTotal, 0, RoundingMode.DOWN)
+                .intValue();
     }
 
     /**

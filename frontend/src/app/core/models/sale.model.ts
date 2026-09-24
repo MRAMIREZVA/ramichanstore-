@@ -77,3 +77,8 @@ export interface SaleRequest {
   items: SaleItemRequest[];
   notes: string | null;
 }
+
+/** Corrige precio unitario/descuento de líneas ya creadas — producto y cantidad quedan fijos. */
+export interface UpdateSaleItemsRequest {
+  items: { detailId: number; unitPrice: number; discount: number }[];
+}

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
-import { PaymentMethod, PaymentStatus, Sale, SaleRequest } from '../models/sale.model';
+import { PaymentMethod, PaymentStatus, Sale, SaleRequest, UpdateSaleItemsRequest } from '../models/sale.model';
 
 export interface SaleFilters {
   customerId?: number | null;
@@ -52,5 +52,10 @@ export class SaleService {
   /** PENDING/PARTIAL/PAID solamente — para cancelar una venta usa cancel(), que revierte stock y puntos. */
   updatePaymentStatus(id: number, status: PaymentStatus): Observable<ApiResponse<Sale>> {
     return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/payment-status`, { status });
+  }
+
+  /** Corrige precio unitario/descuento de líneas ya creadas — recalcula total/ganancia/puntos. */
+  updateItems(id: number, request: UpdateSaleItemsRequest): Observable<ApiResponse<Sale>> {
+    return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/items`, request);
   }
 }
