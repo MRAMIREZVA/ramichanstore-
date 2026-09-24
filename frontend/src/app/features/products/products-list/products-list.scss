@@ -20,8 +20,13 @@
 .filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.clear-filters-btn {
+  height: 40px;
 }
 
 .search-field {

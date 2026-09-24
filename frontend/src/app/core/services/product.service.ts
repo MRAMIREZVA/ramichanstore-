@@ -10,6 +10,7 @@ export interface ProductFilters {
   search?: string;
   categoryId?: number | null;
   brandId?: number | null;
+  lineId?: number | null;
   franchise?: string | null;
   status?: ProductStatus | null;
   page?: number;
@@ -28,6 +29,7 @@ export class ProductService {
     if (filters.search) params = params.set('search', filters.search);
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.brandId) params = params.set('brandId', filters.brandId);
+    if (filters.lineId) params = params.set('lineId', filters.lineId);
     if (filters.franchise) params = params.set('franchise', filters.franchise);
     if (filters.status) params = params.set('status', filters.status);
 

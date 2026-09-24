@@ -51,6 +51,13 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.notEqual(root.get("status"), status);
     }
 
+    public static Specification<Product> hasLine(Long lineId) {
+        if (lineId == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.equal(root.get("line").get("id"), lineId);
+    }
+
     public static Specification<Product> hasFranchise(String franchise) {
         if (!StringUtils.hasText(franchise)) {
             return null;

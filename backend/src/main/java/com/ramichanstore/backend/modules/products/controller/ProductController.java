@@ -35,10 +35,11 @@ public class ProductController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) Long lineId,
             @RequestParam(required = false) String franchise,
             @RequestParam(required = false) ProductStatus status,
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
-        var page = productService.search(search, categoryId, brandId, franchise, status, pageable);
+        var page = productService.search(search, categoryId, brandId, lineId, franchise, status, pageable);
         return ApiResponse.ok(PageResponse.from(page));
     }
 

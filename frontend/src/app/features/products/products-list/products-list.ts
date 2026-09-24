@@ -13,7 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import { Brand, Category } from '../../../core/models/catalog.model';
+import { Brand, Category, ProductLine } from '../../../core/models/catalog.model';
 import { PRODUCT_STATUS_LABELS, Product, ProductStatus } from '../../../core/models/product.model';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { CatalogService } from '../../../core/services/catalog.service';
@@ -56,11 +56,13 @@ export class ProductsList implements OnInit {
   readonly totalElements = signal(0);
   readonly categories = signal<Category[]>([]);
   readonly brands = signal<Brand[]>([]);
+  readonly lines = signal<ProductLine[]>([]);
   readonly franchises = signal<string[]>([]);
 
   readonly searchControl = new FormControl('');
   readonly categoryControl = new FormControl<number | null>(null);
   readonly brandControl = new FormControl<number | null>(null);
+  readonly lineControl = new FormControl<number | null>(null);
   readonly franchiseControl = new FormControl<string | null>(null);
   readonly statusControl = new FormControl<ProductStatus | null>(null);
 
@@ -70,6 +72,7 @@ export class ProductsList implements OnInit {
   ngOnInit(): void {
     this.catalogService.getCategories().subscribe((res) => this.categories.set(res.data));
     this.catalogService.getBrands().subscribe((res) => this.brands.set(res.data));
+    this.catalogService.getProductLines().subscribe((res) => this.lines.set(res.data));
     this.productService.findFranchises().subscribe((res) => this.franchises.set(res.data));
 
     this.searchControl.valueChanges.pipe(debounceTime(350), distinctUntilChanged()).subscribe(() => {
@@ -81,6 +84,10 @@ export class ProductsList implements OnInit {
       this.load();
     });
     this.brandControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
+    this.lineControl.valueChanges.subscribe(() => {
       this.page = 0;
       this.load();
     });
@@ -102,6 +109,7 @@ export class ProductsList implements OnInit {
       search: this.searchControl.value ?? undefined,
       categoryId: this.categoryControl.value,
       brandId: this.brandControl.value,
+      lineId: this.lineControl.value,
       franchise: this.franchiseControl.value,
       status: this.statusControl.value,
       page: this.page,
@@ -119,6 +127,28 @@ export class ProductsList implements OnInit {
 
   statusLabel(status: ProductStatus): string {
     return this.statusLabels[status];
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(
+      this.searchControl.value ||
+      this.categoryControl.value ||
+      this.brandControl.value ||
+      this.lineControl.value ||
+      this.franchiseControl.value ||
+      this.statusControl.value
+    );
+  }
+
+  clearFilters(): void {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.categoryControl.setValue(null, { emitEvent: false });
+    this.brandControl.setValue(null, { emitEvent: false });
+    this.lineControl.setValue(null, { emitEvent: false });
+    this.franchiseControl.setValue(null, { emitEvent: false });
+    this.statusControl.setValue(null, { emitEvent: false });
+    this.page = 0;
+    this.load();
   }
 
   onPage(event: PageEvent): void {
