@@ -12,12 +12,14 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Brand, Category, ProductLine, Supplier } from '../../../core/models/catalog.model';
+import { DeliveryAgency } from '../../../core/models/delivery-agency.model';
 import { Setting } from '../../../core/models/setting.model';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { SettingService } from '../../../core/services/setting.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { DeliveryAgencyFormComponent, DeliveryAgencyFormData } from '../delivery-agency-form/delivery-agency-form';
 import { NameDescriptionFormComponent, NameDescriptionFormData } from '../name-description-form/name-description-form';
 import { ProductLineFormComponent, ProductLineFormData } from '../product-line-form/product-line-form';
 import { SupplierFormComponent, SupplierFormData } from '../supplier-form/supplier-form';
@@ -78,7 +80,11 @@ export class SettingsPage implements OnInit {
   readonly loadingSuppliers = signal(true);
   readonly suppliers = signal<Supplier[]>([]);
 
+  readonly loadingDeliveryAgencies = signal(true);
+  readonly deliveryAgencies = signal<DeliveryAgency[]>([]);
+
   readonly nameColumns = ['name', 'description', 'actions'];
+  readonly agencyColumns = ['name', 'actions'];
   readonly lineColumns = ['name', 'brand', 'description', 'actions'];
   readonly supplierColumns = ['name', 'company', 'contact', 'country', 'actions'];
 
@@ -88,6 +94,7 @@ export class SettingsPage implements OnInit {
     this.loadBrands();
     this.loadLines();
     this.loadSuppliers();
+    this.loadDeliveryAgencies();
     this.loadBanner();
     this.loadAnnouncement();
   }
@@ -386,6 +393,42 @@ export class SettingsPage implements OnInit {
       `¿Eliminar el proveedor "${item.name}"?`,
       () => this.catalogService.deleteSupplier(item.id),
       () => this.loadSuppliers(),
+    );
+  }
+
+  loadDeliveryAgencies(): void {
+    this.loadingDeliveryAgencies.set(true);
+    this.catalogService.getDeliveryAgencies().subscribe({
+      next: (res) => {
+        this.deliveryAgencies.set(res.data);
+        this.loadingDeliveryAgencies.set(false);
+      },
+      error: () => this.loadingDeliveryAgencies.set(false),
+    });
+  }
+
+  openDeliveryAgencyForm(item: DeliveryAgency | null): void {
+    const data: DeliveryAgencyFormData = { agency: item };
+    const ref = this.dialog.open(DeliveryAgencyFormComponent, { data, width: '420px', autoFocus: false });
+    ref.afterClosed().subscribe((request) => {
+      if (!request) return;
+      const obs = item
+        ? this.catalogService.updateDeliveryAgency(item.id, request)
+        : this.catalogService.createDeliveryAgency(request);
+      obs.subscribe({
+        next: (res) => {
+          this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+          this.loadDeliveryAgencies();
+        },
+      });
+    });
+  }
+
+  confirmDeleteDeliveryAgency(item: DeliveryAgency): void {
+    this.confirmAndDelete(
+      `¿Eliminar la agencia "${item.name}"?`,
+      () => this.catalogService.deleteDeliveryAgency(item.id),
+      () => this.loadDeliveryAgencies(),
     );
   }
 

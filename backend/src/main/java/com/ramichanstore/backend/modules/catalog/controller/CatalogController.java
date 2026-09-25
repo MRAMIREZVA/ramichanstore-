@@ -8,6 +8,7 @@ import com.ramichanstore.backend.modules.catalog.dto.StoreInfoResponse;
 import com.ramichanstore.backend.modules.catalog.entity.CatalogAnnouncement;
 import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
 import com.ramichanstore.backend.modules.catalog.service.CatalogService;
+import com.ramichanstore.backend.modules.deliveryagencies.dto.DeliveryAgencyResponse;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +75,11 @@ public class CatalogController {
     @GetMapping("/lines")
     public ApiResponse<List<CatalogFilterOption>> findLines() {
         return ApiResponse.ok(catalogService.findLines());
+    }
+
+    @GetMapping("/delivery-agencies")
+    public ApiResponse<List<DeliveryAgencyResponse>> findDeliveryAgencies() {
+        return ApiResponse.ok(catalogService.findDeliveryAgencies());
     }
 
     @GetMapping("/store-info")

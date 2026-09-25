@@ -1,50 +1,54 @@
-<h1 class="page-title">Tu carrito</h1>
+<h1 class="font-display mb-6 text-2xl font-extrabold text-gray-900 sm:text-3xl">Tu carrito</h1>
 
 @if (lines().length === 0) {
-  <div class="empty-state">
-    <mat-icon>shopping_cart</mat-icon>
-    <p>Tu carrito está vacío.</p>
-    <a mat-flat-button color="primary" routerLink="/catalogo">Ver catálogo</a>
+  <div class="flex flex-col items-center gap-3 rounded-3xl border border-black/5 bg-white py-20 text-center shadow-sm">
+    <mat-icon class="!h-12 !w-12 !text-[48px] text-gray-300">shopping_cart</mat-icon>
+    <p class="text-gray-500">Tu carrito está vacío.</p>
+    <a mat-flat-button color="primary" class="!rounded-xl" routerLink="/catalogo">Ver catálogo</a>
   </div>
 } @else {
-  <div class="cart-list">
+  <div class="flex flex-col gap-3">
     @for (line of lines(); track line.productId) {
-      <div class="cart-row">
+      <div class="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-3 shadow-sm sm:p-4">
         @if (line.mainImageUrl) {
-          <img [src]="resolveImageUrl(line.mainImageUrl)" [alt]="line.name" class="cart-row-image" />
+          <img [src]="resolveImageUrl(line.mainImageUrl)" [alt]="line.name" class="h-16 w-16 flex-none rounded-xl object-cover sm:h-20 sm:w-20" />
         } @else {
-          <div class="cart-row-image placeholder"><mat-icon>image</mat-icon></div>
+          <div class="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-gray-100 sm:h-20 sm:w-20">
+            <mat-icon class="text-gray-300">image</mat-icon>
+          </div>
         }
-        <div class="cart-row-body">
-          <span class="cart-row-name">{{ line.name }}</span>
-          <span class="cart-row-sku">{{ line.sku }}</span>
-          <span class="cart-row-price">S/ {{ line.unitPrice.toFixed(2) }} c/u</span>
+        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="line-clamp-2 text-sm font-semibold text-gray-900 sm:text-base">{{ line.name }}</span>
+          <span class="text-xs text-gray-400">{{ line.sku }}</span>
+          <span class="text-xs text-gray-500 sm:text-sm">S/ {{ line.unitPrice.toFixed(2) }} c/u</span>
         </div>
-        <div class="quantity-stepper">
-          <button mat-icon-button type="button" (click)="decrement(line)">
-            <mat-icon>remove</mat-icon>
+        <div class="flex flex-none items-center gap-1 rounded-full border border-gray-200 px-1 py-0.5">
+          <button mat-icon-button class="!h-8 !w-8" type="button" (click)="decrement(line)">
+            <mat-icon class="!text-[18px]">remove</mat-icon>
           </button>
-          <span class="quantity-value">{{ line.quantity }}</span>
-          <button mat-icon-button type="button" (click)="increment(line)">
-            <mat-icon>add</mat-icon>
+          <span class="w-5 text-center text-sm font-semibold">{{ line.quantity }}</span>
+          <button mat-icon-button class="!h-8 !w-8" type="button" (click)="increment(line)">
+            <mat-icon class="!text-[18px]">add</mat-icon>
           </button>
         </div>
-        <span class="cart-row-subtotal">S/ {{ (line.unitPrice * line.quantity).toFixed(2) }}</span>
-        <button mat-icon-button matTooltip="Quitar" (click)="remove(line)">
-          <mat-icon>delete</mat-icon>
+        <span class="font-display hidden w-24 flex-none text-right text-base font-bold text-[var(--mat-sys-primary)] sm:block">
+          S/ {{ (line.unitPrice * line.quantity).toFixed(2) }}
+        </span>
+        <button mat-icon-button matTooltip="Quitar" class="flex-none text-gray-400 hover:text-red-500" (click)="remove(line)">
+          <mat-icon>delete_outline</mat-icon>
         </button>
       </div>
     }
   </div>
 
-  <div class="cart-summary">
-    <span class="total-label">Total</span>
-    <span class="total-value">S/ {{ totalAmount().toFixed(2) }}</span>
+  <div class="mt-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white p-4 shadow-sm sm:p-5">
+    <span class="text-sm font-semibold uppercase tracking-wide text-gray-500">Total</span>
+    <span class="font-display text-xl font-extrabold text-[var(--mat-sys-primary)] sm:text-2xl">S/ {{ totalAmount().toFixed(2) }}</span>
   </div>
 
-  <div class="cart-actions">
-    <a mat-button routerLink="/catalogo">Seguir comprando</a>
-    <button mat-flat-button color="primary" (click)="checkout()">
+  <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+    <a mat-button class="!rounded-xl" routerLink="/catalogo">Seguir comprando</a>
+    <button mat-flat-button color="primary" class="!rounded-xl" (click)="checkout()">
       Continuar
       <mat-icon iconPositionEnd>arrow_forward</mat-icon>
     </button>

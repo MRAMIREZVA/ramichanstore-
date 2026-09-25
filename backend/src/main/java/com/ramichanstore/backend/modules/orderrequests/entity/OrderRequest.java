@@ -1,6 +1,7 @@
 package com.ramichanstore.backend.modules.orderrequests.entity;
 
 import com.ramichanstore.backend.common.base.BaseEntity;
+import com.ramichanstore.backend.modules.deliveryagencies.entity.DeliveryAgency;
 import com.ramichanstore.backend.modules.sales.entity.DeliveryMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import jakarta.persistence.CascadeType;
@@ -8,6 +9,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -47,6 +51,12 @@ public class OrderRequest extends BaseEntity {
     @Column(name = "guest_district", length = 100)
     private String guestDistrict;
 
+    @Column(name = "guest_province", length = 100)
+    private String guestProvince;
+
+    @Column(name = "guest_department", length = 100)
+    private String guestDepartment;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "preferred_payment_method", nullable = false, length = 20)
     private PaymentMethod preferredPaymentMethod;
@@ -54,6 +64,20 @@ public class OrderRequest extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_method", nullable = false, length = 20)
     private DeliveryMethod deliveryMethod;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_agency_id")
+    private DeliveryAgency deliveryAgency;
+
+    /** Destinatario que recoge en la agencia — puede ser distinto de quien hace el pedido. */
+    @Column(name = "recipient_dni", length = 20)
+    private String recipientDni;
+
+    @Column(name = "recipient_name", length = 200)
+    private String recipientName;
+
+    @Column(name = "recipient_phone", length = 30)
+    private String recipientPhone;
 
     @Column(length = 500)
     private String notes;

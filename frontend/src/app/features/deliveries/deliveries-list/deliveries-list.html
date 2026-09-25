@@ -56,7 +56,7 @@
         <ng-container matColumnDef="destination">
           <th mat-header-cell *matHeaderCellDef>Destino</th>
           <td mat-cell *matCellDef="let d">
-            {{ d.district || d.agency || d.courier || '—' }}
+            {{ d.district || d.deliveryAgencyName || d.courier || '—' }}
           </td>
         </ng-container>
 

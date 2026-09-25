@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>{{ data.agency ? 'Editar agencia' : 'Nueva agencia' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" placeholder="ej. Shalom, Olva Courier" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>El nombre es obligatorio</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="save()">Guardar</button>
+</mat-dialog-actions>

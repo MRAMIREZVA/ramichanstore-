@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.deliveries.entity;
 
 import com.ramichanstore.backend.common.base.BaseEntity;
 import com.ramichanstore.backend.modules.customers.entity.Customer;
+import com.ramichanstore.backend.modules.deliveryagencies.entity.DeliveryAgency;
 import com.ramichanstore.backend.modules.sales.entity.DeliveryMethod;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -60,8 +61,19 @@ public class Delivery extends BaseEntity {
     @Column(length = 100)
     private String province;
 
-    @Column(length = 150)
-    private String agency;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_agency_id")
+    private DeliveryAgency deliveryAgency;
+
+    /** DNI/nombre/celular de quien recoge el paquete en la agencia — puede ser distinto del Customer dueño de la entrega. */
+    @Column(name = "recipient_dni", length = 20)
+    private String recipientDni;
+
+    @Column(name = "recipient_name", length = 200)
+    private String recipientName;
+
+    @Column(name = "recipient_phone", length = 30)
+    private String recipientPhone;
 
     @Column(length = 150)
     private String courier;

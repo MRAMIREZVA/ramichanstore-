@@ -13,6 +13,8 @@ import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
 import com.ramichanstore.backend.modules.catalog.repository.CatalogAnnouncementRepository;
 import com.ramichanstore.backend.modules.catalog.repository.CatalogBannerRepository;
 import com.ramichanstore.backend.modules.categories.service.CategoryService;
+import com.ramichanstore.backend.modules.deliveryagencies.dto.DeliveryAgencyResponse;
+import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
 import com.ramichanstore.backend.modules.productlines.service.ProductLineService;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
@@ -51,6 +53,7 @@ public class CatalogService {
     private final CategoryService categoryService;
     private final BrandService brandService;
     private final ProductLineService productLineService;
+    private final DeliveryAgencyService deliveryAgencyService;
     private final SettingService settingService;
     private final CatalogBannerRepository catalogBannerRepository;
     private final CatalogAnnouncementRepository catalogAnnouncementRepository;
@@ -90,6 +93,12 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public List<String> findFranchises() {
         return productService.findDistinctFranchises();
+    }
+
+    /** Agencias de envío (Shalom, Olva, etc.) para el checkout cuando el método de entrega es "Agencia". */
+    @Transactional(readOnly = true)
+    public List<DeliveryAgencyResponse> findDeliveryAgencies() {
+        return deliveryAgencyService.findAll();
     }
 
     /**

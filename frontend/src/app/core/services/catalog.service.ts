@@ -12,6 +12,7 @@ import {
   Supplier,
   SupplierRequest,
 } from '../models/catalog.model';
+import { DeliveryAgency, DeliveryAgencyRequest } from '../models/delivery-agency.model';
 
 /** Catálogos de apoyo para el módulo de Productos (categorías, marcas, líneas, proveedores). */
 @Injectable({ providedIn: 'root' })
@@ -81,6 +82,22 @@ export class CatalogService {
 
   deleteSupplier(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/suppliers/${id}`);
+  }
+
+  getDeliveryAgencies(): Observable<ApiResponse<DeliveryAgency[]>> {
+    return this.http.get<ApiResponse<DeliveryAgency[]>>(`${this.base}/delivery-agencies`);
+  }
+
+  createDeliveryAgency(request: DeliveryAgencyRequest): Observable<ApiResponse<DeliveryAgency>> {
+    return this.http.post<ApiResponse<DeliveryAgency>>(`${this.base}/delivery-agencies`, request);
+  }
+
+  updateDeliveryAgency(id: number, request: DeliveryAgencyRequest): Observable<ApiResponse<DeliveryAgency>> {
+    return this.http.put<ApiResponse<DeliveryAgency>>(`${this.base}/delivery-agencies/${id}`, request);
+  }
+
+  deleteDeliveryAgency(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.base}/delivery-agencies/${id}`);
   }
 
   uploadCatalogBanner(file: File): Observable<ApiResponse<void>> {

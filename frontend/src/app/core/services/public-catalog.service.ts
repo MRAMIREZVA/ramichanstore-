@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
 import { CatalogFilterOption, PublicProduct, StoreInfo } from '../models/public-catalog.model';
+import { DeliveryAgency } from '../models/delivery-agency.model';
 
 export interface PublicCatalogFilters {
   search?: string;
@@ -63,5 +64,9 @@ export class PublicCatalogService {
 
   getFranchises(): Observable<ApiResponse<string[]>> {
     return this.http.get<ApiResponse<string[]>>(`${this.base}/franchises`);
+  }
+
+  getDeliveryAgencies(): Observable<ApiResponse<DeliveryAgency[]>> {
+    return this.http.get<ApiResponse<DeliveryAgency[]>>(`${this.base}/delivery-agencies`);
   }
 }

@@ -15,6 +15,8 @@ import com.ramichanstore.backend.modules.deliveries.entity.DeliveryStatus;
 import com.ramichanstore.backend.modules.deliveries.repository.DeliveryItemRepository;
 import com.ramichanstore.backend.modules.deliveries.repository.DeliveryRepository;
 import com.ramichanstore.backend.modules.deliveries.repository.DeliverySpecifications;
+import com.ramichanstore.backend.modules.deliveryagencies.entity.DeliveryAgency;
+import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
 import com.ramichanstore.backend.modules.separations.entity.Separation;
@@ -50,6 +52,7 @@ public class DeliveryService {
     private final CustomerRepository customerRepository;
     private final SaleRepository saleRepository;
     private final SeparationRepository separationRepository;
+    private final DeliveryAgencyService deliveryAgencyService;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -188,11 +191,18 @@ public class DeliveryService {
         delivery.setDistrict(request.district());
         delivery.setDepartment(request.department());
         delivery.setProvince(request.province());
-        delivery.setAgency(request.agency());
+        delivery.setDeliveryAgency(resolveAgency(request.deliveryAgencyId()));
+        delivery.setRecipientDni(request.recipientDni());
+        delivery.setRecipientName(request.recipientName());
+        delivery.setRecipientPhone(request.recipientPhone());
         delivery.setCourier(request.courier());
         delivery.setScheduledDate(request.scheduledDate());
         delivery.setStatus(request.status());
         delivery.setNotes(request.notes());
+    }
+
+    private DeliveryAgency resolveAgency(Long deliveryAgencyId) {
+        return deliveryAgencyId != null ? deliveryAgencyService.findById(deliveryAgencyId) : null;
     }
 
     private String summarize(Delivery delivery) {

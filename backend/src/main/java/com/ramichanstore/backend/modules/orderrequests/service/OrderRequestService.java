@@ -8,6 +8,7 @@ import com.ramichanstore.backend.modules.customers.dto.CustomerRequest;
 import com.ramichanstore.backend.modules.customers.entity.CustomerStatus;
 import com.ramichanstore.backend.modules.customers.repository.CustomerRepository;
 import com.ramichanstore.backend.modules.customers.service.CustomerService;
+import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
 import com.ramichanstore.backend.modules.orderrequests.dto.CartItemRequest;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
@@ -51,6 +52,7 @@ public class OrderRequestService {
     private final CustomerRepository customerRepository;
     private final CustomerService customerService;
     private final SaleService saleService;
+    private final DeliveryAgencyService deliveryAgencyService;
     private final AuditService auditService;
 
     @Transactional
@@ -61,8 +63,16 @@ public class OrderRequestService {
         orderRequest.setGuestWhatsapp(request.guestWhatsapp());
         orderRequest.setGuestAddress(request.guestAddress());
         orderRequest.setGuestDistrict(request.guestDistrict());
+        orderRequest.setGuestProvince(request.guestProvince());
+        orderRequest.setGuestDepartment(request.guestDepartment());
         orderRequest.setPreferredPaymentMethod(request.preferredPaymentMethod());
         orderRequest.setDeliveryMethod(request.deliveryMethod());
+        if (request.deliveryAgencyId() != null) {
+            orderRequest.setDeliveryAgency(deliveryAgencyService.findById(request.deliveryAgencyId()));
+        }
+        orderRequest.setRecipientDni(request.recipientDni());
+        orderRequest.setRecipientName(request.recipientName());
+        orderRequest.setRecipientPhone(request.recipientPhone());
         orderRequest.setNotes(request.notes());
         orderRequest.setStatus(OrderRequestStatus.PENDING);
 

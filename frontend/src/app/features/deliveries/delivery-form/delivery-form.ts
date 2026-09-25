@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,8 +14,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { PERU_DEPARTMENTS } from '../../../core/constants/peru-departments';
 import { Customer } from '../../../core/models/customer.model';
+import { DeliveryAgency } from '../../../core/models/delivery-agency.model';
 import { DELIVERY_STATUS_LABELS, Delivery, DeliveryRequest, DeliveryStatus, PendingPurchase } from '../../../core/models/delivery.model';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod } from '../../../core/models/sale.model';
+import { CatalogService } from '../../../core/services/catalog.service';
 import { CustomerService } from '../../../core/services/customer.service';
 import { DeliveryService } from '../../../core/services/delivery.service';
 import { parseIsoDate } from '../../../core/utils/date';
@@ -52,6 +54,7 @@ export class DeliveryFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly customerService = inject(CustomerService);
   private readonly deliveryService = inject(DeliveryService);
+  private readonly catalogService = inject(CatalogService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<DeliveryFormComponent>);
   readonly data = inject<DeliveryFormData>(MAT_DIALOG_DATA);
@@ -59,6 +62,7 @@ export class DeliveryFormComponent implements OnInit {
   readonly deliveryTypeOptions = Object.entries(DELIVERY_METHOD_LABELS) as [DeliveryMethod, string][];
   readonly statusOptions = Object.entries(DELIVERY_STATUS_LABELS) as [DeliveryStatus, string][];
   readonly departments = PERU_DEPARTMENTS;
+  readonly deliveryAgencies = signal<DeliveryAgency[]>([]);
 
   readonly saving = signal(false);
   readonly searchingCustomer = signal(false);
@@ -80,14 +84,27 @@ export class DeliveryFormComponent implements OnInit {
     district: [this.data.delivery?.district ?? ''],
     department: [this.data.delivery?.department ?? null],
     province: [this.data.delivery?.province ?? ''],
-    agency: [this.data.delivery?.agency ?? ''],
+    deliveryAgencyId: [this.data.delivery?.deliveryAgencyId ?? null],
+    recipientDni: [this.data.delivery?.recipientDni ?? ''],
+    recipientName: [this.data.delivery?.recipientName ?? ''],
+    recipientPhone: [this.data.delivery?.recipientPhone ?? ''],
     courier: [this.data.delivery?.courier ?? ''],
     scheduledDate: [this.data.delivery ? parseIsoDate(this.data.delivery.scheduledDate) : new Date(), Validators.required],
     status: [this.data.delivery?.status ?? ('PENDING' as DeliveryStatus), Validators.required],
     notes: [this.data.delivery?.notes ?? ''],
   });
 
+  readonly isAgency = computed(() => this.deliveryTypeValue() === 'AGENCY');
+  private readonly deliveryTypeValue = signal<DeliveryMethod>(this.data.delivery?.deliveryType ?? 'DELIVERY');
+
   constructor() {
+    this.catalogService.getDeliveryAgencies().subscribe({
+      next: (res) => this.deliveryAgencies.set(res.data),
+      error: () => this.deliveryAgencies.set([]),
+    });
+    this.form.controls.deliveryType.valueChanges.subscribe((value) => {
+      this.deliveryTypeValue.set(value as DeliveryMethod);
+    });
     this.form.controls.customerSearch.valueChanges
       .pipe(
         debounceTime(300),
@@ -186,7 +203,10 @@ export class DeliveryFormComponent implements OnInit {
       district: v.district || null,
       department: v.department || null,
       province: v.province || null,
-      agency: v.agency || null,
+      deliveryAgencyId: v.deliveryAgencyId || null,
+      recipientDni: v.recipientDni || null,
+      recipientName: v.recipientName || null,
+      recipientPhone: v.recipientPhone || null,
       courier: v.courier || null,
       scheduledDate: this.toIsoDate(v.scheduledDate as Date),
       status: v.status as DeliveryStatus,

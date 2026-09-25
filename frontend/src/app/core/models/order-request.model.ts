@@ -20,8 +20,14 @@ export interface OrderRequestSubmission {
   guestWhatsapp: string | null;
   guestAddress: string | null;
   guestDistrict: string | null;
+  guestProvince: string | null;
+  guestDepartment: string | null;
   preferredPaymentMethod: PaymentMethod;
   deliveryMethod: DeliveryMethod;
+  deliveryAgencyId: number | null;
+  recipientDni: string | null;
+  recipientName: string | null;
+  recipientPhone: string | null;
   notes: string | null;
   items: CartItemRequest[];
 }
@@ -37,6 +43,13 @@ export interface OrderRequestItem {
   subtotal: number;
 }
 
+/** Versión pública mínima para el polling del checkout mientras espera la confirmación de un pago con Yape. */
+export interface OrderRequestStatusInfo {
+  id: number;
+  status: OrderRequestStatus;
+  convertedSaleId: number | null;
+}
+
 export interface OrderRequest {
   id: number;
   guestName: string;
@@ -44,8 +57,15 @@ export interface OrderRequest {
   guestWhatsapp: string | null;
   guestAddress: string | null;
   guestDistrict: string | null;
+  guestProvince: string | null;
+  guestDepartment: string | null;
   preferredPaymentMethod: PaymentMethod;
   deliveryMethod: DeliveryMethod;
+  deliveryAgencyId: number | null;
+  deliveryAgencyName: string | null;
+  recipientDni: string | null;
+  recipientName: string | null;
+  recipientPhone: string | null;
   notes: string | null;
   items: OrderRequestItem[];
   total: number;

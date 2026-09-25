@@ -1,45 +1,99 @@
-@if (submittedOrder(); as order) {
-  <div class="confirmation">
-    <mat-icon class="confirmation-icon">check_circle</mat-icon>
-    <h1>¡Pedido enviado!</h1>
-    <p class="confirmation-sub">Tu pedido web #{{ order.id }} quedó registrado. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.</p>
+@if (showYapeSuccess()) {
+  <div class="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
+    <mat-icon class="!h-14 !w-14 !text-[56px] text-emerald-600">check_circle</mat-icon>
+    <h1 class="font-display mt-2 text-2xl font-extrabold text-gray-900">¡Pago con Yape exitoso!</h1>
+    <p class="mb-2 text-sm text-gray-500">
+      Tu pago quedó confirmado y tu compra ya se registró
+      @if (convertedSaleId()) { como la venta #{{ convertedSaleId() }} }
+      . Nos pondremos en contacto contigo para coordinar la entrega.
+    </p>
+    <a mat-button class="!rounded-xl" routerLink="/catalogo">Volver al catálogo</a>
+  </div>
+} @else if (showYapeWidget()) {
+  <div class="mx-auto max-w-md rounded-3xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+    <h1 class="font-display mb-4 text-xl font-extrabold text-gray-900">Pago con Yape</h1>
 
-    <div class="confirmation-summary">
+    @if (yapeStage() === 'starting') {
+      <div class="flex flex-col items-center gap-3 py-10 text-center text-gray-500">
+        <mat-spinner diameter="32" />
+        <p>Preparando el pago...</p>
+      </div>
+    }
+
+    <div id="kr-payment-form" [style.display]="yapeStage() === 'widget' ? 'block' : 'none'">
+      <div class="kr-smart-form"></div>
+    </div>
+
+    @if (yapeStage() === 'confirming') {
+      <div class="flex flex-col items-center gap-3 py-10 text-center text-gray-500">
+        <mat-spinner diameter="32" />
+        <p>Confirmando tu pago...</p>
+      </div>
+    }
+
+    @if (yapeStage() === 'failed') {
+      <div class="flex flex-col items-center gap-3 py-8 text-center">
+        <mat-icon class="text-red-500">error_outline</mat-icon>
+        <p class="text-sm text-gray-600">{{ yapeErrorMessage() }}</p>
+        <button mat-stroked-button color="primary" class="!rounded-xl" (click)="retryWithWhatsApp()">Coordinar por WhatsApp</button>
+      </div>
+    }
+
+    @if (yapeStage() === 'delayed') {
+      <div class="flex flex-col items-center gap-3 py-8 text-center text-gray-500">
+        <mat-icon>schedule</mat-icon>
+        <p class="text-sm">Tu pago fue aprobado y estamos terminando de confirmar tu pedido — puede tardar unos segundos más.</p>
+        @if (whatsAppUrl()) {
+          <a mat-flat-button color="primary" class="!rounded-xl" [href]="whatsAppUrl()" target="_blank" rel="noopener">
+            <mat-icon>chat</mat-icon>
+            Avisarnos por WhatsApp
+          </a>
+        }
+      </div>
+    }
+  </div>
+} @else if (submittedOrder(); as order) {
+  <div class="mx-auto flex max-w-md flex-col items-center gap-2 py-14 text-center">
+    <mat-icon class="!h-14 !w-14 !text-[56px] text-emerald-600">check_circle</mat-icon>
+    <h1 class="font-display mt-2 text-2xl font-extrabold text-gray-900">¡Pedido enviado!</h1>
+    <p class="mb-2 text-sm text-gray-500">Tu pedido web #{{ order.id }} quedó registrado. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.</p>
+
+    <div class="mb-2 w-full rounded-2xl border border-black/5 bg-white p-4 text-left shadow-sm">
       @for (item of order.items; track item.id) {
-        <div class="confirmation-line">
+        <div class="flex justify-between py-1 text-sm text-gray-600">
           <span>{{ item.quantity }}x {{ item.productName }}</span>
           <span>S/ {{ item.subtotal.toFixed(2) }}</span>
         </div>
       }
-      <div class="confirmation-line total">
+      <div class="mt-1 flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
         <span>Total</span>
         <span>S/ {{ order.total.toFixed(2) }}</span>
       </div>
     </div>
 
     @if (whatsAppUrl()) {
-      <p class="whatsapp-hint">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>
-      <a mat-flat-button color="primary" class="whatsapp-btn" [href]="whatsAppUrl()" target="_blank" rel="noopener">
+      <p class="text-sm text-gray-500">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>
+      <a mat-flat-button color="primary" class="!my-1 !rounded-xl" [href]="whatsAppUrl()" target="_blank" rel="noopener">
         <mat-icon>chat</mat-icon>
         Enviar por WhatsApp
       </a>
     } @else if (!storeHasWhatsapp()) {
-      <p class="whatsapp-hint">La tienda todavía no configuró un WhatsApp de contacto — quedará pendiente de revisión igual.</p>
+      <p class="text-sm text-gray-500">La tienda todavía no configuró un WhatsApp de contacto — quedará pendiente de revisión igual.</p>
     }
 
-    <a mat-button routerLink="/catalogo" class="back-link">Volver al catálogo</a>
+    <a mat-button class="!rounded-xl" routerLink="/catalogo">Volver al catálogo</a>
   </div>
 } @else {
-  <h1 class="page-title">Finalizar pedido</h1>
+  <h1 class="font-display mb-6 text-2xl font-extrabold text-gray-900 sm:text-3xl">Finalizar pedido</h1>
 
-  <div class="checkout-layout">
-    <form [formGroup]="form" class="checkout-form" (ngSubmit)="submit()">
-      <h2 class="section-title">Tus datos</h2>
-      <mat-form-field appearance="outline" class="full-width">
+  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <form [formGroup]="form" class="flex flex-col gap-4 rounded-3xl border border-black/5 bg-white p-5 shadow-sm sm:p-7" (ngSubmit)="submit()">
+      <h2 class="font-display text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Tus datos</h2>
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Nombre completo</mat-label>
         <input matInput formControlName="guestName" />
       </mat-form-field>
-      <div class="grid-2">
+      <div class="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
         <mat-form-field appearance="outline">
           <mat-label>Teléfono</mat-label>
           <input matInput formControlName="guestPhone" />
@@ -50,8 +104,8 @@
         </mat-form-field>
       </div>
 
-      <h2 class="section-title">Entrega</h2>
-      <mat-form-field appearance="outline" class="full-width">
+      <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Entrega</h2>
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Tipo de entrega</mat-label>
         <mat-select formControlName="deliveryMethod">
           @for (opt of deliveryMethodOptions; track opt[0]) {
@@ -59,8 +113,9 @@
           }
         </mat-select>
       </mat-form-field>
-      @if (needsAddress()) {
-        <div class="grid-2">
+
+      @if (locationMode() === 'address') {
+        <div class="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
           <mat-form-field appearance="outline">
             <mat-label>Distrito</mat-label>
             <input matInput formControlName="guestDistrict" />
@@ -72,9 +127,57 @@
         </div>
       }
 
-      <h2 class="section-title">Pago</h2>
-      <p class="payment-hint">Elige cómo prefieres pagar — coordinaremos el pago real contigo por WhatsApp.</p>
-      <mat-form-field appearance="outline" class="full-width">
+      @if (locationMode() === 'agency') {
+        <div class="rounded-2xl bg-gray-50 p-4">
+          <p class="mb-3 text-sm font-semibold text-gray-700">Datos de quien recoge el paquete en la agencia</p>
+          <div class="grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2">
+            <mat-form-field appearance="outline">
+              <mat-label>DNI</mat-label>
+              <input matInput formControlName="recipientDni" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre completo</mat-label>
+              <input matInput formControlName="recipientName" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Celular</mat-label>
+              <input matInput formControlName="recipientPhone" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Agencia</mat-label>
+              <mat-select formControlName="deliveryAgencyId">
+                @for (a of deliveryAgencies(); track a.id) {
+                  <mat-option [value]="a.id">{{ a.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Departamento</mat-label>
+              <mat-select formControlName="guestDepartment">
+                @for (dep of departments; track dep) {
+                  <mat-option [value]="dep">{{ dep }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Provincia</mat-label>
+              <input matInput formControlName="guestProvince" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Distrito</mat-label>
+              <input matInput formControlName="guestDistrict" />
+            </mat-form-field>
+          </div>
+        </div>
+      }
+
+      <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Pago</h2>
+      @if (selectedPaymentMethod() === 'YAPE') {
+        <p class="-mt-1 text-xs text-gray-500">Pagarás en línea con Yape, al instante, aquí mismo en la página.</p>
+      } @else {
+        <p class="-mt-1 text-xs text-gray-500">Elige cómo prefieres pagar — coordinaremos el pago real contigo por WhatsApp.</p>
+      }
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Método de pago preferido</mat-label>
         <mat-select formControlName="preferredPaymentMethod">
           @for (opt of paymentMethodOptions; track opt[0]) {
@@ -83,12 +186,12 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Observaciones (opcional)</mat-label>
         <textarea matInput formControlName="notes" rows="2"></textarea>
       </mat-form-field>
 
-      <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="saving()">
+      <button mat-flat-button color="primary" type="submit" class="!mt-1 !w-fit !rounded-xl" [disabled]="saving()">
         @if (saving()) {
           <mat-spinner diameter="20" />
         } @else {
@@ -97,19 +200,19 @@
       </button>
     </form>
 
-    <aside class="order-summary">
-      <h2 class="section-title">Tu pedido</h2>
+    <aside class="rounded-3xl border border-black/5 bg-white p-5 shadow-sm lg:sticky lg:top-4">
+      <h2 class="font-display mb-3 text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Tu pedido</h2>
       @for (line of lines(); track line.productId) {
-        <div class="summary-line">
+        <div class="flex justify-between py-1 text-sm text-gray-600">
           <span>{{ line.quantity }}x {{ line.name }}</span>
           <span>S/ {{ (line.unitPrice * line.quantity).toFixed(2) }}</span>
         </div>
       }
-      <div class="summary-line total">
+      <div class="mt-2 flex justify-between border-t border-gray-100 pt-2 text-base font-bold text-gray-900">
         <span>Total</span>
         <span>S/ {{ totalAmount().toFixed(2) }}</span>
       </div>
-      <a routerLink="/catalogo/carrito" class="edit-cart-link">Editar carrito</a>
+      <a class="mt-3 inline-block text-xs font-semibold text-[var(--mat-sys-primary)]" routerLink="/catalogo/carrito">Editar carrito</a>
     </aside>
   </div>
 }

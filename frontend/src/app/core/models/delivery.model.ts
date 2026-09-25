@@ -43,7 +43,11 @@ export interface Delivery {
   district: string | null;
   department: string | null;
   province: string | null;
-  agency: string | null;
+  deliveryAgencyId: number | null;
+  deliveryAgencyName: string | null;
+  recipientDni: string | null;
+  recipientName: string | null;
+  recipientPhone: string | null;
   courier: string | null;
   scheduledDate: string;
   status: DeliveryStatus;
@@ -59,7 +63,10 @@ export interface DeliveryRequest {
   district: string | null;
   department: string | null;
   province: string | null;
-  agency: string | null;
+  deliveryAgencyId: number | null;
+  recipientDni: string | null;
+  recipientName: string | null;
+  recipientPhone: string | null;
   courier: string | null;
   scheduledDate: string;
   status: DeliveryStatus;

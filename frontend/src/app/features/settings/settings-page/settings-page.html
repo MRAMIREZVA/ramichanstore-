@@ -191,6 +191,39 @@
       </div>
     </mat-tab>
 
+    <mat-tab label="Agencias de envío">
+      <div class="tab-body">
+        <p class="tab-hint">Agencias disponibles al elegir "Envío por agencia" en el checkout del catálogo y en Entregas.</p>
+        <div class="tab-actions">
+          <button mat-flat-button color="primary" (click)="openDeliveryAgencyForm(null)">
+            <mat-icon>add</mat-icon>
+            Nueva agencia
+          </button>
+        </div>
+        <div class="table-card">
+          @if (loadingDeliveryAgencies()) {
+            <div class="loading"><mat-spinner diameter="36" /></div>
+          } @else {
+            <table mat-table [dataSource]="deliveryAgencies()" class="admin-table">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                <td mat-cell *matCellDef="let a">{{ a.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let a">
+                  <button mat-icon-button (click)="openDeliveryAgencyForm(a)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button (click)="confirmDeleteDeliveryAgency(a)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="agencyColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: agencyColumns"></tr>
+            </table>
+          }
+        </div>
+      </div>
+    </mat-tab>
+
     <mat-tab label="Catálogo">
       <div class="tab-body">
         <p class="hint">Banner que se muestra arriba de todo en el catálogo público (/catalogo). Sin uno propio, se usa un fondo degradado.</p>
