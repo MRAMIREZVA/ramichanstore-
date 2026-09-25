@@ -193,9 +193,13 @@ export class PreorderReservationsComponent {
   }
 
   cancelReservation(reservation: PreorderReservation): void {
+    const paidWarning =
+      reservation.amountPaid > 0
+        ? ` Ya tiene S/ ${reservation.amountPaid.toFixed(2)} abonado(s) — coordina con el cliente qué hacer con ese monto.`
+        : '';
     const data: ConfirmDialogData = {
       title: 'Cancelar reserva',
-      message: `¿Cancelar la reserva de "${reservation.customerName}" (${reservation.quantity} unidad(es))? Libera esos cupos.`,
+      message: `¿Cancelar la reserva de "${reservation.customerName}" (${reservation.quantity} unidad(es))? Libera esos cupos.${paidWarning}`,
       confirmLabel: 'Cancelar reserva',
       destructive: true,
     };
