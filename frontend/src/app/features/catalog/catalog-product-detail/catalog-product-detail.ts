@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -15,7 +14,7 @@ import { resolveImageUrl } from '../../../core/utils/image-url';
 @Component({
   selector: 'app-catalog-product-detail',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatChipsModule, MatProgressSpinnerModule],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './catalog-product-detail.html',
   styleUrl: './catalog-product-detail.scss',
 })
