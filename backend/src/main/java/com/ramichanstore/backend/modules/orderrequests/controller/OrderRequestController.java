@@ -3,6 +3,7 @@ package com.ramichanstore.backend.modules.orderrequests.controller;
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestResponse;
+import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestStatusResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
 import com.ramichanstore.backend.modules.orderrequests.dto.RejectOrderRequestRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
@@ -53,6 +54,16 @@ public class OrderRequestController {
     @PreAuthorize("hasAuthority('PERM_ORDER_REQUEST_VIEW')")
     public ApiResponse<OrderRequestResponse> findById(@PathVariable Long id) {
         return ApiResponse.ok(orderRequestService.findResponseById(id));
+    }
+
+    /**
+     * Pública a propósito (ver SecurityConfig) — el checkout la usa para hacer polling mientras
+     * espera la confirmación IPN de un pago con Yape (Fase 37). Solo expone estado/id de venta,
+     * nunca los datos del invitado.
+     */
+    @GetMapping("/{id}/status")
+    public ApiResponse<OrderRequestStatusResponse> status(@PathVariable Long id) {
+        return ApiResponse.ok(OrderRequestStatusResponse.from(orderRequestService.findById(id)));
     }
 
     @PostMapping("/{id}/convert")

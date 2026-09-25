@@ -18,3 +18,11 @@ app:
     secret: GENERA_UN_SECRETO_ALEATORIO_DE_AL_MENOS_64_BYTES_AQUI
   cors:
     allowed-origins: http://localhost:4200
+  izipay:
+    # Sección "Desarrolladores" del Back Office Vendedor de Izipay (sandbox-panel.izipay.pe
+    # para pruebas, panel.izipay.pe para producción). Usa SIEMPRE las credenciales de TEST
+    # mientras desarrollas — nunca las de producción en esta máquina.
+    username: TU_CODIGO_DE_COMERCIO_DE_PRUEBA
+    password: TU_CLAVE_DE_API_DEL_BOTON_DE_PAGOS_DE_PRUEBA
+    public-key: TU_CLAVE_PUBLICA_DE_PRUEBA
+    hmac-sha256-key: TU_CLAVE_HASH_HMAC_SHA256_DE_PRUEBA

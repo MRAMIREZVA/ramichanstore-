@@ -34,6 +34,19 @@ app:
     refresh-token-expiration-ms: ${JWT_REFRESH_EXP_MS:604800000}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  izipay:
+    # Pago con Yape en el checkout del catálogo público (Fase 37). Las 4 credenciales
+    # vienen del Back Office Vendedor de Izipay (sección "Desarrolladores") — username
+    # es el "Código de comercio", password es la "Clave de API del botón de pagos".
+    # api-base-url apunta al ambiente de pruebas (sandbox) por defecto; NUNCA pegar
+    # credenciales reales acá — van en application-local.yml (gitignored) o env vars.
+    username: ${IZIPAY_USERNAME:}
+    password: ${IZIPAY_PASSWORD:}
+    public-key: ${IZIPAY_PUBLIC_KEY:}
+    hmac-sha256-key: ${IZIPAY_HMAC_SHA256_KEY:}
+    # Misma URL para sandbox y producción — lo que cambia es el par username/password
+    # (Izipay distingue el ambiente por las credenciales, no por la URL).
+    api-base-url: ${IZIPAY_API_BASE_URL:https://api.micuentaweb.pe}
 
 springdoc:
   swagger-ui:

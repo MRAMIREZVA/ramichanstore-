@@ -26,6 +26,9 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "@lyracom/embedded-form-glue"
+            ],
             "assets": [
               {
                 "glob": "**/*",

@@ -23,6 +23,21 @@ public class SecurityUser implements UserDetails {
         this.user = user;
     }
 
+    /**
+     * Actor sintético para acciones automáticas del propio backend, sin sesión de staff detrás
+     * (ej. la IPN de Izipay confirmando un pago y convirtiendo un pedido web en venta — Fase 37).
+     * Nunca se persiste: solo se usa para que servicios como InventoryService/LoyaltyService, que
+     * leen currentUser.getId()/getUsername() para dejar rastro en su ledger (userId/username como
+     * columnas planas, sin FK a User), tengan a quién atribuirle el movimiento. id=0 es intencional
+     * y seguro porque esas columnas no llevan restricción de llave foránea.
+     */
+    public static SecurityUser system() {
+        User systemUser = new User();
+        systemUser.setId(0L);
+        systemUser.setUsername("system");
+        return new SecurityUser(systemUser);
+    }
+
     public Long getId() {
         return user.getId();
     }

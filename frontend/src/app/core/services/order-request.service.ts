@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { OrderRequest, OrderRequestStatus, OrderRequestSubmission } from '../models/order-request.model';
+import { OrderRequest, OrderRequestStatus, OrderRequestStatusInfo, OrderRequestSubmission } from '../models/order-request.model';
 import { PageResponse } from '../models/page-response.model';
 
 export interface OrderRequestFilters {
@@ -32,6 +32,11 @@ export class OrderRequestService {
 
   findById(id: number): Observable<ApiResponse<OrderRequest>> {
     return this.http.get<ApiResponse<OrderRequest>>(`${this.baseUrl}/${id}`);
+  }
+
+  /** Público — el checkout hace polling acá mientras espera la confirmación IPN de un pago con Yape. */
+  getStatus(id: number): Observable<ApiResponse<OrderRequestStatusInfo>> {
+    return this.http.get<ApiResponse<OrderRequestStatusInfo>>(`${this.baseUrl}/${id}/status`);
   }
 
   convert(id: number): Observable<ApiResponse<OrderRequest>> {
