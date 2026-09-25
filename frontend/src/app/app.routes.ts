@@ -8,6 +8,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },
   {
+    path: 'privacidad',
+    loadComponent: () =>
+      import('./features/legal/privacy-policy/privacy-policy').then((m) => m.PrivacyPolicy),
+  },
+  {
     path: '',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],

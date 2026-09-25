@@ -78,7 +78,9 @@ form {
 .footer-links {
   margin-top: 16px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 4px 16px;
   font-size: 13px;
 
   a {

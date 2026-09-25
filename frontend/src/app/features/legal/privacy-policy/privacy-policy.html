@@ -1,0 +1,132 @@
+<div class="catalog-shell min-h-screen bg-gray-50">
+  <header class="border-b border-black/5 bg-white">
+    <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+      <a routerLink="/catalogo" class="flex items-center gap-2">
+        <img src="/logo.png" alt="RamichanStore" class="h-9 w-9 rounded-full object-cover" />
+        <span class="font-display text-lg font-bold text-gray-900">{{ storeName() }}</span>
+      </a>
+      <button
+        type="button"
+        (click)="goBack()"
+        class="flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+      >
+        <mat-icon class="!h-4 !w-4 !text-[18px]">arrow_back</mat-icon>
+        Volver
+      </button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-3xl px-6 py-10">
+    <span class="inline-block rounded-full bg-purple-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-700">
+      Legal
+    </span>
+    <h1 class="font-display mt-3 text-3xl font-extrabold tracking-tight text-gray-900">Política de Privacidad</h1>
+    <p class="mt-2 text-sm text-gray-500">Última actualización: septiembre de 2026</p>
+
+    <div class="mt-8 space-y-8 text-[15px] leading-relaxed text-gray-700">
+      <p>
+        En {{ storeName() }} ("nosotros") respetamos tu privacidad y nos comprometemos a proteger tus datos personales
+        conforme a la Ley N.° 29733, Ley de Protección de Datos Personales, y su reglamento (D.S. N.° 003-2013-JUS).
+      </p>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">1. ¿Qué datos recopilamos?</h2>
+        <p class="mt-2">Según cómo interactúes con nosotros, podemos recopilar:</p>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>
+            <strong>Al comprar desde el catálogo sin registrarte:</strong> nombre, teléfono, WhatsApp (opcional),
+            dirección y distrito de entrega, método de pago preferido y notas del pedido.
+          </li>
+          <li>
+            <strong>Si te registramos como cliente en tienda:</strong> nombre, documento de identidad (opcional),
+            teléfono, WhatsApp, correo, dirección, distrito, y tus observaciones.
+          </li>
+          <li>
+            <strong>Si te habilitamos el Portal de Clientes:</strong> un usuario y una contraseña (que guardamos de
+            forma cifrada, nunca en texto plano) para que veas tus propias compras, preventas y puntos.
+          </li>
+          <li>
+            <strong>Historial de tus compras, preventas, separaciones, pagos y puntos de fidelidad</strong> asociados
+            a tu perfil de cliente.
+          </li>
+          <li>
+            <strong>Datos técnicos mínimos:</strong> tu carrito de compras y tu sesión se guardan localmente en tu
+            navegador (no en nuestros servidores) mientras navegas el catálogo o el portal.
+          </li>
+        </ul>
+        <p class="mt-2">
+          No recopilamos datos de tarjetas de pago ni procesamos pagos en línea — el pago se coordina directamente
+          contigo por WhatsApp, Yape, Plin, transferencia o efectivo.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">2. ¿Para qué usamos tus datos?</h2>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Procesar y hacer seguimiento a tus compras, preventas y separaciones.</li>
+          <li>Contactarte por WhatsApp o teléfono sobre el estado de tu pedido.</li>
+          <li>Calcular y otorgar tus puntos de fidelidad.</li>
+          <li>Darte acceso a tu propio historial a través del Portal de Clientes.</li>
+          <li>Cumplir con nuestras obligaciones legales y contables.</li>
+        </ul>
+        <p class="mt-2">
+          No vendemos ni compartimos tus datos con terceros con fines publicitarios. Solo los compartimos cuando es
+          estrictamente necesario para completar tu entrega (por ejemplo, con una agencia de envíos o un
+          motorizado).
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">3. ¿Dónde se almacenan tus datos?</h2>
+        <p class="mt-2">
+          Tus datos se almacenan en nuestra base de datos, con acceso restringido solo al personal autorizado de
+          {{ storeName() }}. El carrito de compras y las sesiones de acceso al catálogo o al portal se guardan
+          únicamente en el navegador que usas (localStorage), no en nuestros servidores, y desaparecen si limpias los
+          datos de tu navegador.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">4. Tus derechos (derechos ARCO)</h2>
+        <p class="mt-2">Como titular de tus datos, tienes derecho a:</p>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li><strong>Acceder</strong> a los datos que tenemos sobre ti.</li>
+          <li><strong>Rectificar</strong> datos incorrectos o desactualizados.</li>
+          <li><strong>Cancelar</strong> (eliminar) tus datos cuando ya no sean necesarios.</li>
+          <li><strong>Oponerte</strong> al tratamiento de tus datos en determinados casos.</li>
+        </ul>
+        <p class="mt-2">
+          Para ejercer cualquiera de estos derechos, escríbenos por WhatsApp indicando tu nombre y el derecho que
+          deseas ejercer. Responderemos dentro del plazo que establece la ley.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">5. Conservación de tus datos</h2>
+        <p class="mt-2">
+          Conservamos tus datos mientras mantengas una relación comercial con nosotros y, después, por el tiempo que
+          exijan nuestras obligaciones legales y contables.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">6. Cambios a esta política</h2>
+        <p class="mt-2">
+          Podemos actualizar esta política en cualquier momento. Publicaremos cualquier cambio en esta misma página.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-bold text-gray-900">7. Contacto</h2>
+        <p class="mt-2">
+          Si tienes dudas sobre esta política o sobre cómo tratamos tus datos,
+          @if (contactWhatsAppUrl()) {
+            <a [href]="contactWhatsAppUrl()" target="_blank" rel="noopener" class="font-semibold text-purple-700 hover:underline">escríbenos por WhatsApp</a>.
+          } @else {
+            contáctanos a través de la tienda.
+          }
+        </p>
+      </section>
+    </div>
+  </main>
+</div>
