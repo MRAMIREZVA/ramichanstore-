@@ -2,7 +2,9 @@ package com.ramichanstore.backend.modules.suppliers.service;
 
 import com.ramichanstore.backend.audit.AuditAction;
 import com.ramichanstore.backend.audit.AuditService;
+import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
+import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.suppliers.dto.SupplierRequest;
 import com.ramichanstore.backend.modules.suppliers.entity.Supplier;
 import com.ramichanstore.backend.modules.suppliers.repository.SupplierRepository;
@@ -18,6 +20,7 @@ public class SupplierService {
     private static final String MODULE = "SUPPLIERS";
 
     private final SupplierRepository supplierRepository;
+    private final ProductRepository productRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -52,6 +55,10 @@ public class SupplierService {
     @Transactional
     public void delete(Long id) {
         Supplier supplier = findById(id);
+        if (productRepository.existsBySupplierId(id)) {
+            throw new BusinessRuleException(
+                    "No se puede eliminar el proveedor \"" + supplier.getName() + "\" porque todavía tiene productos asignados");
+        }
         supplier.softDelete();
         supplierRepository.save(supplier);
         auditService.log(AuditAction.DELETE, MODULE, "Supplier", id.toString(), supplier.getName(), null);

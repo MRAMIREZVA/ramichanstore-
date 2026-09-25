@@ -2,10 +2,13 @@ package com.ramichanstore.backend.modules.brands.service;
 
 import com.ramichanstore.backend.audit.AuditAction;
 import com.ramichanstore.backend.audit.AuditService;
+import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.brands.dto.BrandRequest;
 import com.ramichanstore.backend.modules.brands.entity.Brand;
 import com.ramichanstore.backend.modules.brands.repository.BrandRepository;
+import com.ramichanstore.backend.modules.productlines.repository.ProductLineRepository;
+import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,8 @@ public class BrandService {
     private static final String MODULE = "PRODUCTS";
 
     private final BrandRepository brandRepository;
+    private final ProductRepository productRepository;
+    private final ProductLineRepository productLineRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -54,6 +59,10 @@ public class BrandService {
     @Transactional
     public void delete(Long id) {
         Brand brand = findById(id);
+        if (productRepository.existsByBrandId(id) || productLineRepository.existsByBrandId(id)) {
+            throw new BusinessRuleException(
+                    "No se puede eliminar la marca \"" + brand.getName() + "\" porque todavía tiene productos o líneas asignadas");
+        }
         brand.softDelete();
         brandRepository.save(brand);
         auditService.log(AuditAction.DELETE, MODULE, "Brand", id.toString(), brand.getName(), null);

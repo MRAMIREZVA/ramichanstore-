@@ -10,6 +10,14 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     boolean existsBySkuIgnoreCase(String sku);
 
+    boolean existsByLineId(Long lineId);
+
+    boolean existsByCategoryId(Long categoryId);
+
+    boolean existsByBrandId(Long brandId);
+
+    boolean existsBySupplierId(Long supplierId);
+
     @Query("SELECT p FROM Product p WHERE p.currentStock <= p.minStock ORDER BY p.name")
     List<Product> findLowStock();
 

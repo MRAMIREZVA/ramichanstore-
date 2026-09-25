@@ -2,10 +2,12 @@ package com.ramichanstore.backend.modules.categories.service;
 
 import com.ramichanstore.backend.audit.AuditAction;
 import com.ramichanstore.backend.audit.AuditService;
+import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.categories.dto.CategoryRequest;
 import com.ramichanstore.backend.modules.categories.entity.Category;
 import com.ramichanstore.backend.modules.categories.repository.CategoryRepository;
+import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class CategoryService {
     private static final String MODULE = "PRODUCTS";
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -54,6 +57,10 @@ public class CategoryService {
     @Transactional
     public void delete(Long id) {
         Category category = findById(id);
+        if (productRepository.existsByCategoryId(id)) {
+            throw new BusinessRuleException(
+                    "No se puede eliminar la categoría \"" + category.getName() + "\" porque todavía tiene productos asignados");
+        }
         category.softDelete();
         categoryRepository.save(category);
         auditService.log(AuditAction.DELETE, MODULE, "Category", id.toString(), category.getName(), null);

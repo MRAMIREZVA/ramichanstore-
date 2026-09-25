@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.productlines.service;
 
 import com.ramichanstore.backend.audit.AuditAction;
 import com.ramichanstore.backend.audit.AuditService;
+import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.brands.entity.Brand;
 import com.ramichanstore.backend.modules.brands.repository.BrandRepository;
@@ -9,6 +10,7 @@ import com.ramichanstore.backend.modules.productlines.dto.ProductLineRequest;
 import com.ramichanstore.backend.modules.productlines.dto.ProductLineResponse;
 import com.ramichanstore.backend.modules.productlines.entity.ProductLine;
 import com.ramichanstore.backend.modules.productlines.repository.ProductLineRepository;
+import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class ProductLineService {
 
     private final ProductLineRepository productLineRepository;
     private final BrandRepository brandRepository;
+    private final ProductRepository productRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -60,6 +63,10 @@ public class ProductLineService {
     @Transactional
     public void delete(Long id) {
         ProductLine line = findById(id);
+        if (productRepository.existsByLineId(id)) {
+            throw new BusinessRuleException(
+                    "No se puede eliminar la línea \"" + line.getName() + "\" porque todavía tiene productos asignados");
+        }
         line.softDelete();
         productLineRepository.save(line);
         auditService.log(AuditAction.DELETE, MODULE, "ProductLine", id.toString(), line.getName(), null);
