@@ -25,6 +25,14 @@ CONTAINER_BACKUP_DIR="/var/opt/mssql/backup"
 LOCAL_TMP_DIR="/root/db-backups-tmp"
 SPACE_BUCKET="ramichanstore-backups"
 
+# healthchecks.io ("dead man's switch"): si este script no avisa que terminó
+# bien una vez al día, healthchecks.io manda un correo de alerta solo. Así
+# nos enteramos si el backup falla o si el cron simplemente no corrió, sin
+# tener que revisar el log a mano. Ver deploy/DEPLOYMENT.md.
+HC_PING_URL="https://hc-ping.com/dd077059-1a7a-4ed9-8321-4a4f86781967"
+# Si cualquier paso de abajo falla (set -e), avisa a healthchecks.io antes de salir.
+trap 'curl -fsS --retry 3 -m 10 "${HC_PING_URL}/fail" >/dev/null 2>&1 || true' ERR
+
 mkdir -p "$LOCAL_TMP_DIR"
 
 SA_PASSWORD=$(grep '^SA_PASSWORD=' .env | cut -d= -f2-)
@@ -45,3 +53,6 @@ docker compose exec -T sqlserver rm -f "${CONTAINER_BACKUP_DIR}/${BACKUP_FILE}"
 rm -f "${LOCAL_TMP_DIR}/${BACKUP_FILE}"
 
 echo "$(date '+%F %T') - Backup completado y subido: ${BACKUP_FILE}"
+
+# Avisa a healthchecks.io que todo salió bien.
+curl -fsS --retry 3 -m 10 "$HC_PING_URL" >/dev/null 2>&1 || true

@@ -213,6 +213,18 @@ sus propias compras y preventas; no puede editar nada ni ver el panel admin.
     y correr `RESTORE DATABASE RamichanStoreDB FROM DISK = '/var/opt/mssql/backup/<archivo>.bak' WITH REPLACE`.
   - Comando para un backup manual puntual (fuera del cron): `./deploy/backup-db.sh`
     desde `/root/ramichanstore` en el servidor.
+  - **Alerta si el backup falla o no corre un día (healthchecks.io, gratis):** el
+    script le avisa a un "check" de [healthchecks.io](https://healthchecks.io) al
+    terminar bien (`curl` a su Ping URL) y también si algo falla a mitad de camino
+    (`trap ... ERR` llama a `<ping-url>/fail`). El check está configurado con
+    periodo de 1 día + 3 horas de gracia — si no recibe ningún aviso en esa
+    ventana (el cron no corrió, el servidor estuvo caído, etc.), healthchecks.io
+    manda un correo automático a `mramirezv2015@gmail.com` solo. Cuenta y check
+    ("RamichanStore - Backup diario") viven en el dashboard de healthchecks.io del
+    dueño — la URL de ping está embebida en `deploy/backup-db.sh` (no es secreta
+    en el mismo sentido que una contraseña: solo permite "avisar", no leer nada,
+    pero si se filtrara alguien podría generar falsos positivos/negativos de la
+    alerta — no compartirla fuera del repo/servidor sin necesidad).
 - **Firewall (ufw) activo en el servidor**, solo permite entrante: SSH (22),
   HTTP (80) y HTTPS (443) — todo lo demás queda bloqueado por defecto. El
   puerto de SQL Server (1433) nunca estuvo expuesto a Internet (solo es
