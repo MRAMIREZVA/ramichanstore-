@@ -10,6 +10,7 @@ export interface PublicCatalogFilters {
   search?: string;
   categoryId?: number | null;
   brandId?: number | null;
+  lineId?: number | null;
   franchise?: string | null;
   onlyPreorder?: boolean;
   page?: number;
@@ -33,6 +34,7 @@ export class PublicCatalogService {
     if (filters.search) params = params.set('search', filters.search);
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.brandId) params = params.set('brandId', filters.brandId);
+    if (filters.lineId) params = params.set('lineId', filters.lineId);
     if (filters.franchise) params = params.set('franchise', filters.franchise);
     if (filters.onlyPreorder) params = params.set('onlyPreorder', filters.onlyPreorder);
 
@@ -49,6 +51,10 @@ export class PublicCatalogService {
 
   getBrands(): Observable<ApiResponse<CatalogFilterOption[]>> {
     return this.http.get<ApiResponse<CatalogFilterOption[]>>(`${this.base}/brands`);
+  }
+
+  getLines(): Observable<ApiResponse<CatalogFilterOption[]>> {
+    return this.http.get<ApiResponse<CatalogFilterOption[]>>(`${this.base}/lines`);
   }
 
   getStoreInfo(): Observable<ApiResponse<StoreInfo>> {

@@ -13,6 +13,7 @@ import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
 import com.ramichanstore.backend.modules.catalog.repository.CatalogAnnouncementRepository;
 import com.ramichanstore.backend.modules.catalog.repository.CatalogBannerRepository;
 import com.ramichanstore.backend.modules.categories.service.CategoryService;
+import com.ramichanstore.backend.modules.productlines.service.ProductLineService;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class CatalogService {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final BrandService brandService;
+    private final ProductLineService productLineService;
     private final SettingService settingService;
     private final CatalogBannerRepository catalogBannerRepository;
     private final CatalogAnnouncementRepository catalogAnnouncementRepository;
@@ -56,8 +58,8 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public Page<PublicProductResponse> searchProducts(
-            String term, Long categoryId, Long brandId, String franchise, boolean onlyPreorder, Pageable pageable) {
-        return productService.searchPublic(term, categoryId, brandId, franchise, onlyPreorder, pageable)
+            String term, Long categoryId, Long brandId, Long lineId, String franchise, boolean onlyPreorder, Pageable pageable) {
+        return productService.searchPublic(term, categoryId, brandId, lineId, franchise, onlyPreorder, pageable)
                 .map(PublicProductResponse::from);
     }
 
@@ -74,6 +76,14 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public List<CatalogFilterOption> findBrands() {
         return brandService.findAll().stream().map(b -> new CatalogFilterOption(b.getId(), b.getName())).toList();
+    }
+
+    /** Para el filtro "Línea" del catálogo público — mismo criterio que categorías/marcas. */
+    @Transactional(readOnly = true)
+    public List<CatalogFilterOption> findLines() {
+        return productLineService.findAll().stream()
+                .map(l -> new CatalogFilterOption(l.id(), l.name()))
+                .toList();
     }
 
     /** Franquicias/animes distintos entre los productos — para agrupar/filtrar el catálogo por anime. */

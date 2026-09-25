@@ -76,11 +76,12 @@ public class ProductService {
      */
     @Transactional(readOnly = true)
     public Page<Product> searchPublic(
-            String term, Long categoryId, Long brandId, String franchise, boolean onlyPreorder, Pageable pageable) {
+            String term, Long categoryId, Long brandId, Long lineId, String franchise, boolean onlyPreorder, Pageable pageable) {
         List<Specification<Product>> specs = Stream.of(
                         ProductSpecifications.search(term),
                         ProductSpecifications.hasCategory(categoryId),
                         ProductSpecifications.hasBrand(brandId),
+                        ProductSpecifications.hasLine(lineId),
                         ProductSpecifications.hasFranchise(franchise),
                         ProductSpecifications.excludeStatus(ProductStatus.DISCONTINUED),
                         ProductSpecifications.excludeStatus(ProductStatus.OUT_OF_STOCK),

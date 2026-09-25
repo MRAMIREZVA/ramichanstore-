@@ -48,10 +48,11 @@ public class CatalogController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) Long lineId,
             @RequestParam(required = false) String franchise,
             @RequestParam(required = false, defaultValue = "false") boolean onlyPreorder,
             @PageableDefault(size = 24, sort = "name") Pageable pageable) {
-        var page = catalogService.searchProducts(search, categoryId, brandId, franchise, onlyPreorder, pageable);
+        var page = catalogService.searchProducts(search, categoryId, brandId, lineId, franchise, onlyPreorder, pageable);
         return ApiResponse.ok(PageResponse.from(page));
     }
 
@@ -68,6 +69,11 @@ public class CatalogController {
     @GetMapping("/brands")
     public ApiResponse<List<CatalogFilterOption>> findBrands() {
         return ApiResponse.ok(catalogService.findBrands());
+    }
+
+    @GetMapping("/lines")
+    public ApiResponse<List<CatalogFilterOption>> findLines() {
+        return ApiResponse.ok(catalogService.findLines());
     }
 
     @GetMapping("/store-info")

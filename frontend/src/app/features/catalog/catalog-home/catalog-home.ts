@@ -60,11 +60,13 @@ export class CatalogHome implements OnInit {
   readonly searchControl = new FormControl('');
   readonly categoryControl = new FormControl<number | null>(null);
   readonly brandControl = new FormControl<number | null>(null);
+  readonly lineControl = new FormControl<number | null>(null);
   readonly franchiseControl = new FormControl<string | null>(null);
   readonly onlyPreorderControl = new FormControl(false);
 
   readonly categories = signal<CatalogFilterOption[]>([]);
   readonly brands = signal<CatalogFilterOption[]>([]);
+  readonly lines = signal<CatalogFilterOption[]>([]);
   readonly franchises = signal<string[]>([]);
   readonly storeInfo = signal<StoreInfo | null>(null);
 
@@ -74,17 +76,23 @@ export class CatalogHome implements OnInit {
   page = 0;
   pageSize = 24;
 
-  /** Sin ningún filtro activo, la vitrina se agrupa por franquicia/anime en vez de mostrar una grilla plana. */
-  readonly hasActiveFilter = computed(
-    () =>
-      !!(
-        this.searchControl.value ||
-        this.categoryControl.value ||
-        this.brandControl.value ||
-        this.franchiseControl.value ||
-        this.onlyPreorderControl.value
-      ),
-  );
+  /**
+   * Sin ningún filtro activo, la vitrina se agrupa por franquicia/anime en vez de mostrar una grilla plana.
+   * Método plano, no `computed()` — un `computed()` solo se recalcula cuando una SIGNAL que lee cambia, y
+   * `FormControl.value` es una property normal, no una signal: envuelto en `computed()` quedaba congelado
+   * en su primer valor (siempre `false`) para siempre, sin importar cuántas veces cambiaran los controles.
+   * Mismo patrón ya usado y probado en `ProductsList.hasActiveFilters()` (admin).
+   */
+  hasActiveFilter(): boolean {
+    return !!(
+      this.searchControl.value ||
+      this.categoryControl.value ||
+      this.brandControl.value ||
+      this.lineControl.value ||
+      this.franchiseControl.value ||
+      this.onlyPreorderControl.value
+    );
+  }
 
   readonly groupedByFranchise = computed<FranchiseGroup[]>(() => {
     const groups = new Map<string, PublicProduct[]>();
@@ -99,6 +107,7 @@ export class CatalogHome implements OnInit {
   ngOnInit(): void {
     this.catalogService.getCategories().subscribe((res) => this.categories.set(res.data));
     this.catalogService.getBrands().subscribe((res) => this.brands.set(res.data));
+    this.catalogService.getLines().subscribe((res) => this.lines.set(res.data));
     this.catalogService.getFranchises().subscribe((res) => this.franchises.set(res.data));
     this.catalogService.getStoreInfo().subscribe((res) => this.storeInfo.set(res.data));
 
@@ -111,6 +120,10 @@ export class CatalogHome implements OnInit {
       this.load();
     });
     this.brandControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
+    this.lineControl.valueChanges.subscribe(() => {
       this.page = 0;
       this.load();
     });
@@ -133,6 +146,7 @@ export class CatalogHome implements OnInit {
         search: this.searchControl.value || undefined,
         categoryId: this.categoryControl.value,
         brandId: this.brandControl.value,
+        lineId: this.lineControl.value,
         franchise: this.franchiseControl.value,
         onlyPreorder: !!this.onlyPreorderControl.value,
         page: this.page,
@@ -146,6 +160,17 @@ export class CatalogHome implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  clearFilters(): void {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.categoryControl.setValue(null, { emitEvent: false });
+    this.brandControl.setValue(null, { emitEvent: false });
+    this.lineControl.setValue(null, { emitEvent: false });
+    this.franchiseControl.setValue(null, { emitEvent: false });
+    this.onlyPreorderControl.setValue(false, { emitEvent: false });
+    this.page = 0;
+    this.load();
   }
 
   onPage(event: PageEvent): void {
