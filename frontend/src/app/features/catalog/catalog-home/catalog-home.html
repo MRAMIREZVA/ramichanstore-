@@ -98,6 +98,8 @@
         <span class="stock-badge" [class.out]="p.status === 'OUT_OF_STOCK'">{{ statusLabel(p.status) }}</span>
       } @else if (!p.inStock) {
         <span class="stock-badge out">Agotado</span>
+      } @else if (p.lowStock) {
+        <span class="stock-badge low">Últimas unidades</span>
       }
     </div>
     <div class="flex flex-col gap-0.5 px-3 pb-3 pt-2.5">

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +10,7 @@ import { PublicProduct } from '../../../core/models/public-catalog.model';
 import { CartService } from '../../../core/services/cart.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
+import { whatsAppLink } from '../../../core/utils/whatsapp';
 
 @Component({
   selector: 'app-catalog-product-detail',
@@ -34,6 +35,17 @@ export class CatalogProductDetail implements OnInit {
   readonly activeImageUrl = signal<string | null>(null);
   readonly quantity = signal(1);
 
+  /** null si el admin no configuró STORE_WHATSAPP en Configuración (mismo patrón que catalog-layout/contactWhatsAppUrl). */
+  readonly storeWhatsapp = signal<string | null>(null);
+
+  readonly whatsappBuyUrl = computed(() => {
+    const product = this.product();
+    const phone = this.storeWhatsapp();
+    if (!product || !phone || !product.inStock) return null;
+    const message = `Hola! Quiero comprar: ${product.name} (S/ ${product.salePrice.toFixed(2)}) x${this.quantity()} — SKU ${product.sku}`;
+    return whatsAppLink(phone, message);
+  });
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.catalogService.findProductById(id).subscribe({
@@ -46,6 +58,10 @@ export class CatalogProductDetail implements OnInit {
         this.notFound.set(true);
         this.loading.set(false);
       },
+    });
+    this.catalogService.getStoreInfo().subscribe({
+      next: (res) => this.storeWhatsapp.set(res.data.whatsapp),
+      error: () => {},
     });
   }
 

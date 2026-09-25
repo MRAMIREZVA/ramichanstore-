@@ -69,6 +69,8 @@
           <span class="stock-badge" [class.out]="p.status === 'OUT_OF_STOCK'">{{ statusLabels[p.status] }}</span>
         } @else if (!p.inStock) {
           <span class="stock-badge out">Agotado</span>
+        } @else if (p.lowStock) {
+          <span class="stock-badge low">Últimas unidades</span>
         }
       </div>
 
@@ -91,6 +93,12 @@
             <mat-icon>add_shopping_cart</mat-icon>
             Agregar al carrito
           </button>
+          @if (whatsappBuyUrl(); as url) {
+            <a mat-flat-button class="!rounded-xl !bg-[#25d366] !text-white" [href]="url" target="_blank" rel="noopener">
+              <mat-icon>chat</mat-icon>
+              Comprar por WhatsApp
+            </a>
+          }
         </div>
       }
 

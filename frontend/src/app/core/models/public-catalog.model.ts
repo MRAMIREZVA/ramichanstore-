@@ -16,6 +16,8 @@ export interface PublicProduct {
   size: string | null;
   salePrice: number;
   inStock: boolean;
+  /** true si está disponible pero por debajo/igual al stock mínimo — nunca el número real. */
+  lowStock: boolean;
   status: ProductStatus;
 }
 
