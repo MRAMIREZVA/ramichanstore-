@@ -60,12 +60,10 @@ export class SettingsPage implements OnInit {
 
   readonly loadingBanner = signal(true);
   readonly bannerUrl = signal<string | null>(null);
-  readonly bannerVersion = signal(0);
   readonly uploadingBanner = signal(false);
 
   readonly loadingAnnouncement = signal(true);
   readonly announcementUrl = signal<string | null>(null);
-  readonly announcementVersion = signal(0);
   readonly uploadingAnnouncement = signal(false);
 
   readonly loadingCategories = signal(true);
@@ -111,9 +109,7 @@ export class SettingsPage implements OnInit {
   }
 
   get bannerPreviewUrl(): string | null {
-    const url = this.bannerUrl();
-    if (!url) return null;
-    return `${this.resolveImageUrl(url)}?v=${this.bannerVersion()}`;
+    return this.resolveImageUrl(this.bannerUrl());
   }
 
   onBannerFileSelected(event: Event): void {
@@ -135,7 +131,6 @@ export class SettingsPage implements OnInit {
     this.catalogService.uploadCatalogBanner(file).subscribe({
       next: (res) => {
         this.uploadingBanner.set(false);
-        this.bannerVersion.update((v) => v + 1);
         this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
         this.loadBanner();
       },
@@ -174,9 +169,7 @@ export class SettingsPage implements OnInit {
   }
 
   get announcementPreviewUrl(): string | null {
-    const url = this.announcementUrl();
-    if (!url) return null;
-    return `${this.resolveImageUrl(url)}?v=${this.announcementVersion()}`;
+    return this.resolveImageUrl(this.announcementUrl());
   }
 
   onAnnouncementFileSelected(event: Event): void {
@@ -198,7 +191,6 @@ export class SettingsPage implements OnInit {
     this.catalogService.uploadCatalogAnnouncement(file).subscribe({
       next: (res) => {
         this.uploadingAnnouncement.set(false);
-        this.announcementVersion.update((v) => v + 1);
         this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
         this.loadAnnouncement();
       },

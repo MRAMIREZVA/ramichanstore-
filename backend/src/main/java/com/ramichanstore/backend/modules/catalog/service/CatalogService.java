@@ -21,6 +21,7 @@ import com.ramichanstore.backend.modules.settings.service.SettingService;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -104,14 +105,26 @@ public class CatalogService {
     /**
      * whatsapp/bannerUrl/announcementImageUrl vienen null si el admin no los configuró —
      * el frontend público no debe mostrar enlace/imagen/popup rotos.
+     * <p>
+     * Las URLs llevan {@code ?v=<updatedAt>}: el archivo se sirve con
+     * {@code Cache-Control: max-age=1h} (ver banner/announcement file), así que sin este
+     * parámetro el navegador reutiliza la copia vieja en caché después de reemplazar la
+     * imagen — tanto en la vista previa del admin como en el popup/banner real que ven
+     * los visitantes — hasta que esa hora expirara sola. Al incluir el timestamp de la
+     * última actualización, la URL cambia exactamente cuando la imagen cambia (y se
+     * mantiene igual cuando no cambia nada, así que el caché de 1h sigue sirviendo para
+     * el caso normal).
      */
     @Transactional(readOnly = true)
     public StoreInfoResponse getStoreInfo() {
         String storeName = settingService.getValue("STORE_NAME");
         String whatsapp = settingService.getValue("STORE_WHATSAPP");
-        String bannerUrl = catalogBannerRepository.existsById(BANNER_ID) ? "/api/catalog/banner/file" : null;
-        String announcementImageUrl =
-                catalogAnnouncementRepository.existsById(ANNOUNCEMENT_ID) ? "/api/catalog/announcement/file" : null;
+        String bannerUrl = catalogBannerRepository.findById(BANNER_ID)
+                .map(b -> "/api/catalog/banner/file?v=" + b.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                .orElse(null);
+        String announcementImageUrl = catalogAnnouncementRepository.findById(ANNOUNCEMENT_ID)
+                .map(a -> "/api/catalog/announcement/file?v=" + a.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                .orElse(null);
         return new StoreInfoResponse(
                 storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl);
     }
