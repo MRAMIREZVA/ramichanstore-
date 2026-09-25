@@ -21,13 +21,16 @@
           <span class="line-clamp-2 text-sm font-semibold text-gray-900 sm:text-base">{{ line.name }}</span>
           <span class="text-xs text-gray-400">{{ line.sku }}</span>
           <span class="text-xs text-gray-500 sm:text-sm">S/ {{ line.unitPrice.toFixed(2) }} c/u</span>
+          @if (line.quantity >= line.availableQuantity) {
+            <span class="text-xs font-semibold text-amber-600">Máximo disponible: {{ line.availableQuantity }}</span>
+          }
         </div>
         <div class="flex flex-none items-center gap-1 rounded-full border border-gray-200 px-1 py-0.5">
           <button mat-icon-button class="!h-8 !w-8" type="button" (click)="decrement(line)">
             <mat-icon class="!text-[18px]">remove</mat-icon>
           </button>
           <span class="w-5 text-center text-sm font-semibold">{{ line.quantity }}</span>
-          <button mat-icon-button class="!h-8 !w-8" type="button" (click)="increment(line)">
+          <button mat-icon-button class="!h-8 !w-8" type="button" (click)="increment(line)" [disabled]="line.quantity >= line.availableQuantity">
             <mat-icon class="!text-[18px]">add</mat-icon>
           </button>
         </div>

@@ -21,6 +21,10 @@ export class CartService {
    * El carrito permite mezclar productos en stock y en preventa — el checkout
    * es quien separa las líneas en 2 pedidos web homogéneos al enviar (ver
    * checkout-page.submit()), no el carrito en el momento de agregar.
+   *
+   * La cantidad nunca puede superar `product.availableQuantity` (stock real,
+   * snapshot al agregar) — capada acá como última línea de defensa, aunque
+   * el stepper del detalle/carrito ya debería impedir pasarse.
    */
   add(product: PublicProduct, quantity = 1): void {
     const current = this.lines();
@@ -38,7 +42,8 @@ export class CartService {
         name: product.name,
         mainImageUrl: product.mainImageUrl,
         unitPrice: product.salePrice,
-        quantity,
+        quantity: Math.min(quantity, product.availableQuantity),
+        availableQuantity: product.availableQuantity,
         isPreorder: product.status === 'PREORDER',
       },
     ]);
@@ -49,7 +54,9 @@ export class CartService {
       this.remove(productId);
       return;
     }
-    this.set(this.lines().map((l) => (l.productId === productId ? { ...l, quantity } : l)));
+    this.set(
+      this.lines().map((l) => (l.productId === productId ? { ...l, quantity: Math.min(quantity, l.availableQuantity) } : l)),
+    );
   }
 
   remove(productId: number): void {

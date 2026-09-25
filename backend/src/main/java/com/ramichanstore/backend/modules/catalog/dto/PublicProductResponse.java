@@ -16,7 +16,8 @@ public record PublicProductResponse(
         Long id, String sku, String name, String characterName, String franchise,
         String brandName, String categoryName, String lineName,
         String description, String mainImageUrl, List<ProductImageResponse> images,
-        String size, BigDecimal salePrice, boolean inStock, boolean lowStock, ProductStatus status) {
+        String size, BigDecimal salePrice, boolean inStock, boolean lowStock, int availableQuantity,
+        ProductStatus status) {
 
     public static PublicProductResponse from(Product p) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
@@ -27,7 +28,7 @@ public record PublicProductResponse(
                 .orElse(p.getMainImageUrl());
 
         boolean inStock = p.getCurrentStock() > 0 && p.getStatus() != ProductStatus.OUT_OF_STOCK;
-        // "Últimas unidades": solo un booleano, nunca el número real de stock (información de negocio, no de catálogo).
+        // "Últimas unidades": booleano calculado desde el mismo stock que ya se expone acá abajo.
         boolean lowStock = inStock && p.isLowStock();
 
         return new PublicProductResponse(
@@ -36,7 +37,7 @@ public record PublicProductResponse(
                 p.getLine() != null ? p.getLine().getName() : null,
                 p.getDescription(), mainImageUrl, images,
                 p.getSize(), p.getSalePrice(),
-                inStock, lowStock,
+                inStock, lowStock, p.getCurrentStock(),
                 p.getStatus());
     }
 }

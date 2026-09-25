@@ -5,6 +5,8 @@ export interface CartLine {
   mainImageUrl: string | null;
   unitPrice: number;
   quantity: number;
+  /** Snapshot del stock disponible al momento de agregar — tope de cantidad en el carrito (ver CartService). */
+  availableQuantity: number;
   /**
    * true si el producto está en estado PREORDER. El carrito SÍ permite mezclar
    * productos en stock y en preventa (antes se bloqueaba, ver historial) — el

@@ -69,7 +69,8 @@ export class CatalogProductDetail implements OnInit {
   }
 
   incrementQuantity(): void {
-    this.quantity.update((q) => q + 1);
+    const max = this.product()?.availableQuantity ?? Infinity;
+    this.quantity.update((q) => Math.min(q + 1, max));
   }
 
   decrementQuantity(): void {

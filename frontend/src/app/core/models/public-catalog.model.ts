@@ -18,6 +18,8 @@ export interface PublicProduct {
   inStock: boolean;
   /** true si está disponible pero por debajo/igual al stock mínimo — nunca el número real. */
   lowStock: boolean;
+  /** Stock real disponible — tope de cantidad al agregar al carrito (ver catalog-product-detail/cart-page). */
+  availableQuantity: number;
   status: ProductStatus;
 }
 
