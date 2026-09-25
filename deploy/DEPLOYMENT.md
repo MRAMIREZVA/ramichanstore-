@@ -194,10 +194,27 @@ sus propias compras y preventas; no puede editar nada ni ver el panel admin.
 - El backend corre con `SPRING_PROFILES_ACTIVE=prod`, que apaga Swagger UI
   (`/swagger-ui.html`) — no debe quedar expuesta la documentación de la API
   en un servidor público.
-- Haz respaldos periódicos del volumen `sqlserver_data` (contiene toda la
-  base de datos). Comando rápido para un backup manual:
-  ```bash
-  docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -C \
-    -Q "BACKUP DATABASE RamichanStoreDB TO DISK = '/var/opt/mssql/backup.bak'"
-  docker compose cp sqlserver:/var/opt/mssql/backup.bak ./backup-$(date +%F).bak
-  ```
+- **Backups automáticos diarios a DigitalOcean Spaces (ya configurado en producción).**
+  `deploy/backup-db.sh` hace `BACKUP DATABASE` dentro del contenedor, copia el
+  `.bak` al host y lo sube con `s3cmd` a un Space privado (`ramichanstore-backups`,
+  región NYC3) — así el respaldo vive fuera del servidor: si el VPS se pierde
+  o el disco falla, los datos siguen a salvo. Corre por cron todos los días a
+  las 8:00 UTC (3am Perú), con log en `/var/log/ramichanstore-backup.log`.
+  No borra backups viejos del Space a propósito (250GB incluidos en el plan
+  es muchísimo más de lo que esta base de datos va a pesar en años — revisar
+  el tamaño del bucket de vez en cuando es más seguro que un script de borrado
+  automático con riesgo de eliminar algo que sí hacía falta).
+  - Requiere `s3cmd` instalado (`apt install s3cmd`) y `/root/.s3cfg` con las
+    credenciales del Space (Access Key/Secret Key de Spaces — **no** el token
+    general de la API de DigitalOcean, son cosas distintas) — ese archivo
+    **no se versiona**, vive solo en el servidor con permisos `600`.
+  - Para restaurar un backup: descargarlo del Space (`s3cmd get s3://ramichanstore-backups/<archivo>.bak`),
+    copiarlo dentro del contenedor (`docker compose cp <archivo>.bak sqlserver:/var/opt/mssql/backup/`)
+    y correr `RESTORE DATABASE RamichanStoreDB FROM DISK = '/var/opt/mssql/backup/<archivo>.bak' WITH REPLACE`.
+  - Comando para un backup manual puntual (fuera del cron): `./deploy/backup-db.sh`
+    desde `/root/ramichanstore` en el servidor.
+- **Firewall (ufw) activo en el servidor**, solo permite entrante: SSH (22),
+  HTTP (80) y HTTPS (443) — todo lo demás queda bloqueado por defecto. El
+  puerto de SQL Server (1433) nunca estuvo expuesto a Internet (solo es
+  alcanzable entre contenedores de docker-compose), así que esto es una
+  segunda capa de protección, no la única.
