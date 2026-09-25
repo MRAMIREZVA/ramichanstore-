@@ -8,6 +8,9 @@ import com.ramichanstore.backend.modules.brands.entity.Brand;
 import com.ramichanstore.backend.modules.brands.repository.BrandRepository;
 import com.ramichanstore.backend.modules.categories.entity.Category;
 import com.ramichanstore.backend.modules.categories.repository.CategoryRepository;
+import com.ramichanstore.backend.modules.inventory.repository.InventoryMovementRepository;
+import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRepository;
+import com.ramichanstore.backend.modules.preorders.repository.PreorderRepository;
 import com.ramichanstore.backend.modules.productlines.entity.ProductLine;
 import com.ramichanstore.backend.modules.productlines.repository.ProductLineRepository;
 import com.ramichanstore.backend.modules.products.dto.ProductRequest;
@@ -16,6 +19,8 @@ import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.products.repository.ProductSpecifications;
+import com.ramichanstore.backend.modules.sales.repository.SaleDetailRepository;
+import com.ramichanstore.backend.modules.separations.repository.SeparationRepository;
 import com.ramichanstore.backend.modules.suppliers.entity.Supplier;
 import com.ramichanstore.backend.modules.suppliers.repository.SupplierRepository;
 import java.math.BigDecimal;
@@ -46,6 +51,11 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductLineRepository productLineRepository;
     private final SupplierRepository supplierRepository;
+    private final InventoryMovementRepository inventoryMovementRepository;
+    private final SaleDetailRepository saleDetailRepository;
+    private final SeparationRepository separationRepository;
+    private final PreorderRepository preorderRepository;
+    private final OrderRequestRepository orderRequestRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -164,6 +174,12 @@ public class ProductService {
     @Transactional
     public void delete(Long id) {
         Product product = findById(id);
+        if (inventoryMovementRepository.existsByProductId(id) || saleDetailRepository.existsByProductId(id)
+                || separationRepository.existsByProductId(id) || preorderRepository.existsByProductId(id)
+                || orderRequestRepository.existsByItems_ProductId(id)) {
+            throw new BusinessRuleException(
+                    "No se puede eliminar el producto \"" + product.getName() + "\" porque todavía tiene movimientos, ventas, separaciones, preventas o pedidos web asociados");
+        }
         product.softDelete();
         productRepository.save(product);
         auditService.log(AuditAction.DELETE, MODULE, "Product", id.toString(), summarize(product), null);

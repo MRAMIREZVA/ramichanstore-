@@ -13,6 +13,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
 
     List<Sale> findByCustomerIdOrderBySaleDateDesc(Long customerId);
 
+    boolean existsByCustomerId(Long customerId);
+
     @Query("SELECT COALESCE(SUM(s.total), 0) FROM Sale s WHERE s.saleDate BETWEEN :from AND :to AND s.paymentStatus <> 'CANCELLED'")
     BigDecimal sumTotalBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 

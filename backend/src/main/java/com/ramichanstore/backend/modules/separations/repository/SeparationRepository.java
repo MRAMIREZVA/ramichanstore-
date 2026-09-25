@@ -11,4 +11,8 @@ public interface SeparationRepository extends JpaRepository<Separation, Long>, J
     List<Separation> findByStatusIn(List<PaymentStatus> statuses);
 
     List<Separation> findByCustomerIdOrderBySeparationDateDesc(Long customerId);
+
+    boolean existsByProductId(Long productId);
+
+    boolean existsByCustomerId(Long customerId);
 }

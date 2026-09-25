@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface InventoryMovementRepository
         extends JpaRepository<InventoryMovement, Long>, JpaSpecificationExecutor<InventoryMovement> {
+
+    boolean existsByProductId(Long productId);
 }

@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface PreorderRepository extends JpaRepository<Preorder, Long>, JpaSpecificationExecutor<Preorder> {
 
     long countByStatus(PreorderStatus status);
+
+    boolean existsByProductId(Long productId);
 }

@@ -13,6 +13,8 @@ public interface PreorderCustomerRepository extends JpaRepository<PreorderCustom
 
     List<PreorderCustomer> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
 
+    boolean existsByCustomerId(Long customerId);
+
     @Query("SELECT COALESCE(SUM(pc.quantity), 0) FROM PreorderCustomer pc WHERE pc.preorder.id = :preorderId")
     int sumReservedQuantity(@Param("preorderId") Long preorderId);
 }

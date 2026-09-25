@@ -11,4 +11,6 @@ public interface OrderRequestRepository extends JpaRepository<OrderRequest, Long
     Page<OrderRequest> findByStatus(OrderRequestStatus status, Pageable pageable);
 
     boolean existsByDeliveryAgencyId(Long deliveryAgencyId);
+
+    boolean existsByItems_ProductId(Long productId);
 }

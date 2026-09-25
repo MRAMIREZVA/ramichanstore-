@@ -13,6 +13,8 @@ public interface LoyaltyPointMovementRepository
     @Query("SELECT COALESCE(SUM(m.points), 0) FROM LoyaltyPointMovement m WHERE m.customer.id = :customerId")
     int sumBalance(@Param("customerId") Long customerId);
 
+    boolean existsByCustomerId(Long customerId);
+
     @Query("SELECT COALESCE(SUM(m.points), 0) FROM LoyaltyPointMovement m WHERE m.points > 0 AND m.createdAt BETWEEN :from AND :to")
     int sumPositivePointsBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

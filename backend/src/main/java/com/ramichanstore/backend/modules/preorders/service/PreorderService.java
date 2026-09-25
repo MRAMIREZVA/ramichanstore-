@@ -115,9 +115,15 @@ public class PreorderService {
     @Transactional(readOnly = true)
     public List<PreorderCustomerResponse> listReservations(Long preorderId) {
         findById(preorderId);
-        return preorderCustomerRepository.findByPreorderIdOrderByCreatedAtDesc(preorderId).stream()
-                .map(pc -> PreorderCustomerResponse.from(pc, preorderCustomerPaymentRepository.sumPaidAmount(pc.getId())))
-                .toList();
+        List<PreorderCustomerResponse> reservations = new ArrayList<>();
+        for (PreorderCustomer pc : preorderCustomerRepository.findByPreorderIdOrderByCreatedAtDesc(preorderId)) {
+            try {
+                reservations.add(PreorderCustomerResponse.from(pc, preorderCustomerPaymentRepository.sumPaidAmount(pc.getId())));
+            } catch (EntityNotFoundException ignored) {
+                // ver PortalService.myReservations: mismo caso defensivo (ej. cliente eliminado de otra forma).
+            }
+        }
+        return reservations;
     }
 
     /**

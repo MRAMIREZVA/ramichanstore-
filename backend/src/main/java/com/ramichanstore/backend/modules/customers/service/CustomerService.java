@@ -12,6 +12,11 @@ import com.ramichanstore.backend.modules.customers.entity.Customer;
 import com.ramichanstore.backend.modules.customers.entity.CustomerStatus;
 import com.ramichanstore.backend.modules.customers.repository.CustomerRepository;
 import com.ramichanstore.backend.modules.customers.repository.CustomerSpecifications;
+import com.ramichanstore.backend.modules.deliveries.repository.DeliveryRepository;
+import com.ramichanstore.backend.modules.loyalty.repository.LoyaltyPointMovementRepository;
+import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerRepository;
+import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
+import com.ramichanstore.backend.modules.separations.repository.SeparationRepository;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -31,6 +36,11 @@ public class CustomerService {
     private static final String MODULE = "CUSTOMERS";
 
     private final CustomerRepository customerRepository;
+    private final SaleRepository saleRepository;
+    private final SeparationRepository separationRepository;
+    private final LoyaltyPointMovementRepository loyaltyPointMovementRepository;
+    private final DeliveryRepository deliveryRepository;
+    private final PreorderCustomerRepository preorderCustomerRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
 
@@ -79,6 +89,12 @@ public class CustomerService {
     @Transactional
     public void delete(Long id) {
         Customer customer = findById(id);
+        if (saleRepository.existsByCustomerId(id) || separationRepository.existsByCustomerId(id)
+                || loyaltyPointMovementRepository.existsByCustomerId(id) || deliveryRepository.existsByCustomerId(id)
+                || preorderCustomerRepository.existsByCustomerId(id)) {
+            throw new BusinessRuleException(
+                    "No se puede eliminar al cliente \"" + customer.getFullName() + "\" porque todavía tiene compras, separaciones, puntos, entregas o reservas de preventa asociadas");
+        }
         customer.softDelete();
         customerRepository.save(customer);
         auditService.log(AuditAction.DELETE, MODULE, "Customer", id.toString(), summarize(customer), null);
