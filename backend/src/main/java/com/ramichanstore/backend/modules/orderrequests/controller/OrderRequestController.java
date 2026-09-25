@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.orderrequests.controller;
 
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
+import com.ramichanstore.backend.modules.orderrequests.dto.ConvertToReservationsRequest;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestStatusResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
@@ -70,6 +71,15 @@ public class OrderRequestController {
     @PreAuthorize("hasAuthority('PERM_ORDER_REQUEST_MANAGE')")
     public ApiResponse<OrderRequestResponse> convert(@PathVariable Long id, @AuthenticationPrincipal SecurityUser currentUser) {
         return ApiResponse.ok("Pedido convertido a venta", orderRequestService.convertToSale(id, currentUser));
+    }
+
+    @PostMapping("/{id}/convert-to-reservations")
+    @PreAuthorize("hasAuthority('PERM_ORDER_REQUEST_MANAGE')")
+    public ApiResponse<OrderRequestResponse> convertToReservations(
+            @PathVariable Long id, @Valid @RequestBody ConvertToReservationsRequest request,
+            @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Pedido convertido a reserva(s) de preventa",
+                orderRequestService.convertToReservations(id, request, currentUser));
     }
 
     @PostMapping("/{id}/reject")

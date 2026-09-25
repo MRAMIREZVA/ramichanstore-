@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.orderrequests.dto;
 
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
+import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestType;
 import com.ramichanstore.backend.modules.sales.entity.DeliveryMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import java.math.BigDecimal;
@@ -17,7 +18,7 @@ public record OrderRequestResponse(
         String recipientDni, String recipientName, String recipientPhone,
         String notes,
         List<OrderRequestItemResponse> items, BigDecimal total,
-        OrderRequestStatus status, String rejectionReason, Long convertedSaleId,
+        OrderRequestType requestType, OrderRequestStatus status, String rejectionReason, Long convertedSaleId,
         LocalDateTime createdAt) {
 
     public static OrderRequestResponse from(OrderRequest o) {
@@ -33,7 +34,7 @@ public record OrderRequestResponse(
                 o.getRecipientDni(), o.getRecipientName(), o.getRecipientPhone(),
                 o.getNotes(),
                 items, total,
-                o.getStatus(), o.getRejectionReason(), o.getConvertedSaleId(),
+                o.getRequestType(), o.getStatus(), o.getRejectionReason(), o.getConvertedSaleId(),
                 o.getCreatedAt());
     }
 }

@@ -86,6 +86,11 @@ public class OrderRequest extends BaseEntity {
     @Column(nullable = false, length = 20)
     private OrderRequestStatus status = OrderRequestStatus.PENDING;
 
+    /** STOCK -> se convierte en Sale; PREORDER -> se convierte en reserva(s). Homogéneo: nunca mezcla ambos. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_type", nullable = false, length = 20)
+    private OrderRequestType requestType = OrderRequestType.STOCK;
+
     @Column(name = "rejection_reason", length = 500)
     private String rejectionReason;
 

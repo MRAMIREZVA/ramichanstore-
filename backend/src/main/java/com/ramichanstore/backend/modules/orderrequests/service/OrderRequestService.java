@@ -10,12 +10,19 @@ import com.ramichanstore.backend.modules.customers.repository.CustomerRepository
 import com.ramichanstore.backend.modules.customers.service.CustomerService;
 import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
 import com.ramichanstore.backend.modules.orderrequests.dto.CartItemRequest;
+import com.ramichanstore.backend.modules.orderrequests.dto.ConvertToReservationsRequest;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestItem;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
+import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestType;
 import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRepository;
+import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
+import com.ramichanstore.backend.modules.preorders.entity.Preorder;
+import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
+import com.ramichanstore.backend.modules.preorders.repository.PreorderRepository;
+import com.ramichanstore.backend.modules.preorders.service.PreorderService;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
@@ -26,6 +33,8 @@ import com.ramichanstore.backend.modules.sales.service.SaleService;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +62,8 @@ public class OrderRequestService {
     private final CustomerService customerService;
     private final SaleService saleService;
     private final DeliveryAgencyService deliveryAgencyService;
+    private final PreorderRepository preorderRepository;
+    private final PreorderService preorderService;
     private final AuditService auditService;
 
     @Transactional
@@ -76,21 +87,19 @@ public class OrderRequestService {
         orderRequest.setNotes(request.notes());
         orderRequest.setStatus(OrderRequestStatus.PENDING);
 
-        boolean cartHasPreorder = false;
-        boolean cartHasStock = false;
+        // Un pedido web es SIEMPRE homogéneo (todo STOCK o todo PREORDER) — el carrito público sí puede
+        // mezclar ambos tipos (ver CartService.add en el frontend), pero el checkout los separa en 2
+        // submits distintos antes de llegar acá. Esta es la validación de fondo, por si alguien llama
+        // al endpoint público directo sin pasar por esa UI.
+        OrderRequestType requestType = null;
         for (CartItemRequest cartItem : request.items()) {
             // findPublicById (no findById): un producto descontinuado no es comprable, ni por un pedido web.
             Product product = productService.findPublicById(cartItem.productId());
-            // Un pedido web se convierte SIEMPRE en una sola Sale (ver convertToSale) — no hay forma de que
-            // resulte mitad-venta mitad-reserva de preventa, así que no se acepta un carrito mixto. El
-            // frontend ya bloquea esto al agregar al carrito (CartService.add); esta es la validación de
-            // fondo, por si alguien llama al endpoint público directo sin pasar por esa UI.
-            if (product.getStatus() == ProductStatus.PREORDER) {
-                cartHasPreorder = true;
-            } else {
-                cartHasStock = true;
-            }
-            if (cartHasPreorder && cartHasStock) {
+            boolean isPreorderItem = product.getStatus() == ProductStatus.PREORDER;
+            OrderRequestType itemType = isPreorderItem ? OrderRequestType.PREORDER : OrderRequestType.STOCK;
+            if (requestType == null) {
+                requestType = itemType;
+            } else if (requestType != itemType) {
                 throw new BusinessRuleException("No se puede mezclar productos en preventa con productos en stock en el mismo pedido");
             }
 
@@ -101,8 +110,18 @@ public class OrderRequestService {
             item.setQuantity(cartItem.quantity());
             item.setUnitPrice(unitPrice);
             item.setSubtotal(unitPrice.multiply(BigDecimal.valueOf(cartItem.quantity())));
+            if (isPreorderItem) {
+                // Snapshot de la campaña vigente — igual criterio que unitPrice: si la campaña cambia de
+                // estado entre el submit y la conversión, el admin sigue viendo con cuál se comprometió el cliente.
+                Preorder activeCampaign = preorderRepository
+                        .findFirstByProductIdAndStatusOrderByCreatedAtDesc(product.getId(), PreorderStatus.ACTIVE)
+                        .orElseThrow(() -> new BusinessRuleException(
+                                "\"" + product.getName() + "\" ya no tiene una campaña de preventa activa — actualiza tu carrito"));
+                item.setPreorder(activeCampaign);
+            }
             orderRequest.getItems().add(item);
         }
+        orderRequest.setRequestType(requestType != null ? requestType : OrderRequestType.STOCK);
 
         OrderRequest saved = orderRequestRepository.save(orderRequest);
         auditService.log(AuditAction.CREATE, MODULE, "OrderRequest", saved.getId().toString(), null, summarize(saved));
@@ -146,6 +165,9 @@ public class OrderRequestService {
         if (orderRequest.getStatus() != OrderRequestStatus.PENDING) {
             throw new BusinessRuleException("Solo se puede convertir un pedido web pendiente");
         }
+        if (orderRequest.getRequestType() != OrderRequestType.STOCK) {
+            throw new BusinessRuleException("Este pedido es de preventa — conviértelo a reserva desde el botón correspondiente");
+        }
 
         Long customerId = resolveCustomerId(orderRequest);
 
@@ -164,6 +186,58 @@ public class OrderRequestService {
         orderRequest.setConvertedSaleId(sale.id());
         OrderRequest saved = orderRequestRepository.save(orderRequest);
         auditService.log(AuditAction.UPDATE, MODULE, "OrderRequest", id.toString(), "PENDING", "CONVERTED a Sale #" + sale.id());
+        return OrderRequestResponse.from(saved);
+    }
+
+    /**
+     * Convierte un pedido web de preventa en una o más reservas reales
+     * ({@link PreorderCustomerRequest} vía {@link PreorderService#addReservation}) —
+     * una por cada ítem, contra la campaña resuelta en {@link #submit}. A
+     * diferencia de {@link #convertToSale}, acá el depósito NO se puede
+     * inventar: es dinero real que el admin ya coordinó con el cliente, así
+     * que lo declara explícitamente por ítem (ver {@link ConvertToReservationsRequest}).
+     * Reutiliza toda la validación de cupos/depósito mínimo que ya tiene
+     * {@code addReservation}, sin duplicarla acá.
+     */
+    @Transactional
+    public OrderRequestResponse convertToReservations(Long id, ConvertToReservationsRequest request, SecurityUser currentUser) {
+        OrderRequest orderRequest = findById(id);
+        if (orderRequest.getStatus() != OrderRequestStatus.PENDING) {
+            throw new BusinessRuleException("Solo se puede convertir un pedido web pendiente");
+        }
+        if (orderRequest.getRequestType() != OrderRequestType.PREORDER) {
+            throw new BusinessRuleException("Este pedido no es de preventa — conviértelo a venta desde el botón correspondiente");
+        }
+
+        Map<Long, BigDecimal> depositByItemId = new HashMap<>();
+        for (ConvertToReservationsRequest.ItemDeposit deposit : request.deposits()) {
+            depositByItemId.put(deposit.itemId(), deposit.depositAmount());
+        }
+
+        Long customerId = resolveCustomerId(orderRequest);
+        String notes = "Convertido desde pedido web #" + orderRequest.getId();
+
+        for (OrderRequestItem item : orderRequest.getItems()) {
+            BigDecimal depositAmount = depositByItemId.get(item.getId());
+            if (depositAmount == null) {
+                throw new BusinessRuleException(
+                        "Falta el depósito de \"" + item.getProduct().getName() + "\" (ítem #" + item.getId() + ")");
+            }
+            if (item.getPreorder() == null) {
+                // No debería pasar (submit siempre lo resuelve para un ítem PREORDER) — defensivo.
+                throw new BusinessRuleException(
+                        "\"" + item.getProduct().getName() + "\" no tiene una campaña de preventa asociada");
+            }
+            PreorderCustomerRequest reservationRequest = new PreorderCustomerRequest(
+                    customerId, item.getQuantity(), depositAmount, orderRequest.getPreferredPaymentMethod(),
+                    item.getUnitPrice(), notes);
+            preorderService.addReservation(item.getPreorder().getId(), reservationRequest, currentUser);
+        }
+
+        orderRequest.setStatus(OrderRequestStatus.CONVERTED);
+        OrderRequest saved = orderRequestRepository.save(orderRequest);
+        auditService.log(AuditAction.UPDATE, MODULE, "OrderRequest", id.toString(), "PENDING",
+                "CONVERTED a " + orderRequest.getItems().size() + " reserva(s) de preventa");
         return OrderRequestResponse.from(saved);
     }
 

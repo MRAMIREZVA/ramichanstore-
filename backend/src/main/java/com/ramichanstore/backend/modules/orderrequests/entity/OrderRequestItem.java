@@ -1,5 +1,6 @@
 package com.ramichanstore.backend.modules.orderrequests.entity;
 
+import com.ramichanstore.backend.modules.preorders.entity.Preorder;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,4 +48,9 @@ public class OrderRequestItem {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
+
+    /** Campaña de preventa resuelta al momento del submit — solo cuando el producto estaba en PREORDER. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "preorder_id")
+    private Preorder preorder;
 }

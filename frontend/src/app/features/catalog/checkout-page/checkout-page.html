@@ -52,24 +52,40 @@
       </div>
     }
   </div>
-} @else if (submittedOrder(); as order) {
+} @else if (submittedOrders().length > 0) {
   <div class="mx-auto flex max-w-md flex-col items-center gap-2 py-14 text-center">
     <mat-icon class="!h-14 !w-14 !text-[56px] text-emerald-600">check_circle</mat-icon>
     <h1 class="font-display mt-2 text-2xl font-extrabold text-gray-900">¡Pedido enviado!</h1>
-    <p class="mb-2 text-sm text-gray-500">Tu pedido web #{{ order.id }} quedó registrado. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.</p>
+    @if (submittedOrders().length > 1) {
+      <p class="mb-2 text-sm text-gray-500">
+        Tu carrito tenía productos en stock y en preventa, así que quedaron registrados como 2 pedidos web —
+        #{{ submittedOrders()[0].id }} y #{{ submittedOrders()[1].id }}. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.
+      </p>
+    } @else {
+      <p class="mb-2 text-sm text-gray-500">
+        Tu pedido web #{{ submittedOrders()[0].id }} quedó registrado. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.
+      </p>
+    }
 
-    <div class="mb-2 w-full rounded-2xl border border-black/5 bg-white p-4 text-left shadow-sm">
-      @for (item of order.items; track item.id) {
-        <div class="flex justify-between py-1 text-sm text-gray-600">
-          <span>{{ item.quantity }}x {{ item.productName }}</span>
-          <span>S/ {{ item.subtotal.toFixed(2) }}</span>
+    @for (order of submittedOrders(); track order.id) {
+      <div class="mb-2 w-full rounded-2xl border border-black/5 bg-white p-4 text-left shadow-sm">
+        @if (submittedOrders().length > 1) {
+          <p class="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">
+            {{ order.requestType === 'PREORDER' ? 'Preventa' : 'En stock' }} — pedido #{{ order.id }}
+          </p>
+        }
+        @for (item of order.items; track item.id) {
+          <div class="flex justify-between py-1 text-sm text-gray-600">
+            <span>{{ item.quantity }}x {{ item.productName }}</span>
+            <span>S/ {{ item.subtotal.toFixed(2) }}</span>
+          </div>
+        }
+        <div class="mt-1 flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
+          <span>Total</span>
+          <span>S/ {{ order.total.toFixed(2) }}</span>
         </div>
-      }
-      <div class="mt-1 flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
-        <span>Total</span>
-        <span>S/ {{ order.total.toFixed(2) }}</span>
       </div>
-    </div>
+    }
 
     @if (whatsAppUrl()) {
       <p class="text-sm text-gray-500">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>

@@ -43,6 +43,11 @@ export class OrderRequestService {
     return this.http.post<ApiResponse<OrderRequest>>(`${this.baseUrl}/${id}/convert`, {});
   }
 
+  /** Solo para pedidos requestType=PREORDER — un depósito real por ítem, ver ConvertToReservationsRequest (backend). */
+  convertToReservations(id: number, deposits: { itemId: number; depositAmount: number }[]): Observable<ApiResponse<OrderRequest>> {
+    return this.http.post<ApiResponse<OrderRequest>>(`${this.baseUrl}/${id}/convert-to-reservations`, { deposits });
+  }
+
   reject(id: number, reason: string): Observable<ApiResponse<OrderRequest>> {
     return this.http.post<ApiResponse<OrderRequest>>(`${this.baseUrl}/${id}/reject`, { reason });
   }

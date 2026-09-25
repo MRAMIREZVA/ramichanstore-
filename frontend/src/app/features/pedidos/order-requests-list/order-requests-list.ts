@@ -12,10 +12,17 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../core/models/sale.model';
-import { ORDER_REQUEST_STATUS_LABELS, OrderRequest, OrderRequestStatus } from '../../../core/models/order-request.model';
+import {
+  ORDER_REQUEST_STATUS_LABELS,
+  ORDER_REQUEST_TYPE_LABELS,
+  OrderRequest,
+  OrderRequestStatus,
+  OrderRequestType,
+} from '../../../core/models/order-request.model';
 import { OrderRequestFilters, OrderRequestService } from '../../../core/services/order-request.service';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { ConvertToReservationsDialogComponent, ConvertToReservationsDialogData } from '../convert-to-reservations-dialog/convert-to-reservations-dialog';
 import {
   RejectOrderRequestDialogComponent,
   RejectOrderRequestDialogData,
@@ -52,9 +59,10 @@ export class OrderRequestsList implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly statusLabels = ORDER_REQUEST_STATUS_LABELS;
+  readonly typeLabels = ORDER_REQUEST_TYPE_LABELS;
   readonly paymentMethodLabels = PAYMENT_METHOD_LABELS;
   readonly deliveryMethodLabels = DELIVERY_METHOD_LABELS;
-  readonly displayedColumns = ['guest', 'items', 'payment', 'delivery', 'status', 'createdAt', 'actions'];
+  readonly displayedColumns = ['guest', 'items', 'type', 'payment', 'delivery', 'status', 'createdAt', 'actions'];
 
   readonly loading = signal(true);
   readonly orderRequests = signal<OrderRequest[]>([]);
@@ -118,6 +126,10 @@ export class OrderRequestsList implements OnInit {
     return this.statusLabels[status];
   }
 
+  typeLabel(type: OrderRequestType): string {
+    return this.typeLabels[type];
+  }
+
   paymentMethodLabel(method: PaymentMethod): string {
     return this.paymentMethodLabels[method];
   }
@@ -127,6 +139,10 @@ export class OrderRequestsList implements OnInit {
   }
 
   confirmConvert(order: OrderRequest): void {
+    if (order.requestType === 'PREORDER') {
+      this.openConvertToReservations(order);
+      return;
+    }
     const data: ConfirmDialogData = {
       title: 'Convertir a venta',
       message: `Esto crea una venta real para "${order.guestName}" — descuenta stock y genera puntos como cualquier venta. ¿Confirmas?`,
@@ -141,6 +157,19 @@ export class OrderRequestsList implements OnInit {
           this.load();
         },
       });
+    });
+  }
+
+  private openConvertToReservations(order: OrderRequest): void {
+    const data: ConvertToReservationsDialogData = { orderRequest: order };
+    const ref = this.dialog.open<ConvertToReservationsDialogComponent, ConvertToReservationsDialogData, string | null>(
+      ConvertToReservationsDialogComponent,
+      { data, width: '560px', maxWidth: '95vw' },
+    );
+    ref.afterClosed().subscribe((message) => {
+      if (!message) return;
+      this.snackBar.open(message, 'Cerrar', { duration: 3000 });
+      this.load();
     });
   }
 

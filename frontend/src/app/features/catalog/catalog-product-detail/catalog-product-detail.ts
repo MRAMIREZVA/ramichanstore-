@@ -4,7 +4,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { mixedCartMessage } from '../../../core/models/cart.model';
 import { PRODUCT_STATUS_LABELS } from '../../../core/models/product.model';
 import { PublicProduct } from '../../../core/models/public-catalog.model';
 import { CartService } from '../../../core/services/cart.service';
@@ -80,11 +79,7 @@ export class CatalogProductDetail implements OnInit {
   addToCart(): void {
     const product = this.product();
     if (!product || !product.inStock) return;
-    const result = this.cartService.add(product, this.quantity());
-    if (!result.ok) {
-      this.snackBar.open(mixedCartMessage(result.cartHasPreorder), 'Cerrar', { duration: 4000 });
-      return;
-    }
+    this.cartService.add(product, this.quantity());
     this.snackBar.open(`${product.name} agregado al carrito`, 'Cerrar', { duration: 2500 });
     this.quantity.set(1);
   }

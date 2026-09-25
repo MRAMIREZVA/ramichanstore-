@@ -66,6 +66,16 @@
   color: #b32424;
 }
 
+.status-chip[data-status='STOCK'] {
+  background: #e0e7fb;
+  color: #2f3fa3;
+}
+
+.status-chip[data-status='PREORDER'] {
+  background: #f1e0fb;
+  color: #7a24b3;
+}
+
 .whatsapp-link {
   color: #1e7a3a;
 }

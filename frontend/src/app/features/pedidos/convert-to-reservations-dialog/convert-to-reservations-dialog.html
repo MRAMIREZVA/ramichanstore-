@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>Convertir a reserva de preventa — pedido #{{ data.orderRequest.id }}</h2>
+
+<mat-dialog-content>
+  <p>
+    Esto crea una reserva real por cada producto para <strong>{{ data.orderRequest.guestName }}</strong>. Escribe el
+    depósito que ya recibiste (coordinado por WhatsApp) — el sugerido es el mínimo de la campaña, edítalo si el
+    cliente pagó otro monto.
+  </p>
+  <form [formGroup]="form" class="items-form">
+    @for (group of depositControls; track group.value.itemId; let i = $index) {
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">{{ data.orderRequest.items[i].quantity }}x {{ data.orderRequest.items[i].productName }}</span>
+          <span class="item-price">Precio: S/ {{ data.orderRequest.items[i].unitPrice.toFixed(2) }} c/u — Subtotal: S/ {{ data.orderRequest.items[i].subtotal.toFixed(2) }}</span>
+        </div>
+        <mat-form-field appearance="outline" class="deposit-field" [formGroup]="group">
+          <mat-label>Depósito recibido (S/)</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="depositAmount" />
+          @if (group.controls.depositAmount.touched && group.controls.depositAmount.invalid) {
+            <mat-error>Obligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Volver</button>
+  <button mat-flat-button color="primary" (click)="confirm()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="20" />
+    } @else {
+      Confirmar reserva(s)
+    }
+  </button>
+</mat-dialog-actions>

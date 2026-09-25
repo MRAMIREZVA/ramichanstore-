@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { AddToCartResult, CartLine } from '../models/cart.model';
+import { CartLine } from '../models/cart.model';
 import { PublicProduct } from '../models/public-catalog.model';
 
 const STORAGE_KEY = 'ramichan_cart_v1';
@@ -18,26 +18,16 @@ export class CartService {
   readonly totalAmount = computed(() => this.lines().reduce((sum, l) => sum + l.unitPrice * l.quantity, 0));
 
   /**
-   * No se permite mezclar productos en preventa (status PREORDER) con productos en
-   * stock en el mismo carrito: son dos flujos de cumplimiento distintos (una preventa
-   * se reserva contra cupos de una campaña, un producto en stock se vende directo) y
-   * un solo pedido web no puede resolverse mitad-venta mitad-reserva. Se bloquea acá,
-   * en el momento de agregar, en vez de permitir el carrito mixto y tener que dividir
-   * el pedido después.
+   * El carrito permite mezclar productos en stock y en preventa — el checkout
+   * es quien separa las líneas en 2 pedidos web homogéneos al enviar (ver
+   * checkout-page.submit()), no el carrito en el momento de agregar.
    */
-  add(product: PublicProduct, quantity = 1): AddToCartResult {
+  add(product: PublicProduct, quantity = 1): void {
     const current = this.lines();
     const existing = current.find((l) => l.productId === product.id);
     if (existing) {
       this.updateQuantity(product.id, existing.quantity + quantity);
-      return { ok: true };
-    }
-
-    const isPreorder = product.status === 'PREORDER';
-    const cartHasPreorder = current.some((l) => l.isPreorder);
-    const cartHasStock = current.some((l) => !l.isPreorder);
-    if ((isPreorder && cartHasStock) || (!isPreorder && cartHasPreorder)) {
-      return { ok: false, reason: 'MIXED_TYPES', cartHasPreorder };
+      return;
     }
 
     this.set([
@@ -49,10 +39,9 @@ export class CartService {
         mainImageUrl: product.mainImageUrl,
         unitPrice: product.salePrice,
         quantity,
-        isPreorder,
+        isPreorder: product.status === 'PREORDER',
       },
     ]);
-    return { ok: true };
   }
 
   updateQuantity(productId: number, quantity: number): void {

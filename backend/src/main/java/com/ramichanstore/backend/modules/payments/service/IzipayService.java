@@ -5,6 +5,7 @@ import com.ramichanstore.backend.audit.AuditService;
 import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
+import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestType;
 import com.ramichanstore.backend.modules.orderrequests.service.OrderRequestService;
 import com.ramichanstore.backend.modules.payments.config.IzipayProperties;
 import com.ramichanstore.backend.modules.payments.dto.FormTokenResponse;
@@ -71,6 +72,13 @@ public class IzipayService {
         OrderRequest orderRequest = orderRequestService.findById(orderRequestId);
         if (orderRequest.getStatus() != OrderRequestStatus.PENDING) {
             throw new BusinessRuleException("Este pedido ya no está pendiente de pago");
+        }
+        if (orderRequest.getRequestType() != OrderRequestType.STOCK) {
+            // Una reserva de preventa exige que el admin declare el depósito real recibido (ver
+            // OrderRequestService.convertToReservations) — no hay forma de auto-confirmarla solo con
+            // la notificación de pago de Izipay, así que el pago en línea no se ofrece para estos
+            // pedidos. El frontend ya cae sin fricción al flujo de WhatsApp cuando esto falla.
+            throw new BusinessRuleException("El pago en línea no está disponible para pedidos de preventa");
         }
 
         BigDecimal total = orderRequest.getItems().stream()

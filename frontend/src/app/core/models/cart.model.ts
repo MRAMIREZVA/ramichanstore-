@@ -5,14 +5,12 @@ export interface CartLine {
   mainImageUrl: string | null;
   unitPrice: number;
   quantity: number;
-  /** true si el producto está en estado PREORDER — ver CartService.add(), no se puede mezclar con productos en stock en el mismo carrito. */
+  /**
+   * true si el producto está en estado PREORDER. El carrito SÍ permite mezclar
+   * productos en stock y en preventa (antes se bloqueaba, ver historial) — el
+   * checkout (`checkout-page.submit()`) separa las líneas en 2 pedidos web
+   * homogéneos antes de enviarlos, porque el backend sigue sin aceptar un solo
+   * pedido mixto (una preventa se resuelve contra cupos de campaña, no stock).
+   */
   isPreorder: boolean;
-}
-
-export type AddToCartResult = { ok: true } | { ok: false; reason: 'MIXED_TYPES'; cartHasPreorder: boolean };
-
-export function mixedCartMessage(cartHasPreorder: boolean): string {
-  return cartHasPreorder
-    ? 'Tu carrito ya tiene una preventa — vacíalo o complétalo antes de agregar productos en stock.'
-    : 'Tu carrito ya tiene productos en stock — vacíalo o complétalo antes de agregar una preventa.';
 }
