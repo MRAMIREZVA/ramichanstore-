@@ -5,15 +5,18 @@ import { portalAuthGuard } from './core/guards/portal-auth.guard';
 export const routes: Routes = [
   {
     path: 'login',
+    title: 'RamichanStore | Panel administrativo',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },
   {
     path: 'privacidad',
+    title: 'RamichanStore | Política de privacidad',
     loadComponent: () =>
       import('./features/legal/privacy-policy/privacy-policy').then((m) => m.PrivacyPolicy),
   },
   {
     path: '',
+    title: 'RamichanStore | Panel administrativo',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
     children: [
@@ -75,6 +78,7 @@ export const routes: Routes = [
   },
   {
     path: 'catalogo',
+    title: 'RamichanStore | Catálogo',
     loadComponent: () => import('./features/catalog/catalog-layout/catalog-layout').then((m) => m.CatalogLayout),
     children: [
       {
@@ -100,10 +104,12 @@ export const routes: Routes = [
   },
   {
     path: 'portal/login',
+    title: 'RamichanStore | Portal de clientes',
     loadComponent: () => import('./features/portal/portal-login/portal-login').then((m) => m.PortalLogin),
   },
   {
     path: 'portal',
+    title: 'RamichanStore | Portal de clientes',
     loadComponent: () => import('./features/portal/portal-layout/portal-layout').then((m) => m.PortalLayout),
     canActivate: [portalAuthGuard],
     children: [
