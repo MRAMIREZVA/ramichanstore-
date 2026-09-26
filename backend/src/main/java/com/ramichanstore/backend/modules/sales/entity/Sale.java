@@ -22,9 +22,16 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 
 /**
- * Cabecera de venta. Total/costo/ganancia/puntos SIEMPRE se calculan en
- * {@code SaleService}, nunca se aceptan editados desde el frontend. No hay
- * UPDATE de venta: solo creación y cancelación (ver SaleService.cancel).
+ * Cabecera de venta — cubre AMBOS tipos de compra que antes eran entidades separadas:
+ * {@code type=VENTA} (pago de una sola vez, requiere paymentMethod/deliveryMethod, genera
+ * puntos de fidelidad) y {@code type=SEPARACION} (producto ya en stock pagado en abonos vía
+ * el ledger {@link Payment}, paymentMethod/deliveryMethod quedan null porque nunca existieron
+ * a nivel de cabecera, jamás genera puntos). Ver {@code SaleService} para el detalle de qué
+ * cambia según el tipo — la fusión es de datos, no de reglas de negocio.
+ *
+ * <p>Total/costo/ganancia/puntos SIEMPRE se calculan en {@code SaleService}, nunca se aceptan
+ * editados desde el frontend. No hay UPDATE de cabecera libre: solo creación, cancelación,
+ * corrección de líneas/agregar línea (ver SaleService), y para SEPARACION el ledger de abonos.</p>
  */
 @Entity
 @Table(name = "sales")
@@ -34,6 +41,10 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 public class Sale extends BaseEntity {
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sale_type", nullable = false, length = 20)
+    private SaleType type = SaleType.VENTA;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -41,17 +52,23 @@ public class Sale extends BaseEntity {
     @Column(name = "sale_date", nullable = false)
     private LocalDate saleDate;
 
+    /** Nullable: solo obligatorio para {@code type=VENTA} (validado en SaleService, no en la BD). */
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false, length = 20)
+    @Column(name = "payment_method", length = 20)
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 20)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
+    /** Nullable: solo obligatorio para {@code type=VENTA} (validado en SaleService, no en la BD). */
     @Enumerated(EnumType.STRING)
-    @Column(name = "delivery_method", nullable = false, length = 20)
+    @Column(name = "delivery_method", length = 20)
     private DeliveryMethod deliveryMethod;
+
+    /** Solo tiene sentido para {@code type=SEPARACION} — fecha límite de pago de los abonos. */
+    @Column(name = "limit_date")
+    private LocalDate limitDate;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
@@ -73,4 +90,8 @@ public class Sale extends BaseEntity {
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SaleDetail> items = new ArrayList<>();
+
+    /** Ledger de abonos — en la práctica solo tiene filas cuando {@code type=SEPARACION}. */
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Payment> payments = new ArrayList<>();
 }

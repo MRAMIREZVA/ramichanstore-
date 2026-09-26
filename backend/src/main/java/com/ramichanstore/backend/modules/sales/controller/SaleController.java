@@ -4,22 +4,27 @@ import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.sales.dto.AddSaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.CancelSaleRequest;
+import com.ramichanstore.backend.modules.sales.dto.PaymentRequest;
+import com.ramichanstore.backend.modules.sales.dto.PaymentResponse;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
 import com.ramichanstore.backend.modules.sales.dto.UpdateSaleItemsRequest;
 import com.ramichanstore.backend.modules.sales.dto.UpdateSalePaymentStatusRequest;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
+import com.ramichanstore.backend.modules.sales.entity.SaleType;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
 import com.ramichanstore.backend.security.SecurityUser;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,13 +44,14 @@ public class SaleController {
     @GetMapping
     @PreAuthorize("hasAuthority('PERM_SALE_VIEW')")
     public ApiResponse<PageResponse<SaleResponse>> search(
+            @RequestParam(required = false) SaleType type,
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) PaymentStatus status,
             @RequestParam(required = false) PaymentMethod method,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 20, sort = "saleDate") Pageable pageable) {
-        return ApiResponse.ok(PageResponse.from(saleService.search(customerId, status, method, from, to, pageable)));
+        return ApiResponse.ok(PageResponse.from(saleService.search(type, customerId, status, method, from, to, pageable)));
     }
 
     @GetMapping("/{id}")
@@ -57,14 +63,15 @@ public class SaleController {
     @PostMapping
     @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
     public ApiResponse<SaleResponse> create(@Valid @RequestBody SaleRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
-        return ApiResponse.ok("Venta registrada", saleService.create(request, currentUser));
+        String message = request.type() == SaleType.VENTA ? "Venta registrada" : "Separación creada";
+        return ApiResponse.ok(message, saleService.create(request, currentUser));
     }
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('PERM_SALE_CANCEL')")
     public ApiResponse<SaleResponse> cancel(
             @PathVariable Long id, @Valid @RequestBody CancelSaleRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
-        return ApiResponse.ok("Venta cancelada", saleService.cancel(id, request.reason(), currentUser));
+        return ApiResponse.ok("Cancelado", saleService.cancel(id, request.reason(), currentUser));
     }
 
     @PutMapping("/{id}/payment-status")
@@ -85,5 +92,34 @@ public class SaleController {
     public ApiResponse<SaleResponse> addItem(
             @PathVariable Long id, @Valid @RequestBody AddSaleItemRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
         return ApiResponse.ok("Producto agregado a la venta", saleService.addItem(id, request, currentUser));
+    }
+
+    @GetMapping("/{id}/payments")
+    @PreAuthorize("hasAuthority('PERM_SALE_VIEW')")
+    public ApiResponse<List<PaymentResponse>> listPayments(@PathVariable Long id) {
+        return ApiResponse.ok(saleService.listPayments(id));
+    }
+
+    @PostMapping("/{id}/payments")
+    @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
+    public ApiResponse<PaymentResponse> registerPayment(
+            @PathVariable Long id, @Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Abono registrado", saleService.registerPayment(id, request, currentUser));
+    }
+
+    @PutMapping("/{id}/payments/{paymentId}")
+    @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
+    public ApiResponse<PaymentResponse> updatePayment(
+            @PathVariable Long id, @PathVariable Long paymentId,
+            @Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Abono actualizado", saleService.updatePayment(id, paymentId, request, currentUser));
+    }
+
+    @DeleteMapping("/{id}/payments/{paymentId}")
+    @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
+    public ApiResponse<Void> deletePayment(
+            @PathVariable Long id, @PathVariable Long paymentId, @AuthenticationPrincipal SecurityUser currentUser) {
+        saleService.deletePayment(id, paymentId, currentUser);
+        return ApiResponse.ok("Abono eliminado", null);
     }
 }

@@ -9,24 +9,24 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
-import { DeliveryStatus, PurchaseType } from '../../../core/models/delivery.model';
+import { DeliveryStatus } from '../../../core/models/delivery.model';
 import { PREORDER_STATUS_LABELS, PreorderStatus } from '../../../core/models/preorder.model';
-import { PAYMENT_STATUS_LABELS, PaymentStatus, Sale } from '../../../core/models/sale.model';
+import { PAYMENT_STATUS_LABELS, PaymentStatus, Sale, SaleType } from '../../../core/models/sale.model';
 import { PortalReservation } from '../../../core/models/portal.model';
 import { PortalDataService } from '../../../core/services/portal-data.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
-import { buildDeliveryLookup, deliveryLabelFor, deliveryStatusAttrFor, purchaseKey } from '../../../core/utils/delivery-label';
+import { buildDeliveryLookup, deliveryLabelFor, deliveryStatusAttrFor } from '../../../core/utils/delivery-label';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { PortalSaleDetailComponent, PortalSaleDetailData } from '../portal-sale-detail/portal-sale-detail';
 import { ReservationShippingDialogComponent, ReservationShippingDialogData } from '../reservation-shipping-dialog/reservation-shipping-dialog';
 
-/** Traer hasta esta cantidad de ventas/separaciones del cliente y paginar del lado del cliente al unirlas — a esta escala (una tienda, no un marketplace) es irrelevante en la práctica, ver CLAUDE.md. */
+/** Traer hasta esta cantidad de compras del cliente y paginar del lado del cliente — a esta escala (una tienda, no un marketplace) es irrelevante en la práctica, ver CLAUDE.md. */
 const FETCH_SIZE = 200;
 
-/** Fila unificada de "Mis compras" — antes esta pestaña solo mostraba Ventas y un cliente cuya única compra fue una Separación (reserva de un producto ya en stock pagado en abonos) no veía nada; ver CLAUDE.md Fase 17. */
+/** Fila de "Mis compras" — ventas y separaciones son la misma entidad Sale (discriminada por `type`), ver sale.model.ts. */
 interface PortalPurchaseRow {
-  type: PurchaseType;
+  type: SaleType;
   id: number;
   date: string;
   summary: string;
@@ -36,7 +36,7 @@ interface PortalPurchaseRow {
   paymentStatus: PaymentStatus;
   deliveryLabel: string;
   deliveryStatusAttr: DeliveryStatus | 'NONE';
-  sale: Sale | null;
+  sale: Sale;
 }
 
 interface PreorderStep {
@@ -151,49 +151,28 @@ export class PortalHome implements OnInit {
     this.loadingPurchases.set(true);
     forkJoin({
       sales: this.portalDataService.mySales(0, FETCH_SIZE),
-      separations: this.portalDataService.mySeparations(0, FETCH_SIZE),
       deliveries: this.portalDataService.myDeliveries(),
     }).subscribe({
-      next: ({ sales, separations, deliveries }) => {
+      next: ({ sales, deliveries }) => {
         const deliveryLookup = buildDeliveryLookup(deliveries.data);
 
-        const saleRows: PortalPurchaseRow[] = sales.data.content.map((s) => {
-          const delivery = deliveryLookup.get(purchaseKey('VENTA', s.id));
-          // Una venta no tiene ledger de abonos parciales como una separación: se paga completa o queda pendiente.
-          // No se anula el saldo en CANCELLED — mismo criterio que SeparationResponse en el backend (totalPrice - amountPaid siempre), para que ambos tipos de fila se vean consistentes.
-          const amountPaid = s.paymentStatus === 'PAID' ? s.total : 0;
+        this.allPurchases = sales.data.content.map((s) => {
+          const delivery = deliveryLookup.get(s.id);
           return {
-            type: 'VENTA',
+            type: s.type,
             id: s.id,
             date: s.saleDate,
-            summary: `${s.items.length} producto(s)`,
+            summary: s.items.length === 1 ? s.items[0].productName : `${s.items.length} producto(s)`,
             total: s.total,
-            amountPaid,
-            balanceDue: s.total - amountPaid,
+            amountPaid: s.amountPaid,
+            balanceDue: s.balanceDue,
             paymentStatus: s.paymentStatus,
             deliveryLabel: deliveryLabelFor(delivery, s.paymentStatus),
             deliveryStatusAttr: deliveryStatusAttrFor(delivery, s.paymentStatus),
             sale: s,
           };
         });
-        const separationRows: PortalPurchaseRow[] = separations.data.content.map((s) => {
-          const delivery = deliveryLookup.get(purchaseKey('SEPARACION', s.id));
-          return {
-            type: 'SEPARACION',
-            id: s.id,
-            date: s.separationDate,
-            summary: s.productName,
-            total: s.totalPrice,
-            amountPaid: s.amountPaid,
-            balanceDue: s.balanceDue,
-            paymentStatus: s.status,
-            deliveryLabel: deliveryLabelFor(delivery, s.status),
-            deliveryStatusAttr: deliveryStatusAttrFor(delivery, s.status),
-            sale: null,
-          };
-        });
 
-        this.allPurchases = [...saleRows, ...separationRows].sort((a, b) => b.date.localeCompare(a.date));
         this.totalPurchases.set(this.allPurchases.length);
         this.page = 0;
         this.applyPage();
@@ -223,7 +202,6 @@ export class PortalHome implements OnInit {
   }
 
   viewPurchase(row: PortalPurchaseRow): void {
-    if (!row.sale) return;
     const data: PortalSaleDetailData = {
       sale: row.sale,
       deliveryLabel: row.deliveryLabel,

@@ -1,10 +1,19 @@
-<h2 mat-dialog-title>Nueva venta</h2>
+<h2 mat-dialog-title>Nuevo pedido</h2>
 
 <mat-dialog-content>
   <form [formGroup]="header" class="sale-form">
     <div class="grid-2">
       <mat-form-field appearance="outline">
-        <mat-label>Cliente (opcional)</mat-label>
+        <mat-label>Tipo</mat-label>
+        <mat-select [value]="type()" (selectionChange)="onTypeChange($event.value)">
+          @for (opt of typeOptions; track opt[0]) {
+            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Cliente{{ isSeparacion() ? '' : ' (opcional)' }}</mat-label>
         <input
           matInput
           formControlName="customerSearch"
@@ -21,43 +30,61 @@
             <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ customerLabel(c) }}</mat-option>
           }
         </mat-autocomplete>
-        <mat-hint>Sin cliente no se generan puntos de fidelidad</mat-hint>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Fecha de venta</mat-label>
+        <mat-label>Fecha</mat-label>
         <input matInput [matDatepicker]="saleDatePicker" formControlName="saleDate" />
         <mat-datepicker-toggle matSuffix [for]="saleDatePicker" />
         <mat-datepicker #saleDatePicker />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Método de pago</mat-label>
-        <mat-select formControlName="paymentMethod">
-          @for (opt of paymentMethodOptions; track opt[0]) {
-            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+      @if (isSeparacion()) {
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha límite de pago</mat-label>
+          <input matInput [matDatepicker]="limitDatePicker" formControlName="limitDate" />
+          <mat-datepicker-toggle matSuffix [for]="limitDatePicker" />
+          <mat-datepicker #limitDatePicker />
+          @if (header.controls.limitDate.touched && header.controls.limitDate.invalid) {
+            <mat-error>La fecha límite es obligatoria</mat-error>
           }
-        </mat-select>
-      </mat-form-field>
+        </mat-form-field>
+      } @else {
+        <mat-form-field appearance="outline">
+          <mat-label>Método de pago</mat-label>
+          <mat-select formControlName="paymentMethod">
+            @for (opt of paymentMethodOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Estado de pago</mat-label>
-        <mat-select formControlName="paymentStatus">
-          @for (opt of paymentStatusOptions; track opt[0]) {
-            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Estado de pago</mat-label>
+          <mat-select formControlName="paymentStatus">
+            @for (opt of paymentStatusOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Método de entrega</mat-label>
-        <mat-select formControlName="deliveryMethod">
-          @for (opt of deliveryMethodOptions; track opt[0]) {
-            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Método de entrega</mat-label>
+          <mat-select formControlName="deliveryMethod">
+            @for (opt of deliveryMethodOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
     </div>
+    <p class="hint">
+      @if (isSeparacion()) {
+        Una separación reserva el producto ya en stock y no genera puntos de fidelidad — el pago se registra en abonos desde el detalle.
+      } @else {
+        Sin cliente no se generan puntos de fidelidad.
+      }
+    </p>
 
     <h3 class="section-title">Productos</h3>
     <div class="lines">
@@ -129,7 +156,7 @@
     @if (saving()) {
       <mat-spinner diameter="18" />
     } @else {
-      Registrar venta
+      {{ isSeparacion() ? 'Crear separación' : 'Registrar venta' }}
     }
   </button>
 </mat-dialog-actions>

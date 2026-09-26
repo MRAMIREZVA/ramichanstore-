@@ -26,6 +26,14 @@ export const DELIVERY_METHOD_LABELS: Record<DeliveryMethod, string> = {
   AGENCY: 'Envío por agencia',
 };
 
+/** VENTA (pago de una sola vez, genera puntos) o SEPARACION (abonos, nunca genera puntos) — antes eran dos entidades separadas. */
+export type SaleType = 'VENTA' | 'SEPARACION';
+
+export const SALE_TYPE_LABELS: Record<SaleType, string> = {
+  VENTA: 'Venta directa',
+  SEPARACION: 'Separación (abonos)',
+};
+
 export interface SaleItem {
   id: number;
   productId: number;
@@ -39,24 +47,54 @@ export interface SaleItem {
   subtotal: number;
 }
 
+/** Abono individual contra una venta type=SEPARACION. */
+export interface SalePayment {
+  id: number;
+  saleId: number;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
+  notes: string | null;
+  userId: number;
+  username: string;
+  createdAt: string;
+}
+
+export interface SalePaymentRequest {
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
+  notes: string | null;
+}
+
 export interface Sale {
   id: number;
   /** Código legible del pedido (ej. "V-000123"), calculado por el backend a partir del id. */
   orderCode: string;
+  type: SaleType;
   customerId: number | null;
   customerName: string | null;
   customerPhone: string | null;
   customerWhatsapp: string | null;
   saleDate: string;
-  paymentMethod: PaymentMethod;
+  /** Null cuando type=SEPARACION — nunca existió a nivel de cabecera para una separación. */
+  paymentMethod: PaymentMethod | null;
   paymentStatus: PaymentStatus;
-  deliveryMethod: DeliveryMethod;
+  /** Null cuando type=SEPARACION. */
+  deliveryMethod: DeliveryMethod | null;
+  /** Solo tiene sentido para type=SEPARACION — fecha límite de pago de los abonos. */
+  limitDate: string | null;
+  overdue: boolean;
   items: SaleItem[];
   subtotal: number;
   total: number;
   totalCost: number;
   profit: number;
   pointsGenerated: number;
+  /** Calculados por el backend: desde el ledger de abonos si type=SEPARACION, o total/0 según paymentStatus si type=VENTA. */
+  amountPaid: number;
+  balanceDue: number;
+  payments: SalePayment[];
   notes: string | null;
   createdAt: string;
 }
@@ -68,12 +106,18 @@ export interface SaleItemRequest {
   discount: number;
 }
 
+/**
+ * paymentMethod/deliveryMethod solo son obligatorios si type=VENTA (validado en el formulario y
+ * de nuevo en el backend); limitDate solo si type=SEPARACION.
+ */
 export interface SaleRequest {
+  type: SaleType;
   customerId: number | null;
   saleDate: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | null;
   paymentStatus: PaymentStatus;
-  deliveryMethod: DeliveryMethod;
+  deliveryMethod: DeliveryMethod | null;
+  limitDate: string | null;
   items: SaleItemRequest[];
   notes: string | null;
 }

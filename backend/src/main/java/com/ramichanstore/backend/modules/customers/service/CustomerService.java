@@ -16,7 +16,6 @@ import com.ramichanstore.backend.modules.deliveries.repository.DeliveryRepositor
 import com.ramichanstore.backend.modules.loyalty.repository.LoyaltyPointMovementRepository;
 import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
-import com.ramichanstore.backend.modules.separations.repository.SeparationRepository;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -37,7 +36,6 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final SaleRepository saleRepository;
-    private final SeparationRepository separationRepository;
     private final LoyaltyPointMovementRepository loyaltyPointMovementRepository;
     private final DeliveryRepository deliveryRepository;
     private final PreorderCustomerRepository preorderCustomerRepository;
@@ -89,7 +87,7 @@ public class CustomerService {
     @Transactional
     public void delete(Long id) {
         Customer customer = findById(id);
-        if (saleRepository.existsByCustomerId(id) || separationRepository.existsByCustomerId(id)
+        if (saleRepository.existsByCustomerId(id)
                 || loyaltyPointMovementRepository.existsByCustomerId(id) || deliveryRepository.existsByCustomerId(id)
                 || preorderCustomerRepository.existsByCustomerId(id)) {
             throw new BusinessRuleException(

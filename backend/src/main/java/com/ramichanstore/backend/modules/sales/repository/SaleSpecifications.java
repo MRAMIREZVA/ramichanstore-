@@ -3,13 +3,21 @@ package com.ramichanstore.backend.modules.sales.repository;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
+import com.ramichanstore.backend.modules.sales.entity.SaleType;
 import java.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
 
-/** Filtros dinámicos del listado de ventas: cliente, estado/método de pago, rango de fechas. */
+/** Filtros dinámicos del listado de ventas: cliente, tipo, estado/método de pago, rango de fechas. */
 public final class SaleSpecifications {
 
     private SaleSpecifications() {
+    }
+
+    public static Specification<Sale> hasType(SaleType type) {
+        if (type == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.equal(root.get("type"), type);
     }
 
     public static Specification<Sale> hasCustomer(Long customerId) {

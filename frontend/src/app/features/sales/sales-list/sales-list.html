@@ -1,9 +1,9 @@
 <div class="sales-page">
   <header class="page-header">
-    <p class="tab-hint">Cálculo automático de total, costo, ganancia y puntos.</p>
+    <p class="tab-hint">Ventas directas y separaciones en abonos — cálculo automático de total, costo, ganancia y puntos.</p>
     <button mat-flat-button color="primary" (click)="openCreate()">
       <mat-icon>add</mat-icon>
-      Nueva venta
+      Nuevo pedido
     </button>
   </header>
 
@@ -23,6 +23,16 @@
           <mat-option [value]="c" (onSelectionChange)="onCustomerSelected(c)">{{ c.fullName }}</mat-option>
         }
       </mat-autocomplete>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo</mat-label>
+      <mat-select [formControl]="typeControl">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (opt of typeLabels | keyvalue; track opt.key) {
+          <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+        }
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -66,13 +76,20 @@
     } @else if (sales().length === 0) {
       <div class="empty-state">
         <mat-icon>point_of_sale</mat-icon>
-        <p>No se encontraron ventas con estos filtros.</p>
+        <p>No se encontraron pedidos con estos filtros.</p>
       </div>
     } @else {
       <table mat-table [dataSource]="sales()" class="sales-table">
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Código</th>
           <td mat-cell *matCellDef="let s">{{ s.orderCode }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let s">
+            <span class="type-chip" [attr.data-type]="s.type">{{ typeLabel(s.type) }}</span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="date">
@@ -86,8 +103,8 @@
         </ng-container>
 
         <ng-container matColumnDef="items">
-          <th mat-header-cell *matHeaderCellDef>Productos</th>
-          <td mat-cell *matCellDef="let s">{{ s.items.length }}</td>
+          <th mat-header-cell *matHeaderCellDef>Producto(s)</th>
+          <td mat-cell *matCellDef="let s">{{ itemsSummary(s) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="total">
@@ -114,7 +131,7 @@
               <mat-icon>visibility</mat-icon>
             </button>
             @if (s.paymentStatus !== 'CANCELLED') {
-              <button mat-icon-button (click)="cancelSale(s)" matTooltip="Cancelar venta">
+              <button mat-icon-button (click)="cancelSale(s)" matTooltip="Cancelar">
                 <mat-icon>cancel</mat-icon>
               </button>
             }

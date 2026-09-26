@@ -7,7 +7,6 @@ import com.ramichanstore.backend.modules.loyalty.dto.LoyaltyBalanceResponse;
 import com.ramichanstore.backend.modules.portal.dto.PortalReservationResponse;
 import com.ramichanstore.backend.modules.portal.service.PortalService;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
-import com.ramichanstore.backend.modules.separations.dto.SeparationResponse;
 import com.ramichanstore.backend.security.CustomerPrincipal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -45,13 +44,6 @@ public class PortalController {
     @GetMapping("/sales/{id}")
     public ApiResponse<SaleResponse> mySale(@AuthenticationPrincipal CustomerPrincipal principal, @PathVariable Long id) {
         return ApiResponse.ok(portalService.mySale(principal.getId(), id));
-    }
-
-    @GetMapping("/separations")
-    public ApiResponse<PageResponse<SeparationResponse>> mySeparations(
-            @AuthenticationPrincipal CustomerPrincipal principal,
-            @PageableDefault(size = 20, sort = "separationDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.ok(PageResponse.from(portalService.mySeparations(principal.getId(), pageable)));
     }
 
     @GetMapping("/reservations")

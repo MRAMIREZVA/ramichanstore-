@@ -1,4 +1,4 @@
-package com.ramichanstore.backend.modules.separations.dto;
+package com.ramichanstore.backend.modules.sales.dto;
 
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import jakarta.validation.constraints.DecimalMin;

@@ -22,7 +22,9 @@ import {
   PAYMENT_STATUS_LABELS,
   PaymentMethod,
   PaymentStatus,
+  SALE_TYPE_LABELS,
   Sale,
+  SaleType,
 } from '../../../core/models/sale.model';
 import { CustomerService } from '../../../core/services/customer.service';
 import { SaleFilters, SaleService } from '../../../core/services/sale.service';
@@ -60,14 +62,16 @@ export class SalesList implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
+  readonly typeLabels = SALE_TYPE_LABELS;
   readonly statusLabels = PAYMENT_STATUS_LABELS;
   readonly methodLabels = PAYMENT_METHOD_LABELS;
-  readonly displayedColumns = ['code', 'date', 'customer', 'items', 'total', 'profit', 'status', 'actions'];
+  readonly displayedColumns = ['code', 'type', 'date', 'customer', 'items', 'total', 'profit', 'status', 'actions'];
 
   readonly loading = signal(true);
   readonly sales = signal<Sale[]>([]);
   readonly totalElements = signal(0);
 
+  readonly typeControl = new FormControl<SaleType | null>(null);
   readonly statusControl = new FormControl<PaymentStatus | null>(null);
   readonly methodControl = new FormControl<PaymentMethod | null>(null);
   readonly fromControl = new FormControl<Date | null>(null);
@@ -81,6 +85,10 @@ export class SalesList implements OnInit {
   pageSize = 20;
 
   ngOnInit(): void {
+    this.typeControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
     this.statusControl.valueChanges.subscribe(() => {
       this.page = 0;
       this.load();
@@ -125,6 +133,7 @@ export class SalesList implements OnInit {
   load(): void {
     this.loading.set(true);
     const filters: SaleFilters = {
+      type: this.typeControl.value,
       customerId: this.selectedCustomer()?.id ?? null,
       status: this.statusControl.value,
       method: this.methodControl.value,
@@ -143,8 +152,17 @@ export class SalesList implements OnInit {
     });
   }
 
+  typeLabel(type: SaleType): string {
+    return this.typeLabels[type];
+  }
+
   statusLabel(status: PaymentStatus): string {
     return this.statusLabels[status];
+  }
+
+  /** Producto único visible directo (como antes mostraba una Separación); varios, el conteo. */
+  itemsSummary(sale: Sale): string {
+    return sale.items.length === 1 ? sale.items[0].productName : `${sale.items.length} producto(s)`;
   }
 
   customerLabel(customer: Customer | string | null): string {

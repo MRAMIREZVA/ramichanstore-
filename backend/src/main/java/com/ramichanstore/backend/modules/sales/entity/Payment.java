@@ -1,6 +1,5 @@
-package com.ramichanstore.backend.modules.separations.entity;
+package com.ramichanstore.backend.modules.sales.entity;
 
-import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,9 +19,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Abono individual contra una {@link Separation}. Ledger inmutable (no se
- * edita ni se borra), igual que InventoryMovement/AuditLog: no extiende
- * BaseEntity, guarda userId/username como columnas planas.
+ * Abono individual contra una venta {@code SEPARACION} (una venta {@code VENTA} nunca tiene
+ * filas acá — se paga de una vez, se valida en {@code SaleService}, no acá). No extiende
+ * BaseEntity (ledger corregible por el admin, no 100% inmutable — igual criterio ya
+ * documentado desde que existía como Payment de Separaciones: guarda userId/username como
+ * columnas planas en vez de una relación a User).
  */
 @Entity
 @Table(name = "payments")
@@ -36,8 +37,8 @@ public class Payment {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "separation_id", nullable = false)
-    private Separation separation;
+    @JoinColumn(name = "sale_id", nullable = false)
+    private Sale sale;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

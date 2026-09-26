@@ -2,18 +2,29 @@
 
 <mat-dialog-content>
   <div class="info-grid">
-    <div class="info-item">
-      <span class="info-label">Pago</span>
-      <span>{{ paymentMethodLabels[data.sale.paymentMethod] }} · {{ paymentStatusLabels[data.sale.paymentStatus] }}</span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Entrega</span>
-      <span>
-        {{ deliveryMethodLabels[data.sale.deliveryMethod] }}
-        ·
+    @if (data.sale.type === 'VENTA') {
+      <div class="info-item">
+        <span class="info-label">Pago</span>
+        <span>{{ paymentMethodLabels[data.sale.paymentMethod!] }} · {{ paymentStatusLabels[data.sale.paymentStatus] }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Entrega</span>
+        <span>
+          {{ deliveryMethodLabels[data.sale.deliveryMethod!] }}
+          ·
+          <span class="status-chip" [attr.data-delivery-status]="data.deliveryStatusAttr">{{ data.deliveryLabel }}</span>
+        </span>
+      </div>
+    } @else {
+      <div class="info-item">
+        <span class="info-label">Pagado / Saldo</span>
+        <span>S/ {{ data.sale.amountPaid.toFixed(2) }} / S/ {{ data.sale.balanceDue.toFixed(2) }} · {{ paymentStatusLabels[data.sale.paymentStatus] }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Entrega</span>
         <span class="status-chip" [attr.data-delivery-status]="data.deliveryStatusAttr">{{ data.deliveryLabel }}</span>
-      </span>
-    </div>
+      </div>
+    }
   </div>
 
   <table mat-table [dataSource]="data.sale.items" class="items-table">

@@ -24,12 +24,11 @@ import com.ramichanstore.backend.modules.reports.dto.TopCategoryPoint;
 import com.ramichanstore.backend.modules.reports.dto.TopProductPoint;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
+import com.ramichanstore.backend.modules.sales.entity.SaleType;
+import com.ramichanstore.backend.modules.sales.repository.PaymentRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleDetailRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleSpecifications;
-import com.ramichanstore.backend.modules.separations.entity.Separation;
-import com.ramichanstore.backend.modules.separations.repository.PaymentRepository;
-import com.ramichanstore.backend.modules.separations.repository.SeparationRepository;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
@@ -65,7 +64,6 @@ public class ReportService {
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final PreorderRepository preorderRepository;
-    private final SeparationRepository separationRepository;
     private final PaymentRepository paymentRepository;
     private final PreorderCustomerRepository preorderCustomerRepository;
     private final PreorderCustomerPaymentRepository preorderCustomerPaymentRepository;
@@ -77,9 +75,9 @@ public class ReportService {
         LocalDate today = LocalDate.now();
         LocalDate monthStart = today.with(TemporalAdjusters.firstDayOfMonth());
 
-        List<Separation> pendingSeparations = separationRepository.findByStatusIn(List.of(PaymentStatus.PENDING, PaymentStatus.PARTIAL));
+        List<Sale> pendingSeparations = saleRepository.findByTypeAndPaymentStatusIn(SaleType.SEPARACION, List.of(PaymentStatus.PENDING, PaymentStatus.PARTIAL));
         BigDecimal pendingBalance = pendingSeparations.stream()
-                .map(s -> s.getTotalPrice().subtract(paymentRepository.sumPaidAmount(s.getId())))
+                .map(s -> s.getTotal().subtract(paymentRepository.sumPaidAmount(s.getId())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new DashboardSummaryResponse(
@@ -125,7 +123,7 @@ public class ReportService {
                 : BigDecimal.ZERO;
 
         List<Specification<Sale>> specs = List.of(
-                SaleSpecifications.saleDateFrom(from), SaleSpecifications.saleDateTo(to));
+                SaleSpecifications.hasType(SaleType.VENTA), SaleSpecifications.saleDateFrom(from), SaleSpecifications.saleDateTo(to));
         List<SaleExportRow> sales = saleRepository
                 .findAll(Specification.allOf(specs.stream().filter(Objects::nonNull).toList()), Sort.by("saleDate"))
                 .stream()
@@ -154,13 +152,13 @@ public class ReportService {
         Map<Long, CustomerDebtResponse> debtByCustomer = new LinkedHashMap<>();
 
         for (Sale sale : saleRepository.findByPaymentStatusInAndCustomerIsNotNull(List.of(PaymentStatus.PENDING, PaymentStatus.PARTIAL))) {
-            accumulateDebt(debtByCustomer, sale.getCustomer(), sale.getTotal(), BigDecimal.ZERO, BigDecimal.ZERO);
-        }
-
-        for (Separation separation : separationRepository.findByStatusIn(List.of(PaymentStatus.PENDING, PaymentStatus.PARTIAL))) {
-            BigDecimal balance = separation.getTotalPrice().subtract(paymentRepository.sumPaidAmount(separation.getId()));
-            if (balance.compareTo(BigDecimal.ZERO) > 0) {
-                accumulateDebt(debtByCustomer, separation.getCustomer(), BigDecimal.ZERO, balance, BigDecimal.ZERO);
+            if (sale.getType() == SaleType.VENTA) {
+                accumulateDebt(debtByCustomer, sale.getCustomer(), sale.getTotal(), BigDecimal.ZERO, BigDecimal.ZERO);
+            } else {
+                BigDecimal balance = sale.getTotal().subtract(paymentRepository.sumPaidAmount(sale.getId()));
+                if (balance.compareTo(BigDecimal.ZERO) > 0) {
+                    accumulateDebt(debtByCustomer, sale.getCustomer(), BigDecimal.ZERO, balance, BigDecimal.ZERO);
+                }
             }
         }
 
