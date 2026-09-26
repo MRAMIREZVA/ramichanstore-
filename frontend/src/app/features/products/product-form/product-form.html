@@ -28,7 +28,12 @@
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Franquicia</mat-label>
-          <input matInput formControlName="franchise" />
+          <input matInput formControlName="franchise" [matAutocomplete]="franchiseAuto" />
+          <mat-autocomplete #franchiseAuto="matAutocomplete">
+            @for (f of filteredFranchises(); track f) {
+              <mat-option [value]="f">{{ f }}</mat-option>
+            }
+          </mat-autocomplete>
         </mat-form-field>
       </div>
 
