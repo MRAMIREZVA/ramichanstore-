@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { DashboardSummary, ReportCharts } from '../models/report.model';
+import { DashboardSummary, ReceivablesReport, ReportCharts } from '../models/report.model';
 
 export type ReportExportFormat = 'xlsx' | 'csv' | 'pdf';
 
@@ -21,6 +21,11 @@ export class ReportService {
     if (from) params = params.set('from', from);
     if (to) params = params.set('to', to);
     return this.http.get<ApiResponse<ReportCharts>>(`${this.baseUrl}/charts`, { params });
+  }
+
+  /** Snapshot en vivo — sin rango de fechas, muestra el saldo pendiente y las preventas activas AHORA. */
+  getReceivables(): Observable<ApiResponse<ReceivablesReport>> {
+    return this.http.get<ApiResponse<ReceivablesReport>>(`${this.baseUrl}/receivables`);
   }
 
   /** El nombre real del archivo viene en Content-Disposition (lo arma el backend con el rango efectivo). */

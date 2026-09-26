@@ -8,10 +8,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { LineSeries, SimpleLineChartComponent } from '../../../shared/components/charts/simple-line-chart/simple-line-chart';
 import { BarItem, SimpleBarChartComponent } from '../../../shared/components/charts/simple-bar-chart/simple-bar-chart';
-import { ReportCharts } from '../../../core/models/report.model';
+import { CustomerDebt, ReceivablesReport, ReportCharts } from '../../../core/models/report.model';
+import { PREORDER_STATUS_LABELS, PreorderStatus } from '../../../core/models/preorder.model';
 import { ReportExportFormat, ReportService } from '../../../core/services/report.service';
+import { whatsAppLink } from '../../../core/utils/whatsapp';
 
 @Component({
   selector: 'app-reports-page',
@@ -25,6 +30,9 @@ import { ReportExportFormat, ReportService } from '../../../core/services/report
     MatInputModule,
     MatDatepickerModule,
     MatProgressSpinnerModule,
+    MatTableModule,
+    MatTabsModule,
+    MatTooltipModule,
     SimpleLineChartComponent,
     SimpleBarChartComponent,
   ],
@@ -57,6 +65,14 @@ export class ReportsPage implements OnInit {
   });
   readonly newCustomersTotal = computed(() => this.sum(this.charts()?.customerGrowth.map((c) => c.newCustomers)));
 
+  /** "Cuentas por cobrar" — snapshot en vivo, se carga recién al abrir la pestaña (sin endpoint de más si nunca se visita). */
+  readonly receivables = signal<ReceivablesReport | null>(null);
+  readonly loadingReceivables = signal(false);
+  private receivablesLoaded = false;
+  readonly debtColumns = ['customer', 'sales', 'separations', 'preorders', 'total', 'actions'];
+  readonly preorderColumns = ['customer', 'product', 'status', 'balance', 'eta'];
+  readonly preorderStatusLabels = PREORDER_STATUS_LABELS;
+
   readonly topProductsBars = computed<BarItem[]>(
     () => this.charts()?.topProducts.map((p) => ({ label: p.productName, value: p.revenue })) ?? [],
   );
@@ -84,6 +100,36 @@ export class ReportsPage implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  onTabChange(index: number): void {
+    if (index === 1 && !this.receivablesLoaded) {
+      this.receivablesLoaded = true;
+      this.loadReceivables();
+    }
+  }
+
+  loadReceivables(): void {
+    this.loadingReceivables.set(true);
+    this.reportService.getReceivables().subscribe({
+      next: (res) => {
+        this.receivables.set(res.data);
+        this.loadingReceivables.set(false);
+      },
+      error: () => this.loadingReceivables.set(false),
+    });
+  }
+
+  /** null si el cliente no dejó ni WhatsApp ni teléfono — el botón de cobro no se muestra en ese caso. */
+  whatsAppLinkFor(debt: CustomerDebt): string | null {
+    const phone = debt.customerWhatsapp ?? debt.customerPhone;
+    if (!phone) return null;
+    const message = `Hola ${debt.customerName}, te escribo de RamichanStore para recordarte tu saldo pendiente de S/ ${debt.totalBalance.toFixed(2)}.`;
+    return whatsAppLink(phone, message);
+  }
+
+  preorderStatusLabel(status: string): string {
+    return this.preorderStatusLabels[status as PreorderStatus] ?? status;
   }
 
   exportReport(format: ReportExportFormat): void {

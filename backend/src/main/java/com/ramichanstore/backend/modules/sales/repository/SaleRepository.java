@@ -1,5 +1,6 @@
 package com.ramichanstore.backend.modules.sales.repository;
 
+import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,6 +15,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
     List<Sale> findByCustomerIdOrderBySaleDateDesc(Long customerId);
 
     boolean existsByCustomerId(Long customerId);
+
+    /** Para el reporte de cuentas por cobrar — una venta sin cliente (no debería existir hoy) queda fuera. */
+    List<Sale> findByPaymentStatusInAndCustomerIsNotNull(List<PaymentStatus> statuses);
 
     @Query("SELECT COALESCE(SUM(s.total), 0) FROM Sale s WHERE s.saleDate BETWEEN :from AND :to AND s.paymentStatus <> 'CANCELLED'")
     BigDecimal sumTotalBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
