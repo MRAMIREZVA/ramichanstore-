@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -37,6 +38,7 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatAutocompleteModule,
     MatDatepickerModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -69,6 +71,8 @@ export class ProductFormComponent {
   readonly brands = signal<Brand[]>([]);
   readonly lines = signal<ProductLine[]>([]);
   readonly suppliers = signal<Supplier[]>([]);
+  /** Combo de texto libre: sugiere franquicias ya usadas, pero admite escribir una nueva (no es una maestra cerrada). */
+  readonly franchises = signal<string[]>([]);
 
   readonly statusOptions = Object.entries(PRODUCT_STATUS_LABELS) as [ProductStatus, string][];
   readonly resolveImageUrl = resolveImageUrl;
@@ -100,16 +104,30 @@ export class ProductFormComponent {
       brands: this.catalogService.getBrands(),
       lines: this.catalogService.getProductLines(),
       suppliers: this.catalogService.getSuppliers(),
+      franchises: this.productService.findFranchises(),
     }).subscribe({
-      next: ({ categories, brands, lines, suppliers }) => {
+      next: ({ categories, brands, lines, suppliers, franchises }) => {
         this.categories.set(categories.data);
         this.brands.set(brands.data);
         this.lines.set(lines.data);
         this.suppliers.set(suppliers.data);
+        this.franchises.set(franchises.data);
         this.loadingCatalogs.set(false);
       },
       error: () => this.loadingCatalogs.set(false),
     });
+  }
+
+  /**
+   * Método plano, no computed(): computed() solo reacciona a signals, y FormControl.value no lo es
+   * (misma lección de Fase 35 con hasActiveFilter) — Angular igual re-evalúa esto en cada ciclo de
+   * detección de cambios, que un input de texto dispara en cada tecla.
+   */
+  filteredFranchises(): string[] {
+    const term = (this.form.controls.franchise.value ?? '').trim().toLowerCase();
+    const all = this.franchises();
+    if (!term) return all;
+    return all.filter((f) => f.toLowerCase().includes(term));
   }
 
   get previewTotalCost(): number {

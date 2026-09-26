@@ -44,3 +44,37 @@ export interface ReportCharts {
   topCategories: TopCategoryPoint[];
   customerGrowth: CustomerGrowthPoint[];
 }
+
+/** Saldo pendiente de un cliente, desglosado por origen (Ventas/Separaciones/Preventas) — snapshot en vivo, no por rango de fechas. */
+export interface CustomerDebt {
+  customerId: number;
+  customerName: string;
+  customerPhone: string | null;
+  customerWhatsapp: string | null;
+  salesBalance: number;
+  separationsBalance: number;
+  preordersBalance: number;
+  totalBalance: number;
+}
+
+/** Una reserva de preventa activa (campaña ni Entregada ni Cancelada) — una fila por reserva, no por cliente. */
+export interface CustomerActivePreorder {
+  customerId: number;
+  customerName: string;
+  customerPhone: string | null;
+  customerWhatsapp: string | null;
+  reservationId: number;
+  productSku: string;
+  productName: string;
+  quantity: number;
+  totalPrice: number;
+  amountPaid: number;
+  balanceDue: number;
+  preorderStatus: string;
+  estimatedArrivalDate: string | null;
+}
+
+export interface ReceivablesReport {
+  customersWithDebt: CustomerDebt[];
+  activePreorders: CustomerActivePreorder[];
+}

@@ -3,6 +3,7 @@ package com.ramichanstore.backend.modules.reports.controller;
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.modules.reports.dto.DashboardSummaryResponse;
+import com.ramichanstore.backend.modules.reports.dto.ReceivablesReportResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportChartsResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportExportData;
 import com.ramichanstore.backend.modules.reports.export.ReportExportService;
@@ -43,6 +44,12 @@ public class ReportController {
         LocalDate effectiveTo = to != null ? to : LocalDate.now();
         LocalDate effectiveFrom = from != null ? from : effectiveTo.with(TemporalAdjusters.firstDayOfMonth());
         return ApiResponse.ok(reportService.getCharts(effectiveFrom, effectiveTo));
+    }
+
+    @GetMapping("/receivables")
+    @PreAuthorize("hasAuthority('PERM_REPORTS_VIEW')")
+    public ApiResponse<ReceivablesReportResponse> receivables() {
+        return ApiResponse.ok(reportService.getReceivables());
     }
 
     @GetMapping("/export")

@@ -2,105 +2,201 @@
   <header class="page-header">
     <div>
       <h1>Reportes</h1>
-      <p>Ventas, ganancias, top productos/categorías y evolución de clientes por período.</p>
+      <p>Ventas, ganancias, top productos/categorías, evolución de clientes y cuentas por cobrar.</p>
     </div>
   </header>
 
-  <div class="toolbar-card">
-    <div class="filters">
-      <mat-form-field appearance="outline">
-        <mat-label>Desde</mat-label>
-        <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
-        <mat-datepicker-toggle matSuffix [for]="fromPicker" />
-        <mat-datepicker #fromPicker />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Hasta</mat-label>
-        <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
-        <mat-datepicker-toggle matSuffix [for]="toPicker" />
-        <mat-datepicker #toPicker />
-      </mat-form-field>
-    </div>
+  <mat-tab-group animationDuration="150ms" [preserveContent]="true" (selectedIndexChange)="onTabChange($event)">
+    <mat-tab label="Gráficos">
+      <div class="tab-panel">
+        <div class="toolbar-card">
+          <div class="filters">
+            <mat-form-field appearance="outline">
+              <mat-label>Desde</mat-label>
+              <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
+              <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+              <mat-datepicker #fromPicker />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Hasta</mat-label>
+              <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
+              <mat-datepicker-toggle matSuffix [for]="toPicker" />
+              <mat-datepicker #toPicker />
+            </mat-form-field>
+          </div>
 
-    <div class="export-actions">
-      <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('xlsx')">
-        @if (exporting()) {
-          <mat-spinner diameter="16" />
+          <div class="export-actions">
+            <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('xlsx')">
+              @if (exporting()) {
+                <mat-spinner diameter="16" />
+              } @else {
+                <mat-icon>table_view</mat-icon>
+              }
+              Excel
+            </button>
+            <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('csv')">
+              <mat-icon>description</mat-icon>
+              CSV
+            </button>
+            <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('pdf')">
+              <mat-icon>picture_as_pdf</mat-icon>
+              PDF
+            </button>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="loading"><mat-spinner diameter="36" /></div>
         } @else {
-          <mat-icon>table_view</mat-icon>
+          <div class="kpi-grid">
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon">payments</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Ventas del período</span>
+                <span class="stat-value">S/ {{ totalSales().toFixed(2) }}</span>
+              </div>
+            </mat-card>
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon profit">trending_up</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Ganancia del período</span>
+                <span class="stat-value">S/ {{ totalProfit().toFixed(2) }}</span>
+              </div>
+            </mat-card>
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon margin">pie_chart</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Margen</span>
+                <span class="stat-value">{{ marginPercent().toFixed(1) }}%</span>
+              </div>
+            </mat-card>
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon customers">group_add</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Clientes nuevos</span>
+                <span class="stat-value">{{ newCustomersTotal() }}</span>
+              </div>
+            </mat-card>
+          </div>
+
+          <div class="charts-grid">
+            <mat-card class="chart-card wide">
+              <h3><mat-icon>show_chart</mat-icon> Ventas y ganancia por día</h3>
+              <app-simple-line-chart [labels]="salesLabels()" [series]="salesSeries()" />
+            </mat-card>
+
+            <mat-card class="chart-card">
+              <h3><mat-icon>bar_chart</mat-icon> Top productos por ingresos</h3>
+              <app-simple-bar-chart [items]="topProductsBars()" color="#2a78d6" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
+            </mat-card>
+
+            <mat-card class="chart-card">
+              <h3><mat-icon>category</mat-icon> Top categorías por ingresos</h3>
+              <app-simple-bar-chart [items]="topCategoriesBars()" color="#1baf7a" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
+            </mat-card>
+
+            <mat-card class="chart-card wide">
+              <h3><mat-icon>group_add</mat-icon> Evolución de clientes nuevos</h3>
+              <app-simple-bar-chart
+                [items]="customerGrowthBars()"
+                color="#4a3aa7"
+                [integer]="true"
+                emptyMessage="Sin clientes nuevos en el período."
+              />
+            </mat-card>
+          </div>
         }
-        Excel
-      </button>
-      <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('csv')">
-        <mat-icon>description</mat-icon>
-        CSV
-      </button>
-      <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('pdf')">
-        <mat-icon>picture_as_pdf</mat-icon>
-        PDF
-      </button>
-    </div>
-  </div>
+      </div>
+    </mat-tab>
 
-  @if (loading()) {
-    <div class="loading"><mat-spinner diameter="36" /></div>
-  } @else {
-    <div class="kpi-grid">
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon">payments</mat-icon>
-        <div class="stat-body">
-          <span class="stat-label">Ventas del período</span>
-          <span class="stat-value">S/ {{ totalSales().toFixed(2) }}</span>
+    <mat-tab label="Cuentas por cobrar">
+      <ng-template matTabContent>
+        <div class="tab-panel">
+          @if (loadingReceivables()) {
+            <div class="loading"><mat-spinner diameter="36" /></div>
+          } @else if (receivables(); as data) {
+            <mat-card class="chart-card">
+              <h3><mat-icon>account_balance_wallet</mat-icon> Clientes con saldo pendiente</h3>
+              @if (data.customersWithDebt.length === 0) {
+                <p class="empty-hint">Ningún cliente tiene saldo pendiente ahora mismo.</p>
+              } @else {
+                <div class="table-scroll">
+                  <table mat-table [dataSource]="data.customersWithDebt" class="receivables-table">
+                    <ng-container matColumnDef="customer">
+                      <th mat-header-cell *matHeaderCellDef>Cliente</th>
+                      <td mat-cell *matCellDef="let d">{{ d.customerName }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="sales">
+                      <th mat-header-cell *matHeaderCellDef>Ventas</th>
+                      <td mat-cell *matCellDef="let d">S/ {{ d.salesBalance.toFixed(2) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="separations">
+                      <th mat-header-cell *matHeaderCellDef>Separaciones</th>
+                      <td mat-cell *matCellDef="let d">S/ {{ d.separationsBalance.toFixed(2) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="preorders">
+                      <th mat-header-cell *matHeaderCellDef>Preventas</th>
+                      <td mat-cell *matCellDef="let d">S/ {{ d.preordersBalance.toFixed(2) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="total">
+                      <th mat-header-cell *matHeaderCellDef>Total</th>
+                      <td mat-cell *matCellDef="let d"><strong class="debt-total">S/ {{ d.totalBalance.toFixed(2) }}</strong></td>
+                    </ng-container>
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef></th>
+                      <td mat-cell *matCellDef="let d">
+                        @if (whatsAppLinkFor(d); as link) {
+                          <a mat-icon-button [href]="link" target="_blank" matTooltip="Cobrar por WhatsApp">
+                            <mat-icon>chat</mat-icon>
+                          </a>
+                        }
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="debtColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: debtColumns"></tr>
+                  </table>
+                </div>
+              }
+            </mat-card>
+
+            <mat-card class="chart-card">
+              <h3><mat-icon>local_shipping</mat-icon> Clientes con preventas activas</h3>
+              @if (data.activePreorders.length === 0) {
+                <p class="empty-hint">No hay preventas activas ahora mismo.</p>
+              } @else {
+                <div class="table-scroll">
+                  <table mat-table [dataSource]="data.activePreorders" class="receivables-table">
+                    <ng-container matColumnDef="customer">
+                      <th mat-header-cell *matHeaderCellDef>Cliente</th>
+                      <td mat-cell *matCellDef="let r">{{ r.customerName }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="product">
+                      <th mat-header-cell *matHeaderCellDef>Producto</th>
+                      <td mat-cell *matCellDef="let r">{{ r.productSku }} — {{ r.productName }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef>Estado</th>
+                      <td mat-cell *matCellDef="let r">
+                        <span class="status-chip" [attr.data-status]="r.preorderStatus">{{ preorderStatusLabel(r.preorderStatus) }}</span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="balance">
+                      <th mat-header-cell *matHeaderCellDef>Saldo</th>
+                      <td mat-cell *matCellDef="let r">S/ {{ r.balanceDue.toFixed(2) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="eta">
+                      <th mat-header-cell *matHeaderCellDef>Llegada estimada</th>
+                      <td mat-cell *matCellDef="let r">{{ r.estimatedArrivalDate || '—' }}</td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="preorderColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: preorderColumns"></tr>
+                  </table>
+                </div>
+              }
+            </mat-card>
+          }
         </div>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon profit">trending_up</mat-icon>
-        <div class="stat-body">
-          <span class="stat-label">Ganancia del período</span>
-          <span class="stat-value">S/ {{ totalProfit().toFixed(2) }}</span>
-        </div>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon margin">pie_chart</mat-icon>
-        <div class="stat-body">
-          <span class="stat-label">Margen</span>
-          <span class="stat-value">{{ marginPercent().toFixed(1) }}%</span>
-        </div>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon customers">group_add</mat-icon>
-        <div class="stat-body">
-          <span class="stat-label">Clientes nuevos</span>
-          <span class="stat-value">{{ newCustomersTotal() }}</span>
-        </div>
-      </mat-card>
-    </div>
-
-    <div class="charts-grid">
-      <mat-card class="chart-card wide">
-        <h3><mat-icon>show_chart</mat-icon> Ventas y ganancia por día</h3>
-        <app-simple-line-chart [labels]="salesLabels()" [series]="salesSeries()" />
-      </mat-card>
-
-      <mat-card class="chart-card">
-        <h3><mat-icon>bar_chart</mat-icon> Top productos por ingresos</h3>
-        <app-simple-bar-chart [items]="topProductsBars()" color="#2a78d6" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
-      </mat-card>
-
-      <mat-card class="chart-card">
-        <h3><mat-icon>category</mat-icon> Top categorías por ingresos</h3>
-        <app-simple-bar-chart [items]="topCategoriesBars()" color="#1baf7a" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
-      </mat-card>
-
-      <mat-card class="chart-card wide">
-        <h3><mat-icon>group_add</mat-icon> Evolución de clientes nuevos</h3>
-        <app-simple-bar-chart
-          [items]="customerGrowthBars()"
-          color="#4a3aa7"
-          [integer]="true"
-          emptyMessage="Sin clientes nuevos en el período."
-        />
-      </mat-card>
-    </div>
-  }
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
 </div>
