@@ -38,17 +38,42 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+.claim-field {
+  margin-bottom: 4px;
+}
+
 .lines {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   margin-bottom: 8px;
+}
+
+.item-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
 }
 
 .line-row {
   display: flex;
   gap: 8px;
   align-items: flex-start;
+}
+
+.line-row-extra {
+  display: flex;
+  gap: 8px;
+  padding-left: 48px;
+  flex-wrap: wrap;
+}
+
+.small-field {
+  flex: 1 1 140px;
+  max-width: 200px;
 }
 
 .item-photo {

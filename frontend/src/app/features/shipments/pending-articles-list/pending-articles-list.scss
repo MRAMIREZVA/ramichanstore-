@@ -1,0 +1,40 @@
+.tab-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tab-hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.search-field {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 12px;
+}
+
+.table-card {
+  background: var(--mat-sys-surface);
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  overflow: hidden;
+}
+
+.articles-table {
+  width: 100%;
+}
+
+.loading,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--mat-sys-on-surface-variant);
+}

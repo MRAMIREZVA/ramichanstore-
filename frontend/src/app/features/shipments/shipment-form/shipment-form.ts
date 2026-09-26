@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -11,12 +12,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import {
   SHIPMENT_DOCUMENT_TYPE_LABELS,
   SHIPMENT_STATUS_LABELS,
   Shipment,
   ShipmentDocumentType,
   ShipmentHolder,
+  ShipmentItem,
   ShipmentRecipient,
   ShipmentRequest,
   ShipmentStatus,
@@ -44,6 +47,10 @@ interface ShipmentItemDraft {
   articleCode: string;
   description: string;
   quantity: number;
+  weight: number | null;
+  cost: number | null;
+  commission: number | null;
+  transactionSurcharge: number | null;
   imageUrl: string | null;
   /** Object URL local (blob) para mostrar la foto ya subida — la ruta del backend no es pública, no sirve como [src] directo. */
   imageObjectUrl: string | null;
@@ -56,6 +63,10 @@ function emptyItem(): ShipmentItemDraft {
     articleCode: '',
     description: '',
     quantity: 1,
+    weight: null,
+    cost: null,
+    commission: null,
+    transactionSurcharge: null,
     imageUrl: null,
     imageObjectUrl: null,
     uploadingImage: false,
@@ -90,6 +101,7 @@ function emptyDocumentSlot(): DocumentSlot {
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatAutocompleteModule,
   ],
   templateUrl: './shipment-form.html',
   styleUrl: './shipment-form.scss',
@@ -120,11 +132,20 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       articleCode: i.articleCode ?? '',
       description: i.description,
       quantity: i.quantity,
+      weight: i.weight,
+      cost: i.cost,
+      commission: i.commission,
+      transactionSurcharge: i.transactionSurcharge,
       imageUrl: i.imageUrl,
       imageObjectUrl: null,
       uploadingImage: false,
     })) ?? [emptyItem()],
   );
+
+  /** Buscar un artículo pre-registrado por código para agregarlo sin volver a tipear nada (Fase 40). */
+  readonly claimCodeControl = new FormControl('');
+  readonly pendingResults = signal<ShipmentItem[]>([]);
+  readonly searchingPending = signal(false);
 
   private readonly s = this.data.shipment;
 
@@ -197,6 +218,27 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     this.items().forEach((item, index) => {
       if (item.id && item.imageUrl) this.loadItemImage(index, item.id);
     });
+
+    this.claimCodeControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          if (!term || term.trim().length < 2) {
+            this.pendingResults.set([]);
+            return [];
+          }
+          this.searchingPending.set(true);
+          return this.shipmentService.searchPendingItems({ search: term, page: 0, size: 10 });
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this.pendingResults.set(res.data.content);
+          this.searchingPending.set(false);
+        },
+        error: () => this.searchingPending.set(false),
+      });
 
     if (this.s) {
       for (const type of this.documentTypes) {
@@ -273,6 +315,27 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
 
   addItem(): void {
     this.items.update((items) => [...items, emptyItem()]);
+  }
+
+  /** Agrega un artículo pre-registrado (buscado por código) tal cual está, sin volver a tipear nada. */
+  claimPendingItem(pending: ShipmentItem): void {
+    const draft: ShipmentItemDraft = {
+      id: pending.id,
+      articleCode: pending.articleCode ?? '',
+      description: pending.description,
+      quantity: pending.quantity,
+      weight: pending.weight,
+      cost: pending.cost,
+      commission: pending.commission,
+      transactionSurcharge: pending.transactionSurcharge,
+      imageUrl: pending.imageUrl,
+      imageObjectUrl: null,
+      uploadingImage: false,
+    };
+    this.items.update((items) => [...items, draft]);
+    if (pending.imageUrl) this.loadItemImage(this.items().length - 1, pending.id);
+    this.claimCodeControl.setValue('', { emitEvent: false });
+    this.pendingResults.set([]);
   }
 
   removeItem(index: number): void {
@@ -385,10 +448,15 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
   }
 
   save(): void {
-    const validItems = this.items().filter((it) => it.description.trim() && it.quantity > 0);
-    if (this.form.invalid || validItems.length === 0) {
+    const draftItems = this.items().filter((it) => it.description.trim() && it.quantity > 0);
+    const validItems = draftItems.filter((it) => it.weight !== null && it.weight !== undefined && it.weight >= 0);
+    if (this.form.invalid || draftItems.length === 0) {
       this.form.markAllAsTouched();
       this.snackBar.open('Completa los campos obligatorios y al menos un artículo con descripción', 'Cerrar', { duration: 4000 });
+      return;
+    }
+    if (validItems.length !== draftItems.length) {
+      this.snackBar.open('El peso es obligatorio en todos los artículos', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -421,6 +489,11 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
         articleCode: it.articleCode.trim() || null,
         description: it.description.trim(),
         quantity: Number(it.quantity),
+        weight: Number(it.weight),
+        cost: it.cost !== null && it.cost !== undefined ? Number(it.cost) : null,
+        commission: it.commission !== null && it.commission !== undefined ? Number(it.commission) : null,
+        transactionSurcharge:
+          it.transactionSurcharge !== null && it.transactionSurcharge !== undefined ? Number(it.transactionSurcharge) : null,
       })),
     };
 

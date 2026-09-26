@@ -212,59 +212,94 @@
     }
 
     <h3 class="section-title">Artículos del embarque</h3>
+    <mat-form-field appearance="outline" class="full-width claim-field">
+      <mat-label>Buscar artículo pendiente por código</mat-label>
+      <input matInput [formControl]="claimCodeControl" [matAutocomplete]="pendingAuto" placeholder="ej. PWTL887" />
+      @if (searchingPending()) {
+        <mat-spinner matSuffix diameter="18" />
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+      <mat-autocomplete #pendingAuto="matAutocomplete" (optionSelected)="claimPendingItem($event.option.value)">
+        @for (p of pendingResults(); track p.id) {
+          <mat-option [value]="p">{{ p.articleCode }} — {{ p.description }} ({{ p.quantity }})</mat-option>
+        }
+      </mat-autocomplete>
+      <mat-hint>Ya registrado con peso/costo/foto — se agrega tal cual, sin volver a tipear nada.</mat-hint>
+    </mat-form-field>
     <div class="lines">
       @for (item of items(); track $index; let i = $index) {
-        <div class="line-row">
-          <div class="item-photo">
-            @if (item.imageObjectUrl) {
-              <img
-                [src]="item.imageObjectUrl"
-                alt="Foto del artículo"
-                class="item-thumb clickable"
-                (click)="viewItemImage(i)"
-                matTooltip="Ver foto en grande"
-              />
-            } @else {
-              <div class="item-thumb placeholder"><mat-icon>image</mat-icon></div>
-            }
-            @if (item.uploadingImage) {
-              <mat-spinner diameter="20" class="item-photo-spinner" />
-            } @else if (item.id) {
-              <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImageSelected(i, $event)" />
+        <div class="item-block">
+          <div class="line-row">
+            <div class="item-photo">
               @if (item.imageObjectUrl) {
-                <button mat-icon-button type="button" (click)="viewItemImage(i)" matTooltip="Ver foto en grande">
-                  <mat-icon>visibility</mat-icon>
-                </button>
+                <img
+                  [src]="item.imageObjectUrl"
+                  alt="Foto del artículo"
+                  class="item-thumb clickable"
+                  (click)="viewItemImage(i)"
+                  matTooltip="Ver foto en grande"
+                />
+              } @else {
+                <div class="item-thumb placeholder"><mat-icon>image</mat-icon></div>
               }
-              <button mat-icon-button type="button" (click)="fileInput.click()" matTooltip="Subir/reemplazar foto">
-                <mat-icon>photo_camera</mat-icon>
-              </button>
-              @if (item.imageObjectUrl) {
-                <button mat-icon-button type="button" (click)="removeItemImage(i)" matTooltip="Quitar foto">
-                  <mat-icon>close</mat-icon>
+              @if (item.uploadingImage) {
+                <mat-spinner diameter="20" class="item-photo-spinner" />
+              } @else if (item.id) {
+                <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImageSelected(i, $event)" />
+                @if (item.imageObjectUrl) {
+                  <button mat-icon-button type="button" (click)="viewItemImage(i)" matTooltip="Ver foto en grande">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                }
+                <button mat-icon-button type="button" (click)="fileInput.click()" matTooltip="Subir/reemplazar foto">
+                  <mat-icon>photo_camera</mat-icon>
                 </button>
+                @if (item.imageObjectUrl) {
+                  <button mat-icon-button type="button" (click)="removeItemImage(i)" matTooltip="Quitar foto">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              } @else {
+                <span class="item-photo-hint" matTooltip="Guarda el embarque primero para poder subir la foto">
+                  <mat-icon>info</mat-icon>
+                </span>
               }
-            } @else {
-              <span class="item-photo-hint" matTooltip="Guarda el embarque primero para poder subir la foto">
-                <mat-icon>info</mat-icon>
-              </span>
-            }
+            </div>
+            <mat-form-field appearance="outline" class="code-field">
+              <mat-label>Código</mat-label>
+              <input matInput [value]="item.articleCode" (input)="updateItem(i, { articleCode: $any($event.target).value })" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="description-field">
+              <mat-label>Descripción</mat-label>
+              <input matInput [value]="item.description" (input)="updateItem(i, { description: $any($event.target).value })" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="qty-field">
+              <mat-label>Cant.</mat-label>
+              <input matInput type="number" [value]="item.quantity" (input)="updateItem(i, { quantity: +$any($event.target).value })" />
+            </mat-form-field>
+            <button mat-icon-button (click)="removeItem(i)" [disabled]="items().length === 1">
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
-          <mat-form-field appearance="outline" class="code-field">
-            <mat-label>Código</mat-label>
-            <input matInput [value]="item.articleCode" (input)="updateItem(i, { articleCode: $any($event.target).value })" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="description-field">
-            <mat-label>Descripción</mat-label>
-            <input matInput [value]="item.description" (input)="updateItem(i, { description: $any($event.target).value })" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="qty-field">
-            <mat-label>Cant.</mat-label>
-            <input matInput type="number" [value]="item.quantity" (input)="updateItem(i, { quantity: +$any($event.target).value })" />
-          </mat-form-field>
-          <button mat-icon-button (click)="removeItem(i)" [disabled]="items().length === 1">
-            <mat-icon>delete</mat-icon>
-          </button>
+          <div class="line-row-extra">
+            <mat-form-field appearance="outline" class="small-field">
+              <mat-label>Peso (g)</mat-label>
+              <input matInput type="number" [value]="item.weight" (input)="updateItem(i, { weight: +$any($event.target).value })" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="small-field">
+              <mat-label>Costo (S/)</mat-label>
+              <input matInput type="number" [value]="item.cost" (input)="updateItem(i, { cost: $any($event.target).value === '' ? null : +$any($event.target).value })" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="small-field">
+              <mat-label>Comisión (S/)</mat-label>
+              <input matInput type="number" [value]="item.commission" (input)="updateItem(i, { commission: $any($event.target).value === '' ? null : +$any($event.target).value })" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="small-field">
+              <mat-label>Recargo transacción (S/)</mat-label>
+              <input matInput type="number" [value]="item.transactionSurcharge" (input)="updateItem(i, { transactionSurcharge: $any($event.target).value === '' ? null : +$any($event.target).value })" />
+            </mat-form-field>
+          </div>
         </div>
       }
     </div>

@@ -20,6 +20,7 @@ import com.ramichanstore.backend.modules.shipments.entity.ShipmentTypeOption;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentDocumentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentHolderRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentItemRepository;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentItemSpecifications;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
@@ -163,10 +164,16 @@ public class ShipmentService {
     /**
      * Reconcilia por diferencia en vez de clear()+agregar: un artículo ya existente
      * (viene con id) se actualiza en el mismo row para no perder su imagen subida;
-     * solo se borran los que ya no vienen en la lista y solo se crean los nuevos
-     * (sin id). Mismo patrón que DeliveryService.applyRequest (ver CLAUDE.md, lección
-     * de Fase 17) — necesario acá porque, a diferencia de antes, el id del artículo
-     * ahora sí importa (image upload/delete apunta a un itemId estable).
+     * solo se liberan (vuelven al pool pendiente, ver Javadoc de ShipmentItem) los
+     * que ya no vienen en la lista y solo se crean los nuevos (sin id). Mismo patrón
+     * que DeliveryService.applyRequest (ver CLAUDE.md, lección de Fase 17) —
+     * necesario acá porque, a diferencia de antes, el id del artículo ahora sí
+     * importa (image upload/delete apunta a un itemId estable).
+     *
+     * Desde Fase 40, un {@code itemRequest.id()} también puede referenciar un
+     * artículo PRE-REGISTRADO (todavía pendiente, `shipment == null`) que el admin
+     * buscó por código en vez de tipear desde cero — ese caso se "reclama" para
+     * este embarque en vez de crear una fila nueva.
      */
     private void reconcileItems(Shipment shipment, List<ShipmentItemRequest> requestedItems) {
         Map<Long, ShipmentItem> existingById = shipment.getItems().stream()
@@ -176,19 +183,113 @@ public class ShipmentService {
                 .map(ShipmentItemRequest::id)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+
+        // Sin orphanRemoval en Shipment.items (ver entidad): esto solo pone shipment=null
+        // en los que ya no vienen y los saca de la colección — nunca los borra.
+        for (ShipmentItem existing : shipment.getItems()) {
+            if (existing.getId() != null && !keepIds.contains(existing.getId())) {
+                existing.setShipment(null);
+            }
+        }
         shipment.getItems().removeIf(i -> i.getId() != null && !keepIds.contains(i.getId()));
 
         for (ShipmentItemRequest itemRequest : requestedItems) {
             ShipmentItem item = itemRequest.id() != null ? existingById.get(itemRequest.id()) : null;
-            if (item == null) {
+            if (item == null && itemRequest.id() != null) {
+                item = shipmentItemRepository.findById(itemRequest.id())
+                        .orElseThrow(() -> ResourceNotFoundException.of("Artículo de embarque", itemRequest.id()));
+                if (item.getShipment() != null) {
+                    throw new BusinessRuleException(
+                            "El artículo \"" + item.getArticleCode() + "\" ya está asignado a otro embarque");
+                }
+                item.setShipment(shipment);
+                shipment.getItems().add(item);
+            } else if (item == null) {
                 item = new ShipmentItem();
                 item.setShipment(shipment);
                 shipment.getItems().add(item);
             }
-            item.setArticleCode(itemRequest.articleCode());
-            item.setDescription(itemRequest.description());
-            item.setQuantity(itemRequest.quantity());
+            applyItemRequest(item, itemRequest);
         }
+    }
+
+    private void applyItemRequest(ShipmentItem item, ShipmentItemRequest request) {
+        item.setArticleCode(request.articleCode() != null ? request.articleCode().trim() : null);
+        item.setDescription(request.description().trim());
+        item.setQuantity(request.quantity());
+        item.setWeight(request.weight());
+        item.setCost(request.cost());
+        item.setCommission(request.commission());
+        item.setTransactionSurcharge(request.transactionSurcharge());
+    }
+
+    /**
+     * Pool de artículos pre-registrados que todavía no pertenecen a ningún
+     * embarque (Fase 40) — el admin los registra apenas le llegan al almacén de
+     * consolidación, y en el formulario de embarque los busca por código en vez
+     * de volver a tipear todo.
+     */
+    @Transactional(readOnly = true)
+    public Page<ShipmentItemResponse> searchPendingItems(String term, Pageable pageable) {
+        List<Specification<ShipmentItem>> specs = Stream.of(
+                        ShipmentItemSpecifications.isPending(),
+                        ShipmentItemSpecifications.search(term))
+                .filter(Objects::nonNull)
+                .toList();
+        return shipmentItemRepository.findAll(Specification.allOf(specs), pageable).map(ShipmentItemResponse::from);
+    }
+
+    @Transactional
+    public ShipmentItemResponse createPendingItem(ShipmentItemRequest request) {
+        validateUniqueCode(request.articleCode(), null);
+        ShipmentItem item = new ShipmentItem();
+        item.setShipment(null);
+        applyItemRequest(item, request);
+        ShipmentItem saved = shipmentItemRepository.save(item);
+        auditService.log(AuditAction.CREATE, MODULE, "ShipmentItem", saved.getId().toString(), null, summarizeItem(saved));
+        return ShipmentItemResponse.from(saved);
+    }
+
+    @Transactional
+    public ShipmentItemResponse updatePendingItem(Long id, ShipmentItemRequest request) {
+        ShipmentItem item = findItemById(id);
+        if (item.getShipment() != null) {
+            throw new BusinessRuleException("Este artículo ya está asignado a un embarque — edítalo desde ahí");
+        }
+        validateUniqueCode(request.articleCode(), item.getArticleCode());
+        String before = summarizeItem(item);
+        applyItemRequest(item, request);
+        ShipmentItem saved = shipmentItemRepository.save(item);
+        auditService.log(AuditAction.UPDATE, MODULE, "ShipmentItem", id.toString(), before, summarizeItem(saved));
+        return ShipmentItemResponse.from(saved);
+    }
+
+    @Transactional
+    public void deletePendingItem(Long id) {
+        ShipmentItem item = findItemById(id);
+        if (item.getShipment() != null) {
+            throw new BusinessRuleException("No se puede eliminar un artículo ya asignado a un embarque — quítalo del embarque primero");
+        }
+        shipmentItemRepository.delete(item);
+        auditService.log(AuditAction.DELETE, MODULE, "ShipmentItem", id.toString(), summarizeItem(item), null);
+    }
+
+    /** El código es la clave de búsqueda de todo el flujo (Fase 40) — debe ser único entre TODOS los artículos, pendientes o no. */
+    private void validateUniqueCode(String articleCode, String currentCode) {
+        if (articleCode == null || articleCode.isBlank()) {
+            throw new BusinessRuleException("El código es obligatorio para pre-registrar un artículo");
+        }
+        String trimmed = articleCode.trim();
+        if (trimmed.equalsIgnoreCase(currentCode)) {
+            return;
+        }
+        if (shipmentItemRepository.existsByArticleCodeIgnoreCase(trimmed)) {
+            throw new BusinessRuleException("Ya existe un artículo con el código '" + trimmed + "'");
+        }
+    }
+
+    private String summarizeItem(ShipmentItem item) {
+        return "codigo=%s, descripcion=%s, peso=%s".formatted(item.getArticleCode(), item.getDescription(), item.getWeight());
     }
 
     @Transactional
