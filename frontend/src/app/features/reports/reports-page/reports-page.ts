@@ -45,8 +45,17 @@ export class ReportsPage implements OnInit {
   readonly salesLabels = computed(() => this.charts()?.dailySales.map((d) => this.shortDate(d.date)) ?? []);
   readonly salesSeries = computed<LineSeries[]>(() => [
     { name: 'Ventas', color: '#2a78d6', values: this.charts()?.dailySales.map((d) => d.sales) ?? [] },
-    { name: 'Ganancia', color: '#eb6834', values: this.charts()?.dailySales.map((d) => d.profit) ?? [] },
+    { name: 'Ganancia', color: '#eb6834', dashed: true, values: this.charts()?.dailySales.map((d) => d.profit) ?? [] },
   ]);
+
+  /** Calculados en el cliente a partir de los mismos datos que ya trae `charts()` — sin endpoint nuevo. */
+  readonly totalSales = computed(() => this.sum(this.charts()?.dailySales.map((d) => d.sales)));
+  readonly totalProfit = computed(() => this.sum(this.charts()?.dailySales.map((d) => d.profit)));
+  readonly marginPercent = computed(() => {
+    const sales = this.totalSales();
+    return sales > 0 ? (this.totalProfit() / sales) * 100 : 0;
+  });
+  readonly newCustomersTotal = computed(() => this.sum(this.charts()?.customerGrowth.map((c) => c.newCustomers)));
 
   readonly topProductsBars = computed<BarItem[]>(
     () => this.charts()?.topProducts.map((p) => ({ label: p.productName, value: p.revenue })) ?? [],
@@ -123,5 +132,9 @@ export class ReportsPage implements OnInit {
   private shortDate(iso: string): string {
     const [, month, day] = iso.split('-');
     return `${day}/${month}`;
+  }
+
+  private sum(values: number[] | undefined): number {
+    return (values ?? []).reduce((acc, v) => acc + v, 0);
   }
 }

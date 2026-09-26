@@ -23,7 +23,13 @@
     }
 
     @for (s of series(); track s.name) {
-      <path [attr.d]="linePath(s.values)" [attr.stroke]="s.color" class="line-path" fill="none" />
+      <path
+        [attr.d]="linePath(s.values)"
+        [attr.stroke]="s.color"
+        [attr.stroke-dasharray]="s.dashed ? '6 4' : null"
+        class="line-path"
+        fill="none"
+      />
       @for (v of s.values; track $index) {
         <circle [attr.cx]="pointX($index)" [attr.cy]="pointY(v)" r="3" [attr.fill]="s.color" class="point" />
       }
