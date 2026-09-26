@@ -15,9 +15,13 @@ const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
  * `versionUpdates` solo reacciona cuando el propio service worker decide
  * revisar `/ngsw.json` por su cuenta (al registrarse, o en su ciclo interno) —
  * eso puede tardar. Para no depender solo de eso, se fuerza `checkForUpdate()`
- * explícitamente cada vez que la pestaña vuelve a estar visible (el momento
- * más probable en que alguien reabre la PWA) y, como respaldo, cada 6 horas
- * si se queda abierta todo ese tiempo.
+ * explícitamente en 3 momentos: (1) apenas arranca la app — así un cliente
+ * que ya tenía la pestaña abierta y ENFOCADA y solo le da "recargar" sí
+ * dispara la revisión de una vez, en vez de depender de un evento que en ese
+ * caso nunca ocurre (`visibilitychange` NO se dispara si la pestaña nunca
+ * dejó de estar visible); (2) cada vez que la pestaña vuelve a estar visible
+ * después de haber estado en segundo plano; y (3), como respaldo, cada 6
+ * horas si se queda abierta todo ese tiempo sin recargar ni cambiar de pestaña.
  */
 @Injectable({ providedIn: 'root' })
 export class PwaUpdateService {
@@ -38,6 +42,7 @@ export class PwaUpdateService {
     // depende de eso para registrar rápido — con el timer adentro, el SW tardaría siempre el peor
     // caso (30s completos) en registrarse en vez de hacerlo apenas la app esté lista de verdad.
     this.ngZone.runOutsideAngular(() => {
+      this.swUpdate.checkForUpdate();
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') this.swUpdate.checkForUpdate();
       });
