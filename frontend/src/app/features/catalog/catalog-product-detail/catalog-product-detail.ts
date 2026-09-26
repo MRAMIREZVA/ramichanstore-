@@ -84,4 +84,29 @@ export class CatalogProductDetail implements OnInit {
     this.snackBar.open(`${product.name} agregado al carrito`, 'Cerrar', { duration: 2500 });
     this.quantity.set(1);
   }
+
+  /** true si hay al menos un dato de ficha técnica que mostrar — evita renderizar el bloque completo vacío. */
+  hasSpecSheet(p: PublicProduct): boolean {
+    return !!(
+      p.lineName ||
+      p.material ||
+      p.hasArticulations !== null ||
+      p.includedAccessories ||
+      p.packagingMaterial ||
+      p.originCountry ||
+      p.releaseDate ||
+      p.packagedWeightGrams != null
+    );
+  }
+
+  articulationsLabel(value: boolean | null): string {
+    return value === true ? 'Sí' : value === false ? 'No' : '';
+  }
+
+  /** "YYYY-MM-DD" -> "DD/MM/YYYY" a mano, nunca new Date()/DatePipe (corrimiento de zona horaria, ver Fase 24/33). */
+  formatDate(value: string | null): string {
+    if (!value) return '';
+    const [year, month, day] = value.split('-');
+    return `${day}/${month}/${year}`;
+  }
 }

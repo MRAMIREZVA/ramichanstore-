@@ -106,4 +106,101 @@
       <p class="mt-3 text-xs text-gray-400">SKU: {{ p.sku }}</p>
     </div>
   </div>
+
+  @if (hasSpecSheet(p)) {
+    <div class="mt-8 rounded-3xl border border-black/5 bg-white p-5 shadow-sm sm:p-6">
+      <h2 class="font-display mb-4 text-lg font-extrabold text-gray-900">Ficha técnica</h2>
+      <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+        <div>
+          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--mat-sys-primary)]">Información General</h3>
+          <dl class="divide-y divide-gray-100 text-sm">
+            <div class="flex justify-between gap-4 py-1.5">
+              <dt class="text-gray-500">Nombre del Producto</dt>
+              <dd class="text-right font-medium text-gray-800">{{ p.name }}</dd>
+            </div>
+            @if (p.lineName) {
+              <div class="flex justify-between gap-4 py-1.5">
+                <dt class="text-gray-500">Serie/Colección</dt>
+                <dd class="text-right font-medium text-gray-800">{{ p.lineName }}</dd>
+              </div>
+            }
+            <div class="flex justify-between gap-4 py-1.5">
+              <dt class="text-gray-500">Fabricante</dt>
+              <dd class="text-right font-medium text-gray-800">{{ p.brandName }}</dd>
+            </div>
+            @if (p.size) {
+              <div class="flex justify-between gap-4 py-1.5">
+                <dt class="text-gray-500">Escala/Tamaño</dt>
+                <dd class="text-right font-medium text-gray-800">{{ p.size }}</dd>
+              </div>
+            }
+            @if (p.material) {
+              <div class="flex justify-between gap-4 py-1.5">
+                <dt class="text-gray-500">Material</dt>
+                <dd class="text-right font-medium text-gray-800">{{ p.material }}</dd>
+              </div>
+            }
+            @if (p.hasArticulations !== null) {
+              <div class="flex justify-between gap-4 py-1.5">
+                <dt class="text-gray-500">Articulaciones</dt>
+                <dd class="text-right font-medium text-gray-800">{{ articulationsLabel(p.hasArticulations) }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          @if (p.includedAccessories) {
+            <div>
+              <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--mat-sys-primary)]">Diseño y Detalles</h3>
+              <dl class="divide-y divide-gray-100 text-sm">
+                <div class="flex justify-between gap-4 py-1.5">
+                  <dt class="text-gray-500">Accesorios Incluidos</dt>
+                  <dd class="text-right font-medium text-gray-800">{{ p.includedAccessories }}</dd>
+                </div>
+              </dl>
+            </div>
+          }
+
+          @if (p.packagingMaterial) {
+            <div>
+              <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--mat-sys-primary)]">Especificaciones del Empaque</h3>
+              <dl class="divide-y divide-gray-100 text-sm">
+                <div class="flex justify-between gap-4 py-1.5">
+                  <dt class="text-gray-500">Material del Empaque</dt>
+                  <dd class="text-right font-medium text-gray-800">{{ p.packagingMaterial }}</dd>
+                </div>
+              </dl>
+            </div>
+          }
+
+          @if (p.originCountry || p.releaseDate || p.packagedWeightGrams != null) {
+            <div>
+              <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--mat-sys-primary)]">Información Adicional</h3>
+              <dl class="divide-y divide-gray-100 text-sm">
+                @if (p.originCountry) {
+                  <div class="flex justify-between gap-4 py-1.5">
+                    <dt class="text-gray-500">Lugar de Origen</dt>
+                    <dd class="text-right font-medium text-gray-800">{{ p.originCountry }}</dd>
+                  </div>
+                }
+                @if (p.releaseDate) {
+                  <div class="flex justify-between gap-4 py-1.5">
+                    <dt class="text-gray-500">Fecha de Lanzamiento</dt>
+                    <dd class="text-right font-medium text-gray-800">{{ formatDate(p.releaseDate) }}</dd>
+                  </div>
+                }
+                @if (p.packagedWeightGrams != null) {
+                  <div class="flex justify-between gap-4 py-1.5">
+                    <dt class="text-gray-500">Peso del Producto con Empaque</dt>
+                    <dd class="text-right font-medium text-gray-800">{{ p.packagedWeightGrams }} g</dd>
+                  </div>
+                }
+              </dl>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
 }

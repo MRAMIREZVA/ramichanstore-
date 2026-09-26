@@ -107,6 +107,27 @@ public class Product extends BaseEntity {
     @Column(length = 500)
     private String notes;
 
+    @Column(length = 150)
+    private String material;
+
+    @Column(name = "has_articulations")
+    private Boolean hasArticulations;
+
+    @Column(name = "included_accessories", length = 300)
+    private String includedAccessories;
+
+    @Column(name = "packaging_material", length = 150)
+    private String packagingMaterial;
+
+    @Column(name = "origin_country", length = 100)
+    private String originCountry;
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(name = "packaged_weight_grams", precision = 10, scale = 2)
+    private BigDecimal packagedWeightGrams;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("sortOrder ASC")
     private List<ProductImage> images = new ArrayList<>();

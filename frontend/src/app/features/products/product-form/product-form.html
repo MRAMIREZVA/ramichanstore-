@@ -80,6 +80,49 @@
         <textarea matInput formControlName="description" rows="3"></textarea>
       </mat-form-field>
 
+      <h3 class="section-title">Ficha técnica</h3>
+      <p class="hint">Todos estos campos son opcionales — el catálogo público solo muestra la sección/fila que tenga dato.</p>
+      <div class="grid-3">
+        <mat-form-field appearance="outline">
+          <mat-label>Material</mat-label>
+          <input matInput formControlName="material" placeholder="ej. PVC/ABS" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Articulaciones</mat-label>
+          <mat-select formControlName="hasArticulations">
+            <mat-option [value]="null">— Sin especificar —</mat-option>
+            <mat-option [value]="true">Sí</mat-option>
+            <mat-option [value]="false">No</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Peso con empaque (g)</mat-label>
+          <input matInput type="number" step="1" formControlName="packagedWeightGrams" />
+        </mat-form-field>
+      </div>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>Accesorios incluidos</mat-label>
+          <input matInput formControlName="includedAccessories" placeholder="ej. Base" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Material del empaque</mat-label>
+          <input matInput formControlName="packagingMaterial" placeholder="ej. Cartón" />
+        </mat-form-field>
+      </div>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>Lugar de origen</mat-label>
+          <input matInput formControlName="originCountry" placeholder="ej. Japón" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de lanzamiento</mat-label>
+          <input matInput [matDatepicker]="releasePicker" formControlName="releaseDate" />
+          <mat-datepicker-toggle matSuffix [for]="releasePicker" />
+          <mat-datepicker #releasePicker />
+        </mat-form-field>
+      </div>
+
       <h3 class="section-title">Imágenes</h3>
       @if (!product()) {
         <p class="hint">Guarda el producto primero (botón "Crear producto") para poder subir imágenes.</p>

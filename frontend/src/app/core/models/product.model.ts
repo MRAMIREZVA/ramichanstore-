@@ -48,6 +48,14 @@ export interface Product {
   supplierId: number | null;
   supplierName: string | null;
   notes: string | null;
+  /** Ficha técnica (Fase 41) — todos opcionales, se muestran en el catálogo público solo si tienen dato. */
+  material: string | null;
+  hasArticulations: boolean | null;
+  includedAccessories: string | null;
+  packagingMaterial: string | null;
+  originCountry: string | null;
+  releaseDate: string | null;
+  packagedWeightGrams: number | null;
 }
 
 export interface ProductRequest {
@@ -71,4 +79,11 @@ export interface ProductRequest {
   entryDate: string | null;
   supplierId: number | null;
   notes: string | null;
+  material: string | null;
+  hasArticulations: boolean | null;
+  includedAccessories: string | null;
+  packagingMaterial: string | null;
+  originCountry: string | null;
+  releaseDate: string | null;
+  packagedWeightGrams: number | null;
 }
