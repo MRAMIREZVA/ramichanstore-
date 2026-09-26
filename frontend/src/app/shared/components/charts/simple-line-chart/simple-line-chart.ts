@@ -4,6 +4,8 @@ export interface LineSeries {
   name: string;
   color: string;
   values: number[];
+  /** Segunda serie con un valor cercano a la primera puede solaparla casi por completo; el patrón punteado la distingue sin depender solo del color. */
+  dashed?: boolean;
 }
 
 /**

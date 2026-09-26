@@ -6,19 +6,21 @@
     </div>
   </header>
 
-  <div class="filters">
-    <mat-form-field appearance="outline">
-      <mat-label>Desde</mat-label>
-      <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
-      <mat-datepicker-toggle matSuffix [for]="fromPicker" />
-      <mat-datepicker #fromPicker />
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>Hasta</mat-label>
-      <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
-      <mat-datepicker-toggle matSuffix [for]="toPicker" />
-      <mat-datepicker #toPicker />
-    </mat-form-field>
+  <div class="toolbar-card">
+    <div class="filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="fromPicker" [formControl]="fromControl" />
+        <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+        <mat-datepicker #fromPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="toPicker" [formControl]="toControl" />
+        <mat-datepicker-toggle matSuffix [for]="toPicker" />
+        <mat-datepicker #toPicker />
+      </mat-form-field>
+    </div>
 
     <div class="export-actions">
       <button mat-stroked-button [disabled]="exporting()" (click)="exportReport('xlsx')">
@@ -43,24 +45,55 @@
   @if (loading()) {
     <div class="loading"><mat-spinner diameter="36" /></div>
   } @else {
+    <div class="kpi-grid">
+      <mat-card class="stat-card">
+        <mat-icon class="stat-icon">payments</mat-icon>
+        <div class="stat-body">
+          <span class="stat-label">Ventas del período</span>
+          <span class="stat-value">S/ {{ totalSales().toFixed(2) }}</span>
+        </div>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-icon class="stat-icon profit">trending_up</mat-icon>
+        <div class="stat-body">
+          <span class="stat-label">Ganancia del período</span>
+          <span class="stat-value">S/ {{ totalProfit().toFixed(2) }}</span>
+        </div>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-icon class="stat-icon margin">pie_chart</mat-icon>
+        <div class="stat-body">
+          <span class="stat-label">Margen</span>
+          <span class="stat-value">{{ marginPercent().toFixed(1) }}%</span>
+        </div>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-icon class="stat-icon customers">group_add</mat-icon>
+        <div class="stat-body">
+          <span class="stat-label">Clientes nuevos</span>
+          <span class="stat-value">{{ newCustomersTotal() }}</span>
+        </div>
+      </mat-card>
+    </div>
+
     <div class="charts-grid">
       <mat-card class="chart-card wide">
-        <h3>Ventas y ganancia por día</h3>
+        <h3><mat-icon>show_chart</mat-icon> Ventas y ganancia por día</h3>
         <app-simple-line-chart [labels]="salesLabels()" [series]="salesSeries()" />
       </mat-card>
 
       <mat-card class="chart-card">
-        <h3>Top productos por ingresos</h3>
+        <h3><mat-icon>bar_chart</mat-icon> Top productos por ingresos</h3>
         <app-simple-bar-chart [items]="topProductsBars()" color="#2a78d6" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
       </mat-card>
 
       <mat-card class="chart-card">
-        <h3>Top categorías por ingresos</h3>
+        <h3><mat-icon>category</mat-icon> Top categorías por ingresos</h3>
         <app-simple-bar-chart [items]="topCategoriesBars()" color="#1baf7a" valuePrefix="S/ " emptyMessage="Sin ventas en el período." />
       </mat-card>
 
       <mat-card class="chart-card wide">
-        <h3>Evolución de clientes nuevos</h3>
+        <h3><mat-icon>group_add</mat-icon> Evolución de clientes nuevos</h3>
         <app-simple-bar-chart
           [items]="customerGrowthBars()"
           color="#4a3aa7"
