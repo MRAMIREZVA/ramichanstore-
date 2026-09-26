@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>{{ itemId ? 'Editar artículo' : 'Nuevo artículo pendiente' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="pending-article-form">
+    <p class="hint">
+      Regístralo apenas te llegue al almacén — en el embarque solo lo vas a buscar por código.
+    </p>
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Código</mat-label>
+        <input matInput formControlName="articleCode" placeholder="ej. PWTL887" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Cantidad</mat-label>
+        <input matInput type="number" formControlName="quantity" />
+      </mat-form-field>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <input matInput formControlName="description" />
+    </mat-form-field>
+
+    <h3 class="section-title">Peso y costo</h3>
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Peso (g)</mat-label>
+        <input matInput type="number" formControlName="weight" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Costo (S/)</mat-label>
+        <input matInput type="number" formControlName="cost" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Comisión (S/)</mat-label>
+        <input matInput type="number" formControlName="commission" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Recargo por transacción (S/)</mat-label>
+        <input matInput type="number" formControlName="transactionSurcharge" />
+      </mat-form-field>
+    </div>
+
+    <h3 class="section-title">Foto</h3>
+    @if (!itemId) {
+      <p class="hint">Guarda el artículo primero para poder subir la foto.</p>
+    } @else {
+      <div class="photo-row">
+        @if (imageObjectUrl()) {
+          <img
+            [src]="imageObjectUrl()"
+            alt="Foto del artículo"
+            class="item-thumb clickable"
+            (click)="viewImage()"
+            matTooltip="Ver foto en grande"
+          />
+        } @else {
+          <div class="item-thumb placeholder"><mat-icon>image</mat-icon></div>
+        }
+        @if (uploadingImage()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImageSelected($event)" />
+          <button mat-icon-button type="button" (click)="fileInput.click()" matTooltip="Subir/reemplazar foto">
+            <mat-icon>photo_camera</mat-icon>
+          </button>
+          @if (imageObjectUrl()) {
+            <button mat-icon-button type="button" (click)="removeImage()" matTooltip="Quitar foto">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        }
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="saving()">Cerrar</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Guardar
+    }
+  </button>
+</mat-dialog-actions>

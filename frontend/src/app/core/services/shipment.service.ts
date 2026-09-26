@@ -7,6 +7,8 @@ import { PageResponse } from '../models/page-response.model';
 import {
   Shipment,
   ShipmentDocumentType,
+  ShipmentItem,
+  ShipmentItemRequest,
   ShipmentRequest,
   ShipmentStatus,
 } from '../models/shipment.model';
@@ -18,6 +20,12 @@ export interface ShipmentFilters {
   holderId?: number | null;
   from?: string | null;
   to?: string | null;
+  page?: number;
+  size?: number;
+}
+
+export interface PendingShipmentItemFilters {
+  search?: string;
   page?: number;
   size?: number;
 }
@@ -55,6 +63,27 @@ export class ShipmentService {
 
   delete(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
+  }
+
+  /** Pool de artículos pre-registrados sin asignar a ningún embarque (Fase 40). */
+  searchPendingItems(filters: PendingShipmentItemFilters): Observable<ApiResponse<PageResponse<ShipmentItem>>> {
+    let params = new HttpParams()
+      .set('page', filters.page ?? 0)
+      .set('size', filters.size ?? 20);
+    if (filters.search) params = params.set('search', filters.search);
+    return this.http.get<ApiResponse<PageResponse<ShipmentItem>>>(`${environment.apiBaseUrl}/shipment-items/pending`, { params });
+  }
+
+  createPendingItem(request: ShipmentItemRequest): Observable<ApiResponse<ShipmentItem>> {
+    return this.http.post<ApiResponse<ShipmentItem>>(`${environment.apiBaseUrl}/shipment-items`, request);
+  }
+
+  updatePendingItem(id: number, request: ShipmentItemRequest): Observable<ApiResponse<ShipmentItem>> {
+    return this.http.put<ApiResponse<ShipmentItem>>(`${environment.apiBaseUrl}/shipment-items/${id}`, request);
+  }
+
+  deletePendingItem(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${environment.apiBaseUrl}/shipment-items/${id}`);
   }
 
   uploadItemImage(itemId: number, file: File): Observable<ApiResponse<void>> {

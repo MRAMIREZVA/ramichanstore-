@@ -61,7 +61,13 @@ export interface ShipmentItem {
   articleCode: string | null;
   description: string;
   quantity: number;
+  weight: number;
+  cost: number | null;
+  commission: number | null;
+  transactionSurcharge: number | null;
   imageUrl: string | null;
+  /** true si todavía no está asignado a ningún embarque (pool de artículos pre-registrados, Fase 40). */
+  pending: boolean;
 }
 
 export interface ShipmentItemRequest {
@@ -69,6 +75,10 @@ export interface ShipmentItemRequest {
   articleCode: string | null;
   description: string;
   quantity: number;
+  weight: number;
+  cost: number | null;
+  commission: number | null;
+  transactionSurcharge: number | null;
 }
 
 export type ShipmentDocumentType = 'INVOICE' | 'DIF' | 'DIF_VOUCHER' | 'FACTURA';
