@@ -1,7 +1,14 @@
-<h2 mat-dialog-title>Cancelar venta #{{ data.sale.id }}</h2>
+<h2 mat-dialog-title>{{ data.sale.type === 'VENTA' ? 'Cancelar venta' : 'Cancelar separación' }} #{{ data.sale.id }}</h2>
 
 <mat-dialog-content>
-  <p>Esta acción revierte el stock de los productos vendidos (movimiento de Devolución) y marca la venta como cancelada. No se puede deshacer.</p>
+  <p>
+    Esta acción revierte el stock de los productos {{ data.sale.type === 'VENTA' ? 'vendidos' : 'separados' }} (movimiento de
+    Devolución) y marca {{ data.sale.type === 'VENTA' ? 'la venta' : 'la separación' }} como cancelada.
+    @if (data.sale.type === 'SEPARACION') {
+      Los abonos ya registrados quedan en el historial.
+    }
+    No se puede deshacer.
+  </p>
   <form [formGroup]="form">
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Motivo de la cancelación</mat-label>
@@ -15,5 +22,7 @@
 
 <mat-dialog-actions align="end">
   <button mat-button (click)="cancel()" [disabled]="saving()">Volver</button>
-  <button mat-flat-button color="warn" (click)="confirm()" [disabled]="saving()">Cancelar venta</button>
+  <button mat-flat-button color="warn" (click)="confirm()" [disabled]="saving()">
+    {{ data.sale.type === 'VENTA' ? 'Cancelar venta' : 'Cancelar separación' }}
+  </button>
 </mat-dialog-actions>

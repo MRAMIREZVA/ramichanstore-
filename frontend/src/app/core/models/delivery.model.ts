@@ -13,12 +13,11 @@ export const DELIVERY_STATUS_LABELS: Record<DeliveryStatus, string> = {
 
 export type PurchaseType = 'VENTA' | 'SEPARACION';
 
-/** Una compra (venta o separación, nunca ambas) incluida en una entrega. */
+/** Una compra (venta o separación — ambas son la misma entidad Sale, ver sale.model.ts) incluida en una entrega. */
 export interface DeliveryItem {
   id: number;
   type: PurchaseType;
-  saleId: number | null;
-  separationId: number | null;
+  saleId: number;
   purchaseDate: string;
   summary: string;
   total: number;
@@ -57,7 +56,6 @@ export interface Delivery {
 export interface DeliveryRequest {
   customerId: number;
   saleIds: number[];
-  separationIds: number[];
   deliveryType: DeliveryMethod;
   address: string | null;
   district: string | null;

@@ -109,7 +109,7 @@ export interface UpdateReservationPriceRequest {
   unitPrice: number;
 }
 
-/** Abono individual contra una reserva. Ledger inmutable, mismo patrón que SeparationPayment. */
+/** Abono individual contra una reserva. Ledger inmutable, mismo patrón que SalePayment (Ventas → separaciones). */
 export interface PreorderReservationPayment {
   id: number;
   reservationId: number;

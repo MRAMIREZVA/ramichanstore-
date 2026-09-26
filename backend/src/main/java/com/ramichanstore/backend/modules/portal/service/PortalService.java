@@ -10,8 +10,6 @@ import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerPa
 import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerRepository;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
-import com.ramichanstore.backend.modules.separations.dto.SeparationResponse;
-import com.ramichanstore.backend.modules.separations.service.SeparationService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,28 +31,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class PortalService {
 
     private final SaleService saleService;
-    private final SeparationService separationService;
     private final LoyaltyService loyaltyService;
     private final DeliveryService deliveryService;
     private final PreorderCustomerRepository preorderCustomerRepository;
     private final PreorderCustomerPaymentRepository preorderCustomerPaymentRepository;
 
+    /** Ventas Y separaciones (ambas {@code Sale}, distinguidas por {@code type}) — una sola lista, ya mezclada. */
     @Transactional(readOnly = true)
     public Page<SaleResponse> mySales(Long customerId, Pageable pageable) {
-        return saleService.search(customerId, null, null, null, null, pageable);
-    }
-
-    /**
-     * Separación (Fase 6) = producto ya en stock reservado en abonos, tan
-     * "compra" del cliente como una venta — antes {@code mySales} era la
-     * única fuente de "Mis compras" en el portal y un cliente cuya única
-     * compra fue una separación (ej. Mauricio, ver CLAUDE.md Fase 17) no veía
-     * nada. El frontend une esta lista con {@code mySales} igual que ya hacía
-     * el admin en customer-detail.ts.
-     */
-    @Transactional(readOnly = true)
-    public Page<SeparationResponse> mySeparations(Long customerId, Pageable pageable) {
-        return separationService.search(customerId, null, null, null, pageable);
+        return saleService.search(null, customerId, null, null, null, null, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -86,11 +71,9 @@ public class PortalService {
     }
 
     /**
-     * Sin paginar a propósito: el frontend cruza {@code items} de cada entrega
-     * (por tipo+id, ver DeliveryItemResponse) con "mis compras" (ventas y
-     * separaciones) para mostrar el estado de entrega de cada una. Desde
-     * Fase 17 una entrega agrupa varias compras del cliente, ya no es 1:1
-     * con una venta — ver CLAUDE.md.
+     * Sin paginar a propósito: el frontend cruza {@code items} de cada entrega (por sale id, ver
+     * DeliveryItemResponse) con "mis compras" para mostrar el estado de entrega de cada una.
+     * Desde Fase 17 una entrega agrupa varias compras del cliente, ya no es 1:1 con una venta.
      */
     @Transactional(readOnly = true)
     public List<DeliveryResponse> myDeliveries(Long customerId) {

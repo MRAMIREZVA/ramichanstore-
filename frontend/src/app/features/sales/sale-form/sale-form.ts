@@ -20,7 +20,9 @@ import {
   PAYMENT_STATUS_LABELS,
   PaymentMethod,
   PaymentStatus,
+  SALE_TYPE_LABELS,
   SaleRequest,
+  SaleType,
 } from '../../../core/models/sale.model';
 import { CustomerService } from '../../../core/services/customer.service';
 import { ProductService } from '../../../core/services/product.service';
@@ -40,6 +42,13 @@ function emptyLine(): SaleLineDraft {
   return { product: null, productSearchTerm: '', productOptions: [], searching: false, quantity: 1, unitPrice: 0, discount: 0 };
 }
 
+/**
+ * Un solo formulario para ambos tipos de compra (antes eran dos formularios/módulos
+ * separados, Sale y Separation) — el toggle "Tipo" condiciona qué campos son obligatorios:
+ * VENTA exige método de pago/entrega (sin fecha límite); SEPARACION exige cliente + fecha
+ * límite (sin método de pago/entrega, que nunca existieron a nivel de cabecera para una
+ * separación — el método se registra por abono, ver sale-detail).
+ */
 @Component({
   selector: 'app-sale-form',
   standalone: true,
@@ -66,6 +75,7 @@ export class SaleFormComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<SaleFormComponent>);
 
+  readonly typeOptions = Object.entries(SALE_TYPE_LABELS) as [SaleType, string][];
   readonly paymentMethodOptions = Object.entries(PAYMENT_METHOD_LABELS) as [PaymentMethod, string][];
   readonly paymentStatusOptions = Object.entries(PAYMENT_STATUS_LABELS) as [PaymentStatus, string][];
   readonly deliveryMethodOptions = Object.entries(DELIVERY_METHOD_LABELS) as [DeliveryMethod, string][];
@@ -75,6 +85,8 @@ export class SaleFormComponent {
   readonly customerOptions = signal<Customer[]>([]);
   readonly selectedCustomer = signal<Customer | null>(null);
   readonly lines = signal<SaleLineDraft[]>([emptyLine()]);
+  readonly type = signal<SaleType>('VENTA');
+  readonly isSeparacion = computed(() => this.type() === 'SEPARACION');
 
   readonly header = this.fb.group({
     customerSearch: [''],
@@ -82,6 +94,7 @@ export class SaleFormComponent {
     paymentMethod: ['EFECTIVO' as PaymentMethod, Validators.required],
     paymentStatus: ['PAID' as PaymentStatus, Validators.required],
     deliveryMethod: ['PICKUP' as DeliveryMethod, Validators.required],
+    limitDate: [null as Date | null],
     notes: [''],
   });
 
@@ -112,6 +125,22 @@ export class SaleFormComponent {
         },
         error: () => this.searchingCustomer.set(false),
       });
+  }
+
+  onTypeChange(type: SaleType): void {
+    this.type.set(type);
+    if (type === 'VENTA') {
+      this.header.controls.paymentMethod.setValidators(Validators.required);
+      this.header.controls.deliveryMethod.setValidators(Validators.required);
+      this.header.controls.limitDate.clearValidators();
+    } else {
+      this.header.controls.paymentMethod.clearValidators();
+      this.header.controls.deliveryMethod.clearValidators();
+      this.header.controls.limitDate.setValidators(Validators.required);
+    }
+    this.header.controls.paymentMethod.updateValueAndValidity();
+    this.header.controls.deliveryMethod.updateValueAndValidity();
+    this.header.controls.limitDate.updateValueAndValidity();
   }
 
   customerLabel(customer: Customer | string | null): string {
@@ -169,19 +198,28 @@ export class SaleFormComponent {
 
   save(): void {
     const validLines = this.lines().filter((l) => l.product && l.quantity > 0);
-    if (this.header.invalid || validLines.length === 0) {
+    const type = this.type();
+    const missingCustomer = type === 'SEPARACION' && !this.selectedCustomer();
+
+    if (this.header.invalid || validLines.length === 0 || missingCustomer) {
       this.header.markAllAsTouched();
-      this.snackBar.open('Agrega al menos un producto válido a la venta', 'Cerrar', { duration: 3000 });
+      if (missingCustomer) {
+        this.snackBar.open('El cliente es obligatorio para una separación', 'Cerrar', { duration: 3000 });
+      } else if (validLines.length === 0) {
+        this.snackBar.open('Agrega al menos un producto válido', 'Cerrar', { duration: 3000 });
+      }
       return;
     }
 
     const v = this.header.getRawValue();
     const request: SaleRequest = {
+      type,
       customerId: this.selectedCustomer()?.id ?? null,
       saleDate: this.toIsoDate(v.saleDate as Date),
-      paymentMethod: v.paymentMethod as PaymentMethod,
-      paymentStatus: v.paymentStatus as PaymentStatus,
-      deliveryMethod: v.deliveryMethod as DeliveryMethod,
+      paymentMethod: type === 'VENTA' ? (v.paymentMethod as PaymentMethod) : null,
+      paymentStatus: type === 'VENTA' ? (v.paymentStatus as PaymentStatus) : 'PENDING',
+      deliveryMethod: type === 'VENTA' ? (v.deliveryMethod as DeliveryMethod) : null,
+      limitDate: type === 'SEPARACION' ? this.toIsoDate(v.limitDate as Date) : null,
       notes: v.notes || null,
       items: validLines.map((l) => ({
         productId: l.product!.id,

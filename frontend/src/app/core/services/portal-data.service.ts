@@ -7,7 +7,6 @@ import { PageResponse } from '../models/page-response.model';
 import { Delivery } from '../models/delivery.model';
 import { PortalLoyaltyBalance, PortalReservation } from '../models/portal.model';
 import { Sale } from '../models/sale.model';
-import { Separation } from '../models/separation.model';
 
 @Injectable({ providedIn: 'root' })
 export class PortalDataService {
@@ -21,11 +20,6 @@ export class PortalDataService {
 
   mySale(id: number): Observable<ApiResponse<Sale>> {
     return this.http.get<ApiResponse<Sale>>(`${this.baseUrl}/sales/${id}`);
-  }
-
-  mySeparations(page: number, size: number): Observable<ApiResponse<PageResponse<Separation>>> {
-    const params = new HttpParams().set('page', page).set('size', size);
-    return this.http.get<ApiResponse<PageResponse<Separation>>>(`${this.baseUrl}/separations`, { params });
   }
 
   myReservations(): Observable<ApiResponse<PortalReservation[]>> {

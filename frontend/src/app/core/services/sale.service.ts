@@ -4,9 +4,20 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
-import { AddSaleItemRequest, PaymentMethod, PaymentStatus, Sale, SaleRequest, UpdateSaleItemsRequest } from '../models/sale.model';
+import {
+  AddSaleItemRequest,
+  PaymentMethod,
+  PaymentStatus,
+  Sale,
+  SalePayment,
+  SalePaymentRequest,
+  SaleRequest,
+  SaleType,
+  UpdateSaleItemsRequest,
+} from '../models/sale.model';
 
 export interface SaleFilters {
+  type?: SaleType | null;
   customerId?: number | null;
   status?: PaymentStatus | null;
   method?: PaymentMethod | null;
@@ -27,6 +38,7 @@ export class SaleService {
     let params = new HttpParams()
       .set('page', filters.page ?? 0)
       .set('size', filters.size ?? 20);
+    if (filters.type) params = params.set('type', filters.type);
     if (filters.customerId) params = params.set('customerId', filters.customerId);
     if (filters.status) params = params.set('status', filters.status);
     if (filters.method) params = params.set('method', filters.method);
@@ -49,7 +61,7 @@ export class SaleService {
     return this.http.post<ApiResponse<Sale>>(`${this.baseUrl}/${id}/cancel`, { reason });
   }
 
-  /** PENDING/PARTIAL/PAID solamente — para cancelar una venta usa cancel(), que revierte stock y puntos. */
+  /** Solo aplica a type=VENTA — para type=SEPARACION el estado se deriva del ledger de abonos. */
   updatePaymentStatus(id: number, status: PaymentStatus): Observable<ApiResponse<Sale>> {
     return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/payment-status`, { status });
   }
@@ -62,5 +74,23 @@ export class SaleService {
   /** Agrega un producto nuevo a una venta ya creada — a diferencia de updateItems, sí descuenta stock. */
   addItem(id: number, request: AddSaleItemRequest): Observable<ApiResponse<Sale>> {
     return this.http.post<ApiResponse<Sale>>(`${this.baseUrl}/${id}/items`, request);
+  }
+
+  // ---- Ledger de abonos (solo aplica a type=SEPARACION) ----
+
+  listPayments(saleId: number): Observable<ApiResponse<SalePayment[]>> {
+    return this.http.get<ApiResponse<SalePayment[]>>(`${this.baseUrl}/${saleId}/payments`);
+  }
+
+  registerPayment(saleId: number, request: SalePaymentRequest): Observable<ApiResponse<SalePayment>> {
+    return this.http.post<ApiResponse<SalePayment>>(`${this.baseUrl}/${saleId}/payments`, request);
+  }
+
+  updatePayment(saleId: number, paymentId: number, request: SalePaymentRequest): Observable<ApiResponse<SalePayment>> {
+    return this.http.put<ApiResponse<SalePayment>>(`${this.baseUrl}/${saleId}/payments/${paymentId}`, request);
+  }
+
+  deletePayment(saleId: number, paymentId: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${saleId}/payments/${paymentId}`);
   }
 }

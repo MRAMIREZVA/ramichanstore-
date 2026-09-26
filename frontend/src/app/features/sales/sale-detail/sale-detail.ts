@@ -1,8 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -10,19 +11,24 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { Product } from '../../../core/models/product.model';
 import {
   DELIVERY_METHOD_LABELS,
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
+  PaymentMethod,
   PaymentStatus,
   Sale,
+  SalePayment,
 } from '../../../core/models/sale.model';
 import { ProductService } from '../../../core/services/product.service';
 import { SaleService } from '../../../core/services/sale.service';
+import { parseIsoDate } from '../../../core/utils/date';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { BuyerCardComponent } from '../../../shared/components/buyer-card/buyer-card';
+import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 
 interface ItemDraft {
   detailId: number;
@@ -47,17 +53,21 @@ export interface SaleDetailData {
     MatInputModule,
     MatSelectModule,
     MatAutocompleteModule,
+    MatDatepickerModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     BuyerCardComponent,
   ],
   templateUrl: './sale-detail.html',
   styleUrl: './sale-detail.scss',
 })
 export class SaleDetailComponent {
+  private readonly fb = inject(FormBuilder);
   private readonly dialogRef = inject(MatDialogRef<SaleDetailComponent, boolean>);
   private readonly saleService = inject(SaleService);
   private readonly productService = inject(ProductService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   readonly data = inject<SaleDetailData>(MAT_DIALOG_DATA);
 
   readonly resolveImageUrl = resolveImageUrl;
@@ -124,12 +134,7 @@ export class SaleDetailComponent {
     this.savingItems.set(true);
     this.saleService.updateItems(this.data.sale.id, { items }).subscribe({
       next: (res) => {
-        this.data.sale.items = res.data.items;
-        this.data.sale.subtotal = res.data.subtotal;
-        this.data.sale.total = res.data.total;
-        this.data.sale.totalCost = res.data.totalCost;
-        this.data.sale.profit = res.data.profit;
-        this.data.sale.pointsGenerated = res.data.pointsGenerated;
+        Object.assign(this.data.sale, res.data);
         this.itemDrafts.set(this.buildDrafts());
         this.changed = true;
         this.savingItems.set(false);
@@ -158,6 +163,21 @@ export class SaleDetailComponent {
   readonly newDiscount = signal(0);
   readonly addingItem = signal(false);
 
+  // ---- Ledger de abonos (solo visible cuando data.sale.type === 'SEPARACION') ----
+  readonly payments = signal<SalePayment[]>([]);
+  readonly loadingPayments = signal(false);
+  readonly savingPayment = signal(false);
+  readonly editingPaymentId = signal<number | null>(null);
+  readonly paymentMethodOptions = Object.entries(PAYMENT_METHOD_LABELS) as [PaymentMethod, string][];
+  readonly paymentColumns = ['date', 'amount', 'method', 'user', 'actions'];
+
+  readonly paymentForm = this.fb.group({
+    amount: [0],
+    paymentMethod: ['EFECTIVO' as PaymentMethod],
+    paymentDate: [new Date()],
+    notes: [''],
+  });
+
   constructor() {
     this.productSearchControl.valueChanges
       .pipe(
@@ -178,6 +198,14 @@ export class SaleDetailComponent {
         },
         error: () => this.searchingProduct.set(false),
       });
+
+    if (this.data.sale.type === 'SEPARACION') {
+      this.loadPayments();
+    }
+  }
+
+  paymentMethodLabel(method: PaymentMethod): string {
+    return this.paymentMethodLabels[method];
   }
 
   productLabel(product: Product | string | null): string {
@@ -205,12 +233,7 @@ export class SaleDetailComponent {
       })
       .subscribe({
         next: (res) => {
-          this.data.sale.items = res.data.items;
-          this.data.sale.subtotal = res.data.subtotal;
-          this.data.sale.total = res.data.total;
-          this.data.sale.totalCost = res.data.totalCost;
-          this.data.sale.profit = res.data.profit;
-          this.data.sale.pointsGenerated = res.data.pointsGenerated;
+          Object.assign(this.data.sale, res.data);
           this.itemDrafts.set(this.buildDrafts());
           this.changed = true;
           this.addingItem.set(false);
@@ -224,5 +247,94 @@ export class SaleDetailComponent {
         },
         error: () => this.addingItem.set(false),
       });
+  }
+
+  loadPayments(): void {
+    this.loadingPayments.set(true);
+    this.saleService.listPayments(this.data.sale.id).subscribe({
+      next: (res) => {
+        this.payments.set(res.data);
+        this.loadingPayments.set(false);
+      },
+      error: () => this.loadingPayments.set(false),
+    });
+  }
+
+  private refreshSale(): void {
+    this.saleService.findById(this.data.sale.id).subscribe((res) => {
+      Object.assign(this.data.sale, res.data);
+      this.statusControl.setValue(res.data.paymentStatus, { emitEvent: false });
+    });
+  }
+
+  submitPayment(): void {
+    const v = this.paymentForm.getRawValue();
+    if (!v.amount || v.amount <= 0 || !v.paymentDate) {
+      this.paymentForm.markAllAsTouched();
+      return;
+    }
+    const date = v.paymentDate as Date;
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const request = {
+      amount: Number(v.amount),
+      paymentMethod: v.paymentMethod as PaymentMethod,
+      paymentDate: iso,
+      notes: v.notes || null,
+    };
+
+    const editingId = this.editingPaymentId();
+    const obs = editingId
+      ? this.saleService.updatePayment(this.data.sale.id, editingId, request)
+      : this.saleService.registerPayment(this.data.sale.id, request);
+
+    this.savingPayment.set(true);
+    obs.subscribe({
+      next: (res) => {
+        this.savingPayment.set(false);
+        this.changed = true;
+        this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+        this.cancelEditPayment();
+        this.loadPayments();
+        this.refreshSale();
+      },
+      error: () => this.savingPayment.set(false),
+    });
+  }
+
+  startEditPayment(payment: SalePayment): void {
+    this.editingPaymentId.set(payment.id);
+    this.paymentForm.setValue({
+      amount: payment.amount,
+      paymentMethod: payment.paymentMethod,
+      paymentDate: parseIsoDate(payment.paymentDate) ?? new Date(),
+      notes: payment.notes ?? '',
+    });
+  }
+
+  cancelEditPayment(): void {
+    this.editingPaymentId.set(null);
+    this.paymentForm.reset({ amount: 0, paymentMethod: 'EFECTIVO', paymentDate: new Date(), notes: '' });
+  }
+
+  deletePayment(payment: SalePayment): void {
+    const data: ConfirmDialogData = {
+      title: 'Eliminar abono',
+      message: `¿Eliminar el abono de S/ ${payment.amount.toFixed(2)} del ${payment.paymentDate}? El estado de la separación se recalculará.`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+    };
+    const ref = this.dialog.open(ConfirmDialog, { data, width: '420px' });
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.saleService.deletePayment(this.data.sale.id, payment.id).subscribe({
+        next: (res) => {
+          this.changed = true;
+          this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+          if (this.editingPaymentId() === payment.id) this.cancelEditPayment();
+          this.loadPayments();
+          this.refreshSale();
+        },
+      });
+    });
   }
 }

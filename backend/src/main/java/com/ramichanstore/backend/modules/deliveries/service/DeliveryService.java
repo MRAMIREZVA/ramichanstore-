@@ -19,8 +19,6 @@ import com.ramichanstore.backend.modules.deliveryagencies.entity.DeliveryAgency;
 import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
-import com.ramichanstore.backend.modules.separations.entity.Separation;
-import com.ramichanstore.backend.modules.separations.repository.SeparationRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,7 +49,6 @@ public class DeliveryService {
     private final DeliveryItemRepository deliveryItemRepository;
     private final CustomerRepository customerRepository;
     private final SaleRepository saleRepository;
-    private final SeparationRepository separationRepository;
     private final DeliveryAgencyService deliveryAgencyService;
     private final AuditService auditService;
 
@@ -77,24 +74,18 @@ public class DeliveryService {
     }
 
     /**
-     * Compras del cliente que aún no están en ninguna entrega — o que ya están
-     * en {@code excludeDeliveryId} (para poder editar esa entrega sin que sus
-     * propias compras actuales desaparezcan de la lista de candidatas).
+     * Compras del cliente (ventas y separaciones, ambas {@link Sale}) que aún no están en
+     * ninguna entrega — o que ya están en {@code excludeDeliveryId} (para poder editar esa
+     * entrega sin que sus propias compras actuales desaparezcan de la lista de candidatas).
      */
     @Transactional(readOnly = true)
     public List<PendingPurchaseResponse> findPendingPurchases(Long customerId, Long excludeDeliveryId) {
         Set<Long> bundledSaleIds = new LinkedHashSet<>(deliveryItemRepository.findBundledSaleIds(excludeDeliveryId));
-        Set<Long> bundledSeparationIds = new LinkedHashSet<>(deliveryItemRepository.findBundledSeparationIds(excludeDeliveryId));
 
         List<PendingPurchaseResponse> result = new ArrayList<>();
         for (Sale sale : saleRepository.findByCustomerIdOrderBySaleDateDesc(customerId)) {
             if (!bundledSaleIds.contains(sale.getId())) {
                 result.add(PendingPurchaseResponse.fromSale(sale));
-            }
-        }
-        for (Separation separation : separationRepository.findByCustomerIdOrderBySeparationDateDesc(customerId)) {
-            if (!bundledSeparationIds.contains(separation.getId())) {
-                result.add(PendingPurchaseResponse.fromSeparation(separation));
             }
         }
         result.sort((a, b) -> b.purchaseDate().compareTo(a.purchaseDate()));
@@ -127,62 +118,38 @@ public class DeliveryService {
     /**
      * Reconcilia por diferencia (no clear()+re-add): con orphanRemoval activo,
      * borrar y re-insertar la misma fila en el mismo flush puede chocar
-     * momentáneamente contra los índices únicos UQ_delivery_items_sale/
-     * separation si Hibernate ordena el INSERT antes que el DELETE. Solo se
-     * quitan los items que ya no correspondan y solo se agregan los nuevos.
+     * momentáneamente contra el índice único UQ_delivery_items_sale si
+     * Hibernate ordena el INSERT antes que el DELETE. Solo se quitan los
+     * items que ya no correspondan y solo se agregan los nuevos.
      */
     private void applyRequest(Delivery delivery, DeliveryRequest request, Long deliveryId) {
         Set<Long> desiredSaleIds = new LinkedHashSet<>(request.saleIds() != null ? request.saleIds() : List.of());
-        Set<Long> desiredSeparationIds = new LinkedHashSet<>(request.separationIds() != null ? request.separationIds() : List.of());
-        if (desiredSaleIds.isEmpty() && desiredSeparationIds.isEmpty()) {
+        if (desiredSaleIds.isEmpty()) {
             throw new BusinessRuleException("La entrega debe incluir al menos una compra");
         }
 
-        delivery.getItems().removeIf(item ->
-                (item.getSale() != null && !desiredSaleIds.contains(item.getSale().getId()))
-                        || (item.getSeparation() != null && !desiredSeparationIds.contains(item.getSeparation().getId())));
+        delivery.getItems().removeIf(item -> !desiredSaleIds.contains(item.getSale().getId()));
 
         Set<Long> existingSaleIds = delivery.getItems().stream()
-                .filter(i -> i.getSale() != null).map(i -> i.getSale().getId()).collect(Collectors.toSet());
-        Set<Long> existingSeparationIds = delivery.getItems().stream()
-                .filter(i -> i.getSeparation() != null).map(i -> i.getSeparation().getId()).collect(Collectors.toSet());
+                .map(i -> i.getSale().getId()).collect(Collectors.toSet());
 
         Set<Long> bundledSaleIds = new LinkedHashSet<>(deliveryItemRepository.findBundledSaleIds(deliveryId));
-        Set<Long> bundledSeparationIds = new LinkedHashSet<>(deliveryItemRepository.findBundledSeparationIds(deliveryId));
 
         for (Long saleId : desiredSaleIds) {
             if (existingSaleIds.contains(saleId)) {
                 continue;
             }
             if (bundledSaleIds.contains(saleId)) {
-                throw new BusinessRuleException("La venta #" + saleId + " ya está incluida en otra entrega");
+                throw new BusinessRuleException("La compra #" + saleId + " ya está incluida en otra entrega");
             }
             Sale sale = saleRepository.findById(saleId).orElseThrow(() -> ResourceNotFoundException.of("Venta", saleId));
             Long saleCustomerId = sale.getCustomer() != null ? sale.getCustomer().getId() : null;
             if (!delivery.getCustomer().getId().equals(saleCustomerId)) {
-                throw new BusinessRuleException("La venta #" + saleId + " no pertenece a este cliente");
+                throw new BusinessRuleException("La compra #" + saleId + " no pertenece a este cliente");
             }
             DeliveryItem item = new DeliveryItem();
             item.setDelivery(delivery);
             item.setSale(sale);
-            delivery.getItems().add(item);
-        }
-
-        for (Long separationId : desiredSeparationIds) {
-            if (existingSeparationIds.contains(separationId)) {
-                continue;
-            }
-            if (bundledSeparationIds.contains(separationId)) {
-                throw new BusinessRuleException("La separación #" + separationId + " ya está incluida en otra entrega");
-            }
-            Separation separation = separationRepository.findById(separationId)
-                    .orElseThrow(() -> ResourceNotFoundException.of("Separación", separationId));
-            if (!delivery.getCustomer().getId().equals(separation.getCustomer().getId())) {
-                throw new BusinessRuleException("La separación #" + separationId + " no pertenece a este cliente");
-            }
-            DeliveryItem item = new DeliveryItem();
-            item.setDelivery(delivery);
-            item.setSeparation(separation);
             delivery.getItems().add(item);
         }
 

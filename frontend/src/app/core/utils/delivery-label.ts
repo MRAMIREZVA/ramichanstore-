@@ -1,25 +1,17 @@
-import { DELIVERY_STATUS_LABELS, Delivery, DeliveryStatus, PurchaseType } from '../models/delivery.model';
+import { DELIVERY_STATUS_LABELS, Delivery, DeliveryStatus } from '../models/delivery.model';
 import { PaymentStatus } from '../models/sale.model';
 
 /**
- * Clave `tipo-id` para ubicar la entrega (si existe) que agrupa una compra
- * puntual — desde Fase 17 una entrega puede agrupar varias compras (ventas
- * y/o separaciones) de un cliente, así que la relación ya no es más
- * "un Map<saleId, Delivery>" sino "un Map<tipo-id, Delivery>" armado a partir
- * de `delivery.items`. Compartido entre portal-home y customer-detail.
+ * Ubica la entrega (si existe) que agrupa una compra puntual, indexada por id de venta —
+ * desde que Ventas y Separaciones se fusionaron en una sola entidad (Sale, discriminada por
+ * `type`), un id de venta ya es único sin importar el tipo, así que el mapa ya no necesita
+ * un prefijo `tipo-id` como antes. Compartido entre portal-home y customer-detail.
  */
-export function purchaseKey(type: PurchaseType, id: number): string {
-  return `${type}-${id}`;
-}
-
-export function buildDeliveryLookup(deliveries: Delivery[]): Map<string, Delivery> {
-  const map = new Map<string, Delivery>();
+export function buildDeliveryLookup(deliveries: Delivery[]): Map<number, Delivery> {
+  const map = new Map<number, Delivery>();
   for (const delivery of deliveries) {
     for (const item of delivery.items) {
-      const purchaseId = item.type === 'VENTA' ? item.saleId : item.separationId;
-      if (purchaseId != null) {
-        map.set(purchaseKey(item.type, purchaseId), delivery);
-      }
+      map.set(item.saleId, delivery);
     }
   }
   return map;

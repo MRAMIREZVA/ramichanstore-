@@ -29,6 +29,7 @@ import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.sales.dto.SaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
+import com.ramichanstore.backend.modules.sales.entity.SaleType;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.math.BigDecimal;
@@ -177,8 +178,8 @@ public class OrderRequestService {
         String notes = "Convertido desde pedido web #" + orderRequest.getId()
                 + (orderRequest.getNotes() != null && !orderRequest.getNotes().isBlank() ? " — " + orderRequest.getNotes() : "");
         SaleRequest saleRequest = new SaleRequest(
-                customerId, LocalDate.now(), orderRequest.getPreferredPaymentMethod(), PaymentStatus.PENDING,
-                orderRequest.getDeliveryMethod(), saleItems, notes);
+                SaleType.VENTA, customerId, LocalDate.now(), orderRequest.getPreferredPaymentMethod(), PaymentStatus.PENDING,
+                orderRequest.getDeliveryMethod(), null, saleItems, notes);
 
         var sale = saleService.create(saleRequest, currentUser);
 

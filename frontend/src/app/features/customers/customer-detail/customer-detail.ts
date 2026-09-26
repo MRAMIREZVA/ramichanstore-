@@ -16,14 +16,13 @@ import {
 } from '../../../core/models/customer.model';
 import { DeliveryStatus } from '../../../core/models/delivery.model';
 import { CustomerReservation, PREORDER_STATUS_LABELS } from '../../../core/models/preorder.model';
-import { PAYMENT_STATUS_LABELS, PaymentStatus } from '../../../core/models/sale.model';
+import { PAYMENT_STATUS_LABELS, PaymentStatus, SaleType } from '../../../core/models/sale.model';
 import { CustomerService } from '../../../core/services/customer.service';
 import { DeliveryService } from '../../../core/services/delivery.service';
 import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { PreorderService } from '../../../core/services/preorder.service';
 import { SaleService } from '../../../core/services/sale.service';
-import { SeparationService } from '../../../core/services/separation.service';
-import { buildDeliveryLookup, deliveryLabelFor, deliveryStatusAttrFor, purchaseKey } from '../../../core/utils/delivery-label';
+import { buildDeliveryLookup, deliveryLabelFor, deliveryStatusAttrFor } from '../../../core/utils/delivery-label';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { PortalAccessFormComponent, PortalAccessFormData } from '../portal-access-form/portal-access-form';
@@ -32,9 +31,9 @@ export interface CustomerDetailData {
   customer: Customer;
 }
 
-/** Fila unificada de "Compras" — una venta o una separación se ven igual acá (fecha/monto/estado de pago/entrega), solo cambia el tipo. */
+/** Fila de "Compras" — una venta o una separación se ven igual acá (fecha/monto/estado de pago/entrega), solo cambia el tipo. */
 export interface PurchaseRow {
-  type: 'VENTA' | 'SEPARACION';
+  type: SaleType;
   id: number;
   date: string;
   summary: string;
@@ -48,9 +47,9 @@ const RECENT_LIMIT = 5;
 
 /**
  * Ficha del cliente: datos + acceso al portal de solo lectura + últimas compras
- * (ventas Y separaciones unificadas — antes solo mostraba ventas, y un cliente
- * cuya única compra fue una separación aparecía sin nada) y reservas de
- * preventa reales, con botones para ver el historial completo en Pedidos.
+ * (ventas y separaciones — ambas son la misma entidad Sale, discriminada por
+ * `type`, ver sale.model.ts) y reservas de preventa reales, con botones para
+ * ver el historial completo en Pedidos.
  */
 @Component({
   selector: 'app-customer-detail',
@@ -65,7 +64,6 @@ export class CustomerDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
   private readonly saleService = inject(SaleService);
-  private readonly separationService = inject(SeparationService);
   private readonly deliveryService = inject(DeliveryService);
   private readonly preorderService = inject(PreorderService);
   private readonly loyaltyService = inject(LoyaltyService);
@@ -104,43 +102,27 @@ export class CustomerDetailComponent implements OnInit {
 
     forkJoin({
       sales: this.saleService.search({ customerId, size: RECENT_LIMIT, sort: 'saleDate,desc' }),
-      separations: this.separationService.search({ customerId, size: RECENT_LIMIT }),
       deliveries: this.deliveryService.search({ customerId, size: 50 }),
     }).subscribe({
-      next: ({ sales, separations, deliveries }) => {
+      next: ({ sales, deliveries }) => {
         const deliveryLookup = buildDeliveryLookup(deliveries.data.content);
 
-        const saleRows: PurchaseRow[] = sales.data.content.map((s) => {
-          const delivery = deliveryLookup.get(purchaseKey('VENTA', s.id));
+        const rows: PurchaseRow[] = sales.data.content.map((s) => {
+          const delivery = deliveryLookup.get(s.id);
           return {
-            type: 'VENTA',
+            type: s.type,
             id: s.id,
             date: s.saleDate,
-            summary: `${s.items.length} producto(s)`,
+            summary: s.items.length === 1 ? s.items[0].productName : `${s.items.length} producto(s)`,
             total: s.total,
             paymentStatus: s.paymentStatus,
             deliveryLabel: deliveryLabelFor(delivery, s.paymentStatus),
             deliveryStatusAttr: deliveryStatusAttrFor(delivery, s.paymentStatus),
           };
         });
-        const separationRows: PurchaseRow[] = separations.data.content.map((s) => {
-          const delivery = deliveryLookup.get(purchaseKey('SEPARACION', s.id));
-          return {
-            type: 'SEPARACION',
-            id: s.id,
-            date: s.separationDate,
-            summary: s.productName,
-            total: s.totalPrice,
-            paymentStatus: s.status,
-            deliveryLabel: deliveryLabelFor(delivery, s.status),
-            deliveryStatusAttr: deliveryStatusAttrFor(delivery, s.status),
-          };
-        });
 
-        this.recentPurchases.set(
-          [...saleRows, ...separationRows].sort((a, b) => b.date.localeCompare(a.date)).slice(0, RECENT_LIMIT),
-        );
-        this.totalPurchases.set(sales.data.totalElements + separations.data.totalElements);
+        this.recentPurchases.set(rows.slice(0, RECENT_LIMIT));
+        this.totalPurchases.set(sales.data.totalElements);
         this.loadingPurchases.set(false);
       },
       error: () => this.loadingPurchases.set(false),
@@ -176,7 +158,7 @@ export class CustomerDetailComponent implements OnInit {
 
   viewAllReservations(): void {
     this.dialogRef.close(this.changed());
-    this.router.navigate(['/pedidos'], { queryParams: { tab: 2, customerName: this.customer().fullName } });
+    this.router.navigate(['/pedidos'], { queryParams: { tab: 1, customerName: this.customer().fullName } });
   }
 
   viewPointsHistory(): void {

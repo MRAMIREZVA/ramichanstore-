@@ -10,7 +10,6 @@ import java.util.List;
 public record DeliveryRequest(
         @NotNull(message = "El cliente es obligatorio") Long customerId,
         List<Long> saleIds,
-        List<Long> separationIds,
         @NotNull(message = "El tipo de entrega es obligatorio") DeliveryMethod deliveryType,
         @Size(max = 255) String address,
         @Size(max = 100) String district,

@@ -1,10 +1,13 @@
 <h2 mat-dialog-title>
-  Venta {{ data.sale.orderCode }}
+  {{ data.sale.type === 'VENTA' ? 'Venta' : 'Separación' }} {{ data.sale.orderCode }}
   <span class="status-chip" [attr.data-status]="data.sale.paymentStatus">{{ paymentStatusLabels[data.sale.paymentStatus] }}</span>
+  @if (data.sale.overdue) {
+    <span class="overdue-badge">Vencida</span>
+  }
 </h2>
 
 <mat-dialog-content>
-  @if (data.sale.paymentStatus !== 'CANCELLED') {
+  @if (data.sale.type === 'VENTA' && data.sale.paymentStatus !== 'CANCELLED') {
     <div class="status-editor">
       <mat-form-field appearance="outline" class="status-field">
         <mat-label>Estado de pago</mat-label>
@@ -38,15 +41,101 @@
       <span class="info-label">Fecha</span>
       <span>{{ data.sale.saleDate }}</span>
     </div>
-    <div class="info-item">
-      <span class="info-label">Pago</span>
-      <span>{{ paymentMethodLabels[data.sale.paymentMethod] }}</span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Entrega</span>
-      <span>{{ deliveryMethodLabels[data.sale.deliveryMethod] }}</span>
-    </div>
+    @if (data.sale.type === 'VENTA') {
+      <div class="info-item">
+        <span class="info-label">Pago</span>
+        <span>{{ paymentMethodLabels[data.sale.paymentMethod!] }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Entrega</span>
+        <span>{{ deliveryMethodLabels[data.sale.deliveryMethod!] }}</span>
+      </div>
+    } @else {
+      <div class="info-item">
+        <span class="info-label">Fecha límite</span>
+        <span>{{ data.sale.limitDate }}</span>
+      </div>
+    }
   </div>
+
+  @if (data.sale.type === 'SEPARACION') {
+    <div class="summary">
+      <span>Total: <strong>S/ {{ data.sale.total.toFixed(2) }}</strong></span>
+      <span>Pagado: <strong>S/ {{ data.sale.amountPaid.toFixed(2) }}</strong></span>
+      <span [class.negative]="data.sale.balanceDue > 0">Saldo: <strong>S/ {{ data.sale.balanceDue.toFixed(2) }}</strong></span>
+    </div>
+
+    @if (data.sale.paymentStatus !== 'CANCELLED' && (data.sale.paymentStatus !== 'PAID' || editingPaymentId() !== null)) {
+      <form [formGroup]="paymentForm" class="payment-form">
+        <mat-form-field appearance="outline" class="amount-field">
+          <mat-label>Monto (S/)</mat-label>
+          <input matInput type="number" formControlName="amount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="method-field">
+          <mat-label>Método</mat-label>
+          <mat-select formControlName="paymentMethod">
+            @for (opt of paymentMethodOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>Fecha</mat-label>
+          <input matInput [matDatepicker]="payDatePicker" formControlName="paymentDate" />
+          <mat-datepicker-toggle matSuffix [for]="payDatePicker" />
+          <mat-datepicker #payDatePicker />
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="submitPayment()" [disabled]="savingPayment()">
+          @if (savingPayment()) {
+            <mat-spinner diameter="18" />
+          } @else if (editingPaymentId() !== null) {
+            Guardar cambios
+          } @else {
+            Abonar
+          }
+        </button>
+        @if (editingPaymentId() !== null) {
+          <button mat-button type="button" (click)="cancelEditPayment()" [disabled]="savingPayment()">Cancelar edición</button>
+        }
+      </form>
+    }
+
+    @if (loadingPayments()) {
+      <div class="loading"><mat-spinner diameter="32" /></div>
+    } @else if (payments().length === 0) {
+      <p class="hint">Todavía no hay abonos registrados.</p>
+    } @else {
+      <table mat-table [dataSource]="payments()" class="payments-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let p">{{ p.paymentDate }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Monto</th>
+          <td mat-cell *matCellDef="let p">S/ {{ p.amount.toFixed(2) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="method">
+          <th mat-header-cell *matHeaderCellDef>Método</th>
+          <td mat-cell *matCellDef="let p">{{ paymentMethodLabel(p.paymentMethod) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let p">{{ p.username }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            @if (data.sale.paymentStatus !== 'CANCELLED') {
+              <button mat-icon-button (click)="startEditPayment(p)" matTooltip="Editar abono"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="deletePayment(p)" matTooltip="Eliminar abono"><mat-icon>delete</mat-icon></button>
+            }
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: paymentColumns"></tr>
+      </table>
+    }
+  }
 
   <table mat-table [dataSource]="data.sale.items" class="items-table">
     <ng-container matColumnDef="image">

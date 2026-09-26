@@ -72,7 +72,6 @@ export class DeliveryFormComponent implements OnInit {
   readonly loadingPurchases = signal(false);
   readonly pendingPurchases = signal<PendingPurchase[]>([]);
   readonly selectedSaleIds = signal<Set<number>>(new Set());
-  readonly selectedSeparationIds = signal<Set<number>>(new Set());
 
   readonly form = this.fb.group({
     customerSearch: [
@@ -130,12 +129,7 @@ export class DeliveryFormComponent implements OnInit {
     const delivery = this.data.delivery;
     if (delivery) {
       this.form.controls.customerSearch.disable();
-      this.selectedSaleIds.set(
-        new Set(delivery.items.filter((i) => i.type === 'VENTA' && i.saleId != null).map((i) => i.saleId!)),
-      );
-      this.selectedSeparationIds.set(
-        new Set(delivery.items.filter((i) => i.type === 'SEPARACION' && i.separationId != null).map((i) => i.separationId!)),
-      );
+      this.selectedSaleIds.set(new Set(delivery.items.map((i) => i.saleId)));
       this.loadPendingPurchases(delivery.customerId, delivery.id);
     }
   }
@@ -149,7 +143,6 @@ export class DeliveryFormComponent implements OnInit {
     this.form.controls.customerSearch.setValue(this.customerLabel(customer), { emitEvent: false });
     this.customerOptions.set([]);
     this.selectedSaleIds.set(new Set());
-    this.selectedSeparationIds.set(new Set());
     this.loadPendingPurchases(customer.id, null);
   }
 
@@ -165,22 +158,21 @@ export class DeliveryFormComponent implements OnInit {
   }
 
   isSelected(purchase: PendingPurchase): boolean {
-    return purchase.type === 'VENTA' ? this.selectedSaleIds().has(purchase.id) : this.selectedSeparationIds().has(purchase.id);
+    return this.selectedSaleIds().has(purchase.id);
   }
 
   toggle(purchase: PendingPurchase): void {
-    const target = purchase.type === 'VENTA' ? this.selectedSaleIds : this.selectedSeparationIds;
-    const next = new Set(target());
+    const next = new Set(this.selectedSaleIds());
     if (next.has(purchase.id)) {
       next.delete(purchase.id);
     } else {
       next.add(purchase.id);
     }
-    target.set(next);
+    this.selectedSaleIds.set(next);
   }
 
   get hasSelection(): boolean {
-    return this.selectedSaleIds().size > 0 || this.selectedSeparationIds().size > 0;
+    return this.selectedSaleIds().size > 0;
   }
 
   save(): void {
@@ -197,7 +189,6 @@ export class DeliveryFormComponent implements OnInit {
     const request: DeliveryRequest = {
       customerId,
       saleIds: [...this.selectedSaleIds()],
-      separationIds: [...this.selectedSeparationIds()],
       deliveryType: v.deliveryType as DeliveryMethod,
       address: v.address || null,
       district: v.district || null,
