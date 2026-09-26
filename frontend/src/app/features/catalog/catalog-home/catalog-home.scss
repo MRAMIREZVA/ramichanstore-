@@ -9,6 +9,55 @@
 // `.hero-banner`, la utilidad de Tailwind `min-h-[220px]` del HTML dejaría
 // de tener efecto aunque se vea "correcta" en el código.
 
+// Barra de filtros más compacta (Fase 40) — reportado por el dueño desde su
+// celular real: el `appearance="outline"` por defecto de Material queda muy
+// alto/genérico apilado en una columna. `::ng-deep` es la única forma de
+// llegar al DOM interno de `mat-form-field` (vive dentro del propio
+// componente de Material, con su propia encapsulación — un selector normal
+// scopeado a este componente nunca lo alcanza), igual necesidad que motivó
+// el toggle de clase en <body> para la tipografía de Fase 29. Scopeado bajo
+// `.compact-filters` para no afectar ningún otro `mat-form-field` del sitio.
+.compact-filters {
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 40px;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    border-radius: 10px;
+    background-color: var(--mat-sys-surface-container-low);
+  }
+
+  ::ng-deep .mdc-notched-outline__leading,
+  ::ng-deep .mdc-notched-outline__notch,
+  ::ng-deep .mdc-notched-outline__trailing {
+    border-color: transparent !important;
+  }
+
+  ::ng-deep .mat-mdc-form-field-flex {
+    align-items: center;
+  }
+
+  ::ng-deep .mdc-floating-label {
+    font-size: 13px;
+    top: 20px;
+  }
+
+  ::ng-deep .mdc-text-field--outlined .mdc-floating-label--float-above {
+    font-size: 13px;
+  }
+
+  ::ng-deep input.mat-mdc-input-element,
+  ::ng-deep .mat-mdc-select-value {
+    font-size: 14px;
+  }
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
 .hero-banner {
   background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
 
