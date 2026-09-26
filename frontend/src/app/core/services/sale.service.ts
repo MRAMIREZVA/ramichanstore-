@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
-import { PaymentMethod, PaymentStatus, Sale, SaleRequest, UpdateSaleItemsRequest } from '../models/sale.model';
+import { AddSaleItemRequest, PaymentMethod, PaymentStatus, Sale, SaleRequest, UpdateSaleItemsRequest } from '../models/sale.model';
 
 export interface SaleFilters {
   customerId?: number | null;
@@ -57,5 +57,10 @@ export class SaleService {
   /** Corrige precio unitario/descuento de líneas ya creadas — recalcula total/ganancia/puntos. */
   updateItems(id: number, request: UpdateSaleItemsRequest): Observable<ApiResponse<Sale>> {
     return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/items`, request);
+  }
+
+  /** Agrega un producto nuevo a una venta ya creada — a diferencia de updateItems, sí descuenta stock. */
+  addItem(id: number, request: AddSaleItemRequest): Observable<ApiResponse<Sale>> {
+    return this.http.post<ApiResponse<Sale>>(`${this.baseUrl}/${id}/items`, request);
   }
 }

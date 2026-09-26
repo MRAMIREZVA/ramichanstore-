@@ -12,6 +12,7 @@ import com.ramichanstore.backend.modules.inventory.service.InventoryService;
 import com.ramichanstore.backend.modules.loyalty.service.LoyaltyService;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
+import com.ramichanstore.backend.modules.sales.dto.AddSaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
@@ -225,6 +226,79 @@ public class SaleService {
             detail.setSubtotal(lineSubtotal);
         }
 
+        recalculateTotals(sale);
+
+        loyaltyService.reverseSaleEarnedPoints(sale, currentUser);
+        sale.setPointsGenerated(rescalePoints(originalPoints, originalTotal, sale.getTotal()));
+
+        Sale saved = saleRepository.save(sale);
+        loyaltyService.registerSaleEarnedPoints(saved, currentUser);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "Sale", id.toString(), before, summarize(saved));
+        return SaleResponse.from(saved);
+    }
+
+    /**
+     * Agrega un producto NUEVO a una venta ya creada (ej. el cliente decide llevar una figura
+     * más mientras se revisa su pedido en Pedidos → Ventas) — a diferencia de
+     * {@link #updateItems} (solo corrige precio/descuento de líneas existentes, nunca toca
+     * stock), esto SÍ valida y descuenta inventario para la cantidad agregada, exactamente
+     * igual que {@link #create}. Reutiliza {@link #recalculateTotals}/{@link #rescalePoints}
+     * para que el total/ganancia/puntos de la venta completa queden consistentes con el resto
+     * de líneas, sin duplicar esa lógica.
+     */
+    @Transactional
+    public SaleResponse addItem(Long id, AddSaleItemRequest request, SecurityUser currentUser) {
+        Sale sale = findById(id);
+        if (sale.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("No se puede editar una venta cancelada");
+        }
+        Product product = productRepository.findById(request.productId())
+                .orElseThrow(() -> ResourceNotFoundException.of("Producto", request.productId()));
+        if (product.getCurrentStock() < request.quantity()) {
+            throw new BusinessRuleException(
+                    "Stock insuficiente para '%s': disponible %d, solicitado %d"
+                            .formatted(product.getName(), product.getCurrentStock(), request.quantity()));
+        }
+
+        BigDecimal lineGross = request.unitPrice().multiply(BigDecimal.valueOf(request.quantity()));
+        BigDecimal lineSubtotal = lineGross.subtract(request.discount()).setScale(2, RoundingMode.HALF_UP);
+        if (lineSubtotal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessRuleException("El descuento no puede superar el importe de la línea de '" + product.getName() + "'");
+        }
+
+        String before = summarize(sale);
+        BigDecimal originalTotal = sale.getTotal();
+        int originalPoints = sale.getPointsGenerated();
+
+        SaleDetail detail = new SaleDetail();
+        detail.setSale(sale);
+        detail.setProduct(product);
+        detail.setQuantity(request.quantity());
+        detail.setUnitPrice(request.unitPrice());
+        detail.setDiscount(request.discount());
+        detail.setUnitCost(product.getTotalCost());
+        detail.setSubtotal(lineSubtotal);
+        sale.getItems().add(detail);
+
+        recalculateTotals(sale);
+
+        loyaltyService.reverseSaleEarnedPoints(sale, currentUser);
+        sale.setPointsGenerated(rescalePoints(originalPoints, originalTotal, sale.getTotal()));
+
+        Sale saved = saleRepository.save(sale);
+        loyaltyService.registerSaleEarnedPoints(saved, currentUser);
+
+        inventoryService.registerMovement(
+                new InventoryMovementRequest(product.getId(), MovementType.VENTA, request.quantity(),
+                        "Producto agregado a venta #" + saved.getId(), null),
+                currentUser);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "Sale", id.toString(), before, summarize(saved));
+        return SaleResponse.from(saved);
+    }
+
+    private void recalculateTotals(Sale sale) {
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal total = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
@@ -238,21 +312,15 @@ public class SaleService {
         sale.setTotal(total.setScale(2, RoundingMode.HALF_UP));
         sale.setTotalCost(totalCost);
         sale.setProfit(sale.getTotal().subtract(totalCost).setScale(2, RoundingMode.HALF_UP));
-
-        loyaltyService.reverseSaleEarnedPoints(sale, currentUser);
-        sale.setPointsGenerated(rescalePoints(originalPoints, originalTotal, sale.getTotal()));
-
-        Sale saved = saleRepository.save(sale);
-        loyaltyService.registerSaleEarnedPoints(saved, currentUser);
-
-        auditService.log(AuditAction.UPDATE, MODULE, "Sale", id.toString(), before, summarize(saved));
-        return SaleResponse.from(saved);
     }
 
     /**
      * newTotal × (originalPoints ÷ originalTotal), redondeado hacia abajo — preserva la tasa
      * puntos/sol que estuvo vigente cuando se creó la venta, en vez de recalcular con
-     * LOYALTY_POINTS_PER_SOL vigente HOY (ver Javadoc de {@link #updateItems}).
+     * LOYALTY_POINTS_PER_SOL vigente HOY (ver Javadoc de {@link #updateItems}). Se reutiliza
+     * igual en {@link #addItem}: agregar un producto es la misma categoría de "el total de esta
+     * venta cambió después de creada" que corregir un precio, así que aplica el mismo criterio
+     * — nunca dos políticas de puntos distintas para el mismo tipo de edición post-creación.
      */
     private int rescalePoints(int originalPoints, BigDecimal originalTotal, BigDecimal newTotal) {
         if (originalPoints <= 0 || originalTotal == null || originalTotal.signum() <= 0) {

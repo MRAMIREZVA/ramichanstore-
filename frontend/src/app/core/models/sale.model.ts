@@ -82,3 +82,11 @@ export interface SaleRequest {
 export interface UpdateSaleItemsRequest {
   items: { detailId: number; unitPrice: number; discount: number }[];
 }
+
+/** Agrega un producto NUEVO a una venta ya creada — a diferencia de UpdateSaleItemsRequest, SÍ descuenta stock. */
+export interface AddSaleItemRequest {
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+}
