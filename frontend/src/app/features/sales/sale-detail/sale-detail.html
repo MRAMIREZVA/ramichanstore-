@@ -116,6 +116,46 @@
         Guardar cambios
       </button>
     </div>
+
+    <h3 class="add-item-title">¿El cliente quiere llevar algo más?</h3>
+    <div class="add-item-row">
+      <mat-form-field appearance="outline" class="add-item-search">
+        <mat-label>Buscar producto</mat-label>
+        <input matInput [formControl]="productSearchControl" [matAutocomplete]="productAuto" placeholder="Código o nombre" />
+        @if (searchingProduct()) {
+          <mat-spinner matSuffix diameter="18" />
+        } @else {
+          <mat-icon matSuffix>search</mat-icon>
+        }
+        <mat-autocomplete #productAuto="matAutocomplete" (optionSelected)="onProductSelected($event.option.value)">
+          @for (p of productOptions(); track p.id) {
+            <mat-option [value]="p">{{ productLabel(p) }} — S/ {{ p.salePrice.toFixed(2) }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="add-item-qty">
+        <mat-label>Cant.</mat-label>
+        <input matInput type="number" [value]="newQuantity()" (input)="newQuantity.set(+$any($event.target).value)" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="add-item-price">
+        <mat-label>P. unitario</mat-label>
+        <input matInput type="number" step="0.01" [value]="newUnitPrice()" (input)="newUnitPrice.set(+$any($event.target).value)" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="add-item-price">
+        <mat-label>Desc.</mat-label>
+        <input matInput type="number" step="0.01" [value]="newDiscount()" (input)="newDiscount.set(+$any($event.target).value)" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" [disabled]="!selectedProduct() || addingItem()" (click)="addNewItem()">
+        @if (addingItem()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          <ng-container>
+            <mat-icon>add</mat-icon>
+            Agregar
+          </ng-container>
+        }
+      </button>
+    </div>
   }
 
   <div class="totals">

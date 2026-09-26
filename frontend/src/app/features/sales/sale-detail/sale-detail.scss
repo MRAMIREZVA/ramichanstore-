@@ -130,6 +130,36 @@ app-buyer-card {
   }
 }
 
+.add-item-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.add-item-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+
+  button {
+    margin-top: 6px;
+  }
+}
+
+.add-item-search {
+  flex: 2 1 220px;
+}
+
+.add-item-qty {
+  flex: 0 1 80px;
+}
+
+.add-item-price {
+  flex: 0 1 110px;
+}
+
 .totals {
   display: flex;
   justify-content: flex-end;

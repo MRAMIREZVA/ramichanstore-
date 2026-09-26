@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.sales.controller;
 
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
+import com.ramichanstore.backend.modules.sales.dto.AddSaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.CancelSaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
@@ -77,5 +78,12 @@ public class SaleController {
     public ApiResponse<SaleResponse> updateItems(
             @PathVariable Long id, @Valid @RequestBody UpdateSaleItemsRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
         return ApiResponse.ok("Venta actualizada", saleService.updateItems(id, request.items(), currentUser));
+    }
+
+    @PostMapping("/{id}/items")
+    @PreAuthorize("hasAuthority('PERM_SALE_CREATE')")
+    public ApiResponse<SaleResponse> addItem(
+            @PathVariable Long id, @Valid @RequestBody AddSaleItemRequest request, @AuthenticationPrincipal SecurityUser currentUser) {
+        return ApiResponse.ok("Producto agregado a la venta", saleService.addItem(id, request, currentUser));
     }
 }
