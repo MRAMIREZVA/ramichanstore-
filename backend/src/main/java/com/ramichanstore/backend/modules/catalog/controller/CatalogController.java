@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.catalog.controller;
 
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
+import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.catalog.dto.CatalogFilterOption;
 import com.ramichanstore.backend.modules.catalog.dto.PublicProductResponse;
 import com.ramichanstore.backend.modules.catalog.dto.StoreInfoResponse;
@@ -10,12 +11,15 @@ import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
 import com.ramichanstore.backend.modules.catalog.service.CatalogService;
 import com.ramichanstore.backend.modules.deliveryagencies.dto.DeliveryAgencyResponse;
 import com.ramichanstore.backend.security.SecurityUser;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,6 +48,9 @@ public class CatalogController {
 
     private final CatalogService catalogService;
 
+    @Value("${app.public-url}")
+    private String publicUrl;
+
     @GetMapping("/products")
     public ApiResponse<PageResponse<PublicProductResponse>> searchProducts(
             @RequestParam(required = false) String search,
@@ -60,6 +67,64 @@ public class CatalogController {
     @GetMapping("/products/{id}")
     public ApiResponse<PublicProductResponse> findProductById(@PathVariable Long id) {
         return ApiResponse.ok(catalogService.findProductById(id));
+    }
+
+    /**
+     * Fase 46 — vista previa para compartir un producto por WhatsApp/Facebook/etc. Estos bots
+     * NO ejecutan JavaScript: leen el HTML crudo del primer GET y sacan sus meta tags "og:*" de
+     * ahí, así que la SPA de Angular (que arma su `<title>`/meta tags en el navegador, después)
+     * siempre les mostraba el logo/descripción genérica de `index.html`, sin importar qué
+     * producto se compartiera. `nginx.conf` detecta esos bots por User-Agent y, SOLO para ellos,
+     * proxea `/catalogo/{id}` a este endpoint en vez de servir la SPA — un visitante humano nunca
+     * llega acá (y si llegara por error, el `http-equiv="refresh"` lo manda a la página real).
+     * Nunca se devuelve el error 404 en JSON (`ApiResponse`) de siempre — un bot de redes
+     * sociales espera HTML, así que un producto no encontrado cae a una vista previa genérica
+     * apuntando al catálogo, en vez de dejar que `GlobalExceptionHandler` conteste JSON.
+     */
+    @GetMapping(value = "/products/{id}/preview", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> productSharePreview(@PathVariable Long id) {
+        String catalogUrl = publicUrl + "/catalogo";
+        PublicProductResponse product;
+        try {
+            product = catalogService.findProductById(id);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.TEXT_HTML)
+                    .body(redirectHtml(catalogUrl));
+        }
+        String pageUrl = catalogUrl + "/" + product.id();
+        String imageUrl = product.mainImageUrl() != null ? publicUrl + product.mainImageUrl() : publicUrl + "/logo.png";
+        String title = escapeHtml(product.name() + " — RamichanStore");
+        String priceLabel = "S/ " + product.salePrice().setScale(2, RoundingMode.HALF_UP);
+        String description = escapeHtml(
+                priceLabel + (product.franchise() != null ? " — " + product.franchise() : "")
+                        + ". Figuras y coleccionables originales en RamichanStore.");
+        String html = """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                <meta charset="utf-8">
+                <title>%s</title>
+                <meta property="og:type" content="product">
+                <meta property="og:title" content="%s">
+                <meta property="og:description" content="%s">
+                <meta property="og:image" content="%s">
+                <meta property="og:url" content="%s">
+                <meta name="twitter:card" content="summary_large_image">
+                <meta http-equiv="refresh" content="0; url=%s">
+                </head>
+                <body>Redirigiendo a RamichanStore…</body>
+                </html>
+                """.formatted(title, title, description, imageUrl, pageUrl, pageUrl);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
+    }
+
+    private static String redirectHtml(String url) {
+        return "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"0; url=" + url + "\"></head><body></body></html>";
+    }
+
+    private static String escapeHtml(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
     @GetMapping("/categories")

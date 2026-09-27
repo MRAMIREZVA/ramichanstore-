@@ -75,19 +75,42 @@ export class CatalogProductDetail implements OnInit {
     customerPhone: ['', [Validators.required, Validators.maxLength(30)]],
   });
 
+  /**
+   * `route.paramMap` (Observable), no `route.snapshot.paramMap` (valor único leído una
+   * sola vez) — Angular REUTILIZA la misma instancia del componente al navegar entre
+   * `/catalogo/13` y `/catalogo/45` (misma configuración de ruta, solo cambia el
+   * parámetro), así que `ngOnInit` nunca vuelve a correr con el snapshot: la URL cambiaba
+   * pero la página se quedaba mostrando el producto anterior (bug real reportado por el
+   * dueño al hacer clic en "También te puede interesar"). Suscribirse a `paramMap` sí
+   * reacciona a cada cambio, incluida la carga inicial (emite el valor actual al
+   * suscribirse). Se resetea todo el estado dependiente del producto anterior (imagen
+   * activa, cantidad, relacionados, aviso de stock) para no arrastrar nada de la vista
+   * previa mientras carga la nueva.
+   */
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.catalogService.findProductById(id).subscribe({
-      next: (res) => {
-        this.product.set(res.data);
-        this.activeImageUrl.set(res.data.mainImageUrl);
-        this.loading.set(false);
-        this.loadRelatedProducts(res.data);
-      },
-      error: () => {
-        this.notFound.set(true);
-        this.loading.set(false);
-      },
+    this.route.paramMap.subscribe((params) => {
+      const id = Number(params.get('id'));
+      window.scrollTo({ top: 0 });
+      this.loading.set(true);
+      this.notFound.set(false);
+      this.product.set(null);
+      this.activeImageUrl.set(null);
+      this.quantity.set(1);
+      this.relatedProducts.set([]);
+      this.stockAlertSubmitted.set(false);
+      this.stockAlertForm.reset();
+      this.catalogService.findProductById(id).subscribe({
+        next: (res) => {
+          this.product.set(res.data);
+          this.activeImageUrl.set(res.data.mainImageUrl);
+          this.loading.set(false);
+          this.loadRelatedProducts(res.data);
+        },
+        error: () => {
+          this.notFound.set(true);
+          this.loading.set(false);
+        },
+      });
     });
     this.catalogService.getStoreInfo().subscribe({
       next: (res) => this.storeWhatsapp.set(res.data.whatsapp),
