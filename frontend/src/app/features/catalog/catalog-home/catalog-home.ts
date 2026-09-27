@@ -1,7 +1,9 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -11,10 +13,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { PRODUCT_STATUS_LABELS, ProductStatus } from '../../../core/models/product.model';
 import { CatalogFilterOption, PublicProduct, StoreInfo } from '../../../core/models/public-catalog.model';
 import { CartService } from '../../../core/services/cart.service';
@@ -39,6 +42,7 @@ export interface FranchiseGroup {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatSidenavModule,
     MatSlideToggleModule,
     MatChipsModule,
     MatPaginatorModule,
@@ -54,6 +58,28 @@ export class CatalogHome implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly wishlistService = inject(WishlistService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  /**
+   * Debajo de este ancho, el panel de "Filtros" (Fase 44: pedido explícito de moverlo
+   * a la izquierda) no cabe como columna fija — pasa a un drawer deslizable
+   * (`mat-sidenav mode="over"`, mismo componente ya usado en el sidebar del admin)
+   * que el visitante abre con un botón. 900px deja espacio de sobra para la grilla
+   * de productos junto al panel de 264px en tablets/desktop chicos.
+   */
+  readonly isMobileFilters = toSignal(
+    this.breakpointObserver.observe('(max-width: 900px)').pipe(map((r) => r.matches)),
+    { initialValue: false },
+  );
+
+  /**
+   * En mobile, el drawer (`mode="over"`) se abre exactamente donde vive el botón "Filtros"
+   * que lo dispara (el contenedor del sidenav empieza recién debajo del banner, no a
+   * pantalla completa) — sin esto, el botón queda visible detrás del panel y su propio
+   * encabezado "Filtros" se superpone con el del drawer. Se oculta el botón mientras el
+   * drawer está abierto.
+   */
+  readonly filtersDrawerOpen = signal(false);
 
   readonly resolveImageUrl = resolveImageUrl;
   readonly statusLabels = PRODUCT_STATUS_LABELS;

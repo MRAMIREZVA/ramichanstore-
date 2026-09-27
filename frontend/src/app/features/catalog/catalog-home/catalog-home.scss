@@ -58,6 +58,84 @@
   }
 }
 
+// Fase 44: "Filtros" pasa de barra horizontal arriba de la grilla a un panel fijo a la
+// izquierda (pedido explícito del dueño) — en desktop es una columna `mode="side"` que
+// vive junto a la grilla; en mobile (<900px, ver `isMobileFilters()`) se convierte en un
+// drawer `mode="over"` que se abre con el botón "Filtros", mismo componente `MatSidenav`
+// ya usado en el sidebar del panel admin (`main-layout`), reutilizado acá en vez de armar
+// un drawer a mano con CSS. `mat-sidenav-container` normalmente asume un contenedor a
+// pantalla completa (`fixedInViewport`) — acá se deja crecer con el contenido (autosize
+// natural del componente cuando no se fija una altura), así que no hace falta darle un
+// alto explícito para que funcione embebido en medio de una página normal.
+//
+// Bug real encontrado verificando en mobile: sin `[fixedInViewport]`, el drawer solo
+// cubre el alto de `.filters-shell` (que arranca recién debajo del banner, no en el
+// borde superior de la página) — su propio encabezado "Filtros" quedaba superpuesto con
+// el título "Waifus"/el botón que lo abre, en vez de taparlos. Con `[fixedInViewport]`
+// (mismo input que ya usa el sidenav del admin) el drawer se posiciona `position:fixed`
+// relativo a la ventana completa — pero eso reveló un SEGUNDO bug: `.catalog-header`
+// (`catalog-layout.scss`) es `position:sticky; z-index:10` a propósito (para quedar
+// visible al hacer scroll), y sin un z-index mayor el drawer quedaba DEBAJO del header,
+// interceptando los clics de sus propios botones (favoritos/carrito del header "ganaban"
+// el toque en vez del botón "Cerrar filtros" del drawer). Dar z-index solo al drawer NO
+// bastaba: `.filters-shell` (el `mat-sidenav-container`) es `position:relative` pero sin
+// z-index propio (`auto`), así que nunca forma su PROPIO contexto de apilamiento frente al
+// header — el z-index de sus hijos (drawer, telón de fondo) solo se compara ENTRE SÍ
+// dentro de ese contexto, nunca contra el header, que sí crea uno explícito con
+// `z-index:10`. Por eso hace falta subir TODO el contenedor por encima del header, no
+// solo lo de adentro.
+.filters-shell {
+  position: relative;
+  z-index: 15;
+  background: transparent;
+
+  ::ng-deep .mat-drawer-inner-container {
+    overflow-x: hidden;
+  }
+
+  ::ng-deep .mat-drawer-backdrop {
+    z-index: 20;
+  }
+}
+
+.filters-sidenav {
+  width: min(264px, 85vw);
+  padding: 0;
+
+  &.mat-drawer-side {
+    background: transparent;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  // En mobile ("over") necesita fondo SÓLIDO — a diferencia de "side" (donde queda
+  // pegado a la grilla blanca de por sí), acá se dibuja encima de TODA la página
+  // (incluido el header) y sin esto se veía el logo/texto del header transparentándose
+  // detrás del propio título "Filtros" del panel.
+  &.mat-drawer-over {
+    background: var(--mat-sys-surface, #fff);
+    z-index: 21;
+  }
+}
+
+.filters-panel {
+  padding: 4px 20px 24px 4px;
+}
+
+.filters-main {
+  background: transparent;
+  padding-left: 24px;
+}
+
+@media (max-width: 900px) {
+  .filters-main {
+    padding-left: 0;
+  }
+
+  .filters-panel {
+    padding: 16px;
+  }
+}
+
 .hero-banner {
   background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
 
