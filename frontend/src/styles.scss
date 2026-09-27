@@ -130,9 +130,50 @@ body.portal-scope .mat-mdc-dialog-title {
 // imprimible real de una hoja A4 con márgenes) — un ancho en unidades físicas no depende de
 // que ningún ancestro se calcule bien, así que el `flex-wrap` por fin envuelve contra el
 // tamaño real del papel.
+//
+// Tercer bug real, reportado con captura tras el fix de arriba: la primera hoja salía
+// completamente en blanco y las etiquetas recién aparecían en la hoja 2. Causa: al dejar
+// `.print-label-area` en flujo normal (`position: static`), queda empujada hacia abajo por
+// TODO el contenido que viene antes en el DOM — el admin entero (sidebar, header, la tabla
+// de productos completa) sigue ocupando su alto normal de layout aunque esté oculto, porque
+// `visibility: hidden` (a diferencia de `display: none`) NUNCA colapsa la caja de un
+// elemento, solo lo hace invisible.
+//
+// Primer intento de arreglo (revertido): sacar `.print-label-area` del flujo con
+// `position: absolute; top:0; left:0`. Funcionaba para pocas etiquetas, pero con 30
+// (más de una hoja real) solo se imprimían las primeras 6 y el resto se perdía en
+// silencio — sin error, sin scroll, directamente ausente del PDF. Causa: la cantidad de
+// páginas que Chrome reserva para imprimir se calcula a partir de la altura del FLUJO
+// NORMAL del documento, no de dónde llega a pintar un elemento `position: absolute`
+// (que por definición no aporta altura a ese cálculo). Con `<app-root>` colapsado a
+// `display:none` y `.print-label-area` fuera del flujo, casi no quedaba nada en flujo
+// normal — Chrome reservaba ~1 página y cortaba silenciosamente todo lo que el área
+// absoluta pintara más abajo de esa página. **Lección: para contenido que puede
+// necesitar varias hojas, el elemento a imprimir SIEMPRE debe quedar en flujo normal
+// (`position: static`) — su altura real es lo único que le dice al motor de impresión
+// cuántas páginas reservar.** Cualquier técnica que lo saque del flujo (`fixed` o
+// `absolute`) arriesga perder contenido o mostrar de más, más allá de una sola hoja.
+//
+// Solución final: `.print-label-area` se queda en flujo normal, y en vez de colapsar
+// TODO `<app-root>` (que también sacaba de la cuenta la altura real de las etiquetas),
+// solo se colapsan con `display:none` los elementos puntuales que quedan ANTES de ella
+// en el DOM y que igual iban a seguir "empujándola" aun invisibles: el admin completo
+// (`<app-root>`, que de todas formas nunca debe aportar altura al documento impreso) y,
+// dentro del propio diálogo, el título (`<h2 mat-dialog-title>`) y la tabla de
+// selección de productos (`.items-table`) — ambos antes de `.print-label-area` en el
+// DOM. Los botones de "Cerrar"/"Imprimir" (`mat-dialog-actions`) van DESPUÉS en el DOM,
+// así que de por sí no empujan nada hacia abajo, pero también se colapsan para no
+// sumar una hoja extra casi vacía al final si su alto invisible cae justo al borde de
+// una página.
 @media print {
   body * {
     visibility: hidden;
+  }
+  app-root,
+  .mat-mdc-dialog-title,
+  .items-table,
+  .mat-mdc-dialog-actions {
+    display: none !important;
   }
   .print-label-area,
   .print-label-area * {
@@ -153,11 +194,19 @@ body.portal-scope .mat-mdc-dialog-title {
     transform: none !important;
     box-shadow: none !important;
   }
+  // `!important` en las 5 — el propio `print-label-dialog.scss` define
+  // `.print-label-area { max-height: 380px; overflow-y: auto; }` (para el scroll EN
+  // PANTALLA cuando hay muchas etiquetas) con un selector "scopeado" por la view
+  // encapsulation de Angular (lleva un atributo `[_ngcontent-...]` agregado), que tiene
+  // MÁS especificidad que esta regla global sin ese atributo — sin `!important`, la
+  // regla de pantalla seguía ganando incluso bajo `@media print`, dejando el área
+  // recortada a 380px con scroll interno (el origen real del bug reportado desde el
+  // principio) sin importar qué tanto se ajustara `position`/`width` alrededor.
   .print-label-area {
-    position: static;
-    width: 190mm;
-    max-width: 190mm;
-    max-height: none;
-    overflow: visible;
+    position: static !important;
+    width: 190mm !important;
+    max-width: 190mm !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 }
