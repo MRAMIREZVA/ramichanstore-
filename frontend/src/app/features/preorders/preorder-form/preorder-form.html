@@ -2,28 +2,36 @@
 
 <mat-dialog-content>
   <form [formGroup]="form" class="preorder-form">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Producto</mat-label>
-      <input
-        matInput
-        formControlName="productSearch"
-        [matAutocomplete]="auto"
-        placeholder="Busca por nombre, SKU o franquicia"
-      />
-      @if (searching()) {
-        <mat-spinner matSuffix diameter="18" />
-      } @else {
-        <mat-icon matSuffix>search</mat-icon>
-      }
-      <mat-autocomplete #auto="matAutocomplete" [displayWith]="productLabel">
-        @for (p of productOptions(); track p.id) {
-          <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">{{ p.sku }} — {{ p.name }}</mat-option>
+    <div class="product-search-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Producto</mat-label>
+        <input
+          matInput
+          formControlName="productSearch"
+          [matAutocomplete]="auto"
+          placeholder="Busca por nombre, SKU o franquicia"
+        />
+        @if (searching()) {
+          <mat-spinner matSuffix diameter="18" />
+        } @else {
+          <mat-icon matSuffix>search</mat-icon>
         }
-      </mat-autocomplete>
-      @if (form.controls.productSearch.touched && form.controls.productSearch.invalid) {
-        <mat-error>Selecciona un producto</mat-error>
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="productLabel">
+          @for (p of productOptions(); track p.id) {
+            <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">{{ p.sku }} — {{ p.name }}</mat-option>
+          }
+        </mat-autocomplete>
+        @if (form.controls.productSearch.touched && form.controls.productSearch.invalid) {
+          <mat-error>Selecciona un producto</mat-error>
+        }
+      </mat-form-field>
+      @if (!data.preorder) {
+        <button mat-stroked-button type="button" class="scan-button" (click)="scanProduct()">
+          <mat-icon>qr_code_scanner</mat-icon>
+          Escanear
+        </button>
       }
-    </mat-form-field>
+    </div>
 
     <div class="grid-2">
       <mat-form-field appearance="outline">

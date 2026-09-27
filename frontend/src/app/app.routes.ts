@@ -21,6 +21,12 @@ export const routes: Routes = [
       import('./features/legal/complaint-book-form/complaint-book-form').then((m) => m.ComplaintBookForm),
   },
   {
+    path: 'escanear',
+    title: 'RamichanStore | Escanear',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/scan/scan-page/scan-page').then((m) => m.ScanPage),
+  },
+  {
     path: '',
     title: 'RamichanStore | Panel administrativo',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
@@ -99,6 +105,10 @@ export const routes: Routes = [
       {
         path: 'carrito',
         loadComponent: () => import('./features/catalog/cart-page/cart-page').then((m) => m.CartPage),
+      },
+      {
+        path: 'favoritos',
+        loadComponent: () => import('./features/catalog/favorites-page/favorites-page').then((m) => m.FavoritesPage),
       },
       {
         path: 'checkout',

@@ -151,6 +151,20 @@
   padding: 2px 9px;
 }
 
+.completeness-hints {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 4px;
+
+  .hint-icon {
+    height: 16px;
+    width: 16px;
+    font-size: 16px;
+    color: #b5560d;
+    cursor: default;
+  }
+}
+
 .category-cell {
   display: inline-flex;
   align-items: center;

@@ -1,6 +1,18 @@
 <h2 mat-dialog-title>Imprimir etiquetas @if (items().length > 1) { ({{ totalLabels() }} en total) }</h2>
 
 <mat-dialog-content>
+  <mat-button-toggle-group class="format-toggle" [value]="format()" (change)="setFormat($event.value)">
+    <mat-button-toggle value="BARCODE">Código de barras</mat-button-toggle>
+    <mat-button-toggle value="QR">QR</mat-button-toggle>
+  </mat-button-toggle-group>
+  <p class="hint">
+    @if (format() === 'QR') {
+      El QR es más tolerante a impresoras térmicas baratas y ángulos de cámara imperfectos.
+    } @else {
+      El código de barras clásico es más rápido de leer con lectores dedicados.
+    }
+  </p>
+
   <table class="items-table">
     <thead>
       <tr>
@@ -34,7 +46,12 @@
     @for (item of labelInstances(); track $index) {
       <div class="label">
         <span class="label-name">{{ item.name }}</span>
-        <svg #barcodeSvg></svg>
+        @if (format() === 'BARCODE') {
+          <svg #barcodeSvg></svg>
+        } @else {
+          <canvas #qrCanvas></canvas>
+          <span class="label-sku">{{ item.sku }}</span>
+        }
         <span class="label-price">S/ {{ item.salePrice.toFixed(2) }}</span>
       </div>
     }

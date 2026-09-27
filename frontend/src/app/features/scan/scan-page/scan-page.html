@@ -1,0 +1,82 @@
+<div class="scan-page">
+  <header class="scan-header">
+    <button mat-icon-button (click)="exit()" matTooltip="Salir">
+      <mat-icon>close</mat-icon>
+    </button>
+    <span>Escanear producto</span>
+  </header>
+
+  <div class="camera-frame" [hidden]="product() || notFoundCode()">
+    <video #video class="camera-video" muted playsinline autoplay></video>
+    @if (starting()) {
+      <div class="camera-overlay">
+        <mat-spinner diameter="36" />
+        <span>Iniciando cámara…</span>
+      </div>
+    } @else if (!errorMessage()) {
+      <div class="camera-guide"></div>
+    }
+    @if (looking()) {
+      <div class="camera-overlay">
+        <mat-spinner diameter="36" />
+        <span>Buscando producto…</span>
+      </div>
+    }
+  </div>
+  @if (!product() && !notFoundCode()) {
+    @if (errorMessage()) {
+      <p class="error-hint">{{ errorMessage() }}</p>
+    } @else {
+      <p class="hint">Apunta la cámara al código de barras o QR del producto.</p>
+    }
+  }
+
+  @if (notFoundCode()) {
+    <div class="result-card">
+      <mat-icon class="not-found-icon">search_off</mat-icon>
+      <h2>No se encontró ningún producto</h2>
+      <p class="sub">Código escaneado: {{ notFoundCode() }}</p>
+      <button mat-flat-button color="primary" (click)="scanAgain()">
+        <mat-icon>qr_code_scanner</mat-icon>
+        Escanear otro
+      </button>
+    </div>
+  }
+
+  @if (product(); as p) {
+    <div class="result-card">
+      @if (p.mainImageUrl) {
+        <img [src]="resolveImageUrl(p.mainImageUrl)" [alt]="p.name" class="product-photo" />
+      } @else {
+        <div class="product-photo placeholder"><mat-icon>image</mat-icon></div>
+      }
+      <h2>{{ p.name }}</h2>
+      <p class="sub">{{ p.sku }} · {{ p.brandName }}</p>
+      <div class="stock-row">
+        <span class="price">S/ {{ p.salePrice.toFixed(2) }}</span>
+        <span class="stock-pill" [class.low]="p.lowStock">
+          @if (p.lowStock) {
+            <mat-icon>warning</mat-icon>
+          }
+          Stock: {{ p.currentStock }}
+        </span>
+      </div>
+      <span class="status-chip" [attr.data-status]="p.status">{{ statusLabels[p.status] }}</span>
+
+      <div class="actions">
+        <button mat-flat-button color="primary" (click)="editProduct()">
+          <mat-icon>edit</mat-icon>
+          Editar producto
+        </button>
+        <button mat-stroked-button (click)="registerMovement()">
+          <mat-icon>warehouse</mat-icon>
+          Registrar movimiento
+        </button>
+        <button mat-button (click)="scanAgain()">
+          <mat-icon>qr_code_scanner</mat-icon>
+          Escanear otro
+        </button>
+      </div>
+    </div>
+  }
+</div>

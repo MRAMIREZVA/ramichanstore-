@@ -1,28 +1,45 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PRODUCT_STATUS_LABELS } from '../../../core/models/product.model';
-import { PublicProduct } from '../../../core/models/public-catalog.model';
+import { PublicPreorderInfo, PublicProduct } from '../../../core/models/public-catalog.model';
+import { StockAlertSubmission } from '../../../core/models/stock-alert.model';
 import { CartService } from '../../../core/services/cart.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
+import { StockAlertService } from '../../../core/services/stock-alert.service';
+import { WishlistService } from '../../../core/services/wishlist.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 
 @Component({
   selector: 'app-catalog-product-detail',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
   templateUrl: './catalog-product-detail.html',
   styleUrl: './catalog-product-detail.scss',
 })
 export class CatalogProductDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
   private readonly catalogService = inject(PublicCatalogService);
   private readonly cartService = inject(CartService);
+  private readonly stockAlertService = inject(StockAlertService);
+  private readonly wishlistService = inject(WishlistService);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly resolveImageUrl = resolveImageUrl;
@@ -33,6 +50,7 @@ export class CatalogProductDetail implements OnInit {
   readonly product = signal<PublicProduct | null>(null);
   readonly activeImageUrl = signal<string | null>(null);
   readonly quantity = signal(1);
+  readonly relatedProducts = signal<PublicProduct[]>([]);
 
   /** null si el admin no configuró STORE_WHATSAPP en Configuración (mismo patrón que catalog-layout/contactWhatsAppUrl). */
   readonly storeWhatsapp = signal<string | null>(null);
@@ -45,6 +63,18 @@ export class CatalogProductDetail implements OnInit {
     return whatsAppLink(phone, message);
   });
 
+  readonly isWishlisted = computed(() => {
+    const product = this.product();
+    return product ? this.wishlistService.isWishlisted(product.id) : false;
+  });
+
+  readonly stockAlertSaving = signal(false);
+  readonly stockAlertSubmitted = signal(false);
+  readonly stockAlertForm = this.fb.group({
+    customerName: ['', [Validators.required, Validators.maxLength(200)]],
+    customerPhone: ['', [Validators.required, Validators.maxLength(30)]],
+  });
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.catalogService.findProductById(id).subscribe({
@@ -52,6 +82,7 @@ export class CatalogProductDetail implements OnInit {
         this.product.set(res.data);
         this.activeImageUrl.set(res.data.mainImageUrl);
         this.loading.set(false);
+        this.loadRelatedProducts(res.data);
       },
       error: () => {
         this.notFound.set(true);
@@ -60,6 +91,14 @@ export class CatalogProductDetail implements OnInit {
     });
     this.catalogService.getStoreInfo().subscribe({
       next: (res) => this.storeWhatsapp.set(res.data.whatsapp),
+      error: () => {},
+    });
+  }
+
+  private loadRelatedProducts(product: PublicProduct): void {
+    if (!product.franchise) return;
+    this.catalogService.searchProducts({ franchise: product.franchise, size: 7 }).subscribe({
+      next: (res) => this.relatedProducts.set(res.data.content.filter((p) => p.id !== product.id).slice(0, 6)),
       error: () => {},
     });
   }
@@ -85,6 +124,18 @@ export class CatalogProductDetail implements OnInit {
     this.quantity.set(1);
   }
 
+  preorderProgressWidth(info: PublicPreorderInfo): number {
+    if (info.totalQuantity <= 0) return 0;
+    return Math.min(100, Math.round(((info.totalQuantity - info.availableSlots) / info.totalQuantity) * 100));
+  }
+
+  toggleWishlist(): void {
+    const product = this.product();
+    if (!product) return;
+    this.wishlistService.toggle(product);
+    this.snackBar.open(this.isWishlisted() ? 'Agregado a favoritos' : 'Quitado de favoritos', 'Cerrar', { duration: 2000 });
+  }
+
   /** true si hay al menos un dato de ficha técnica que mostrar — evita renderizar el bloque completo vacío. */
   hasSpecSheet(p: PublicProduct): boolean {
     return !!(
@@ -108,5 +159,23 @@ export class CatalogProductDetail implements OnInit {
     if (!value) return '';
     const [year, month, day] = value.split('-');
     return `${day}/${month}/${year}`;
+  }
+
+  submitStockAlert(): void {
+    const product = this.product();
+    if (!product || this.stockAlertForm.invalid) {
+      this.stockAlertForm.markAllAsTouched();
+      return;
+    }
+    const v = this.stockAlertForm.getRawValue();
+    const request: StockAlertSubmission = { productId: product.id, customerName: v.customerName!, customerPhone: v.customerPhone! };
+    this.stockAlertSaving.set(true);
+    this.stockAlertService.submit(request).subscribe({
+      next: () => {
+        this.stockAlertSaving.set(false);
+        this.stockAlertSubmitted.set(true);
+      },
+      error: () => this.stockAlertSaving.set(false),
+    });
   }
 }

@@ -29,6 +29,16 @@ export interface PublicProduct {
   originCountry: string | null;
   releaseDate: string | null;
   packagedWeightGrams: number | null;
+  /** Solo se resuelve en el detalle público (findProductById) — siempre null en el listado/grilla. */
+  preorderInfo: PublicPreorderInfo | null;
+}
+
+/** Barra de progreso/cuenta regresiva de una campaña de preventa activa (Fase 44) — sin depósito ni costo. */
+export interface PublicPreorderInfo {
+  availableSlots: number;
+  totalQuantity: number;
+  limitDate: string | null;
+  estimatedArrivalDate: string | null;
 }
 
 export interface CatalogFilterOption {
@@ -44,4 +54,6 @@ export interface StoreInfo {
   bannerUrl: string | null;
   /** Ruta relativa al backend (ej. /api/catalog/announcement/file); null si el admin no subió una imagen para el popup de bienvenida. */
   announcementImageUrl: string | null;
+  /** Monto mínimo (S/) para envío gratis, mostrado como banner en el catálogo — null desactiva el banner. */
+  freeShippingThreshold: number | null;
 }
