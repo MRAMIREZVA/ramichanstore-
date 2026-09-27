@@ -1,4 +1,4 @@
-import { DeliveryMethod, PaymentMethod } from './sale.model';
+import { DeliveryMethod, PaymentMethod, PaymentStatus } from './sale.model';
 
 export type OrderRequestStatus = 'PENDING' | 'CONVERTED' | 'REJECTED';
 
@@ -60,6 +60,22 @@ export interface OrderRequestStatusInfo {
   id: number;
   status: OrderRequestStatus;
   convertedSaleId: number | null;
+}
+
+/** "Buscar mi pedido" (Fase 47) — versión pública de OrderRequest, sin dirección/DNI del destinatario. */
+export interface PublicOrderRequestInfo {
+  id: number;
+  requestType: OrderRequestType;
+  status: OrderRequestStatus;
+  rejectionReason: string | null;
+  items: OrderRequestItem[];
+  total: number;
+  preferredPaymentMethod: PaymentMethod;
+  deliveryMethod: DeliveryMethod;
+  createdAt: string;
+  convertedSaleId: number | null;
+  saleOrderCode: string | null;
+  salePaymentStatus: PaymentStatus | null;
 }
 
 export interface OrderRequest {

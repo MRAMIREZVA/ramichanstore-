@@ -4,6 +4,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 import { CartService } from '../../../core/services/cart.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
@@ -23,6 +24,7 @@ export class CatalogLayout implements OnInit, OnDestroy {
   private readonly cartService = inject(CartService);
   private readonly wishlistService = inject(WishlistService);
   private readonly dialog = inject(MatDialog);
+  private readonly analyticsService = inject(AnalyticsService);
 
   readonly cartTotalItems = this.cartService.totalItems;
   readonly wishlistTotalItems = this.wishlistService.totalItems;
@@ -43,6 +45,8 @@ export class CatalogLayout implements OnInit, OnDestroy {
           this.contactWhatsAppUrl.set(whatsAppLink(res.data.whatsapp, message));
         }
         this.maybeShowAnnouncement(res.data.announcementImageUrl);
+        if (res.data.googleAnalyticsId) this.analyticsService.initGoogleAnalytics(res.data.googleAnalyticsId);
+        if (res.data.metaPixelId) this.analyticsService.initMetaPixel(res.data.metaPixelId);
       },
       error: () => {},
     });

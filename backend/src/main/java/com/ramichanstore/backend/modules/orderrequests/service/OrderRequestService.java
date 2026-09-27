@@ -13,6 +13,7 @@ import com.ramichanstore.backend.modules.orderrequests.dto.CartItemRequest;
 import com.ramichanstore.backend.modules.orderrequests.dto.ConvertToReservationsRequest;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
+import com.ramichanstore.backend.modules.orderrequests.dto.PublicOrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestItem;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
@@ -28,6 +29,7 @@ import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.sales.dto.SaleItemRequest;
 import com.ramichanstore.backend.modules.sales.dto.SaleRequest;
+import com.ramichanstore.backend.modules.sales.dto.SaleResponse;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.SaleType;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
@@ -140,6 +142,25 @@ public class OrderRequestService {
     @Transactional(readOnly = true)
     public OrderRequestResponse findResponseById(Long id) {
         return OrderRequestResponse.from(findById(id));
+    }
+
+    /**
+     * "Buscar mi pedido" (Fase 47) — pública a propósito (ver SecurityConfig), por eso exige
+     * id Y teléfono coincidentes (el mismo par que el checkout ya le mostró al cliente:
+     * "Tu pedido web #123" + el teléfono que él mismo tecleó) en vez de solo el id, que es
+     * secuencial y adivinable. Nunca distingue "no existe" de "teléfono no coincide" — mismo
+     * criterio que el portal de clientes (Fase 13) para no confirmarle a un desconocido que
+     * un id de pedido en particular sí existe.
+     */
+    @Transactional(readOnly = true)
+    public PublicOrderRequestResponse findPublicByIdAndPhone(Long id, String phone) {
+        OrderRequest orderRequest = orderRequestRepository.findById(id)
+                .filter(o -> o.getGuestPhone() != null && o.getGuestPhone().trim().equalsIgnoreCase(phone.trim()))
+                .orElseThrow(() -> ResourceNotFoundException.of("Pedido web", id));
+        SaleResponse sale = orderRequest.getConvertedSaleId() != null
+                ? saleService.findResponseById(orderRequest.getConvertedSaleId())
+                : null;
+        return PublicOrderRequestResponse.from(orderRequest, sale);
     }
 
     @Transactional(readOnly = true)

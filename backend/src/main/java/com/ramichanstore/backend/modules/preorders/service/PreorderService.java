@@ -75,7 +75,7 @@ public class PreorderService {
                     int reserved = preorderCustomerRepository.sumReservedQuantity(p.getId());
                     return new PreorderPublicInfo(
                             Math.max(0, p.getAvailableQuantity() - reserved), p.getAvailableQuantity(),
-                            p.getLimitDate(), p.getEstimatedArrivalDate());
+                            p.getLimitDate(), p.getEstimatedArrivalDate(), p.getMinDepositAmount());
                 });
     }
 

@@ -6,6 +6,7 @@ import com.ramichanstore.backend.modules.orderrequests.dto.ConvertToReservations
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestStatusResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
+import com.ramichanstore.backend.modules.orderrequests.dto.PublicOrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.RejectOrderRequestRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
 import com.ramichanstore.backend.modules.orderrequests.service.OrderRequestService;
@@ -65,6 +66,16 @@ public class OrderRequestController {
     @GetMapping("/{id}/status")
     public ApiResponse<OrderRequestStatusResponse> status(@PathVariable Long id) {
         return ApiResponse.ok(OrderRequestStatusResponse.from(orderRequestService.findById(id)));
+    }
+
+    /**
+     * "Buscar mi pedido" (Fase 47) — pública a propósito (ver SecurityConfig). Declarada como
+     * "/lookup" (literal), no choca con GET /{id} de arriba (exige permiso de staff) — Spring
+     * prioriza el segmento literal sobre el patrón de variable en la misma posición.
+     */
+    @GetMapping("/lookup")
+    public ApiResponse<PublicOrderRequestResponse> lookup(@RequestParam Long id, @RequestParam String phone) {
+        return ApiResponse.ok(orderRequestService.findPublicByIdAndPhone(id, phone));
     }
 
     @PostMapping("/{id}/convert")

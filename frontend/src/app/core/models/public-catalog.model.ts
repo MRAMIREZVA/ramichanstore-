@@ -33,12 +33,17 @@ export interface PublicProduct {
   preorderInfo: PublicPreorderInfo | null;
 }
 
-/** Barra de progreso/cuenta regresiva de una campaña de preventa activa (Fase 44) — sin depósito ni costo. */
+/**
+ * Barra de progreso/cuenta regresiva de una campaña de preventa activa (Fase 44).
+ * `minDepositAmount` (agregado después) sí se expone a propósito — antes el visitante
+ * no tenía forma de saber cuánto cuesta separar sin escribir por WhatsApp.
+ */
 export interface PublicPreorderInfo {
   availableSlots: number;
   totalQuantity: number;
   limitDate: string | null;
   estimatedArrivalDate: string | null;
+  minDepositAmount: number;
 }
 
 export interface CatalogFilterOption {
@@ -56,4 +61,8 @@ export interface StoreInfo {
   announcementImageUrl: string | null;
   /** Monto mínimo (S/) para envío gratis, mostrado como banner en el catálogo — null desactiva el banner. */
   freeShippingThreshold: number | null;
+  /** Measurement ID de Google Analytics 4 (ej. "G-XXXXXXX"); null desactiva el tracking. */
+  googleAnalyticsId: string | null;
+  /** ID del Meta Pixel; null desactiva el tracking. */
+  metaPixelId: string | null;
 }
