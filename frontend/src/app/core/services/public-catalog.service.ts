@@ -14,6 +14,8 @@ export interface PublicCatalogFilters {
   lineId?: number | null;
   franchise?: string | null;
   onlyPreorder?: boolean;
+  /** Formato Spring Data: "campo,direccion" (ej. "franchise,asc"). Sin valor = orden por defecto del backend (nombre A-Z). */
+  sort?: string | null;
   page?: number;
   size?: number;
 }
@@ -38,6 +40,7 @@ export class PublicCatalogService {
     if (filters.lineId) params = params.set('lineId', filters.lineId);
     if (filters.franchise) params = params.set('franchise', filters.franchise);
     if (filters.onlyPreorder) params = params.set('onlyPreorder', filters.onlyPreorder);
+    if (filters.sort) params = params.set('sort', filters.sort);
 
     return this.http.get<ApiResponse<PageResponse<PublicProduct>>>(`${this.base}/products`, { params });
   }
