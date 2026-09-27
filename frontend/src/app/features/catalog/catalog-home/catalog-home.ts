@@ -131,7 +131,17 @@ export class CatalogHome implements OnInit {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(p);
     }
-    return Array.from(groups.entries()).map(([franchise, products]) => ({ franchise, products }));
+    // Pedido explícito del dueño: las secciones (antes en el orden en que aparecía cada
+    // franquicia por primera vez en la página, siguiendo el orden por nombre de producto
+    // de la lista sin agrupar) pasan a ordenarse alfabéticamente — "Otros" (productos sin
+    // franquicia asignada) siempre al final, nunca intercalado alfabéticamente.
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => {
+        if (a === 'Otros') return 1;
+        if (b === 'Otros') return -1;
+        return a.localeCompare(b, 'es');
+      })
+      .map(([franchise, products]) => ({ franchise, products }));
   });
 
   ngOnInit(): void {
