@@ -15,6 +15,12 @@ export const routes: Routes = [
       import('./features/legal/privacy-policy/privacy-policy').then((m) => m.PrivacyPolicy),
   },
   {
+    path: 'libro-de-reclamaciones',
+    title: 'RamichanStore | Libro de Reclamaciones',
+    loadComponent: () =>
+      import('./features/legal/complaint-book-form/complaint-book-form').then((m) => m.ComplaintBookForm),
+  },
+  {
     path: '',
     title: 'RamichanStore | Panel administrativo',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
@@ -72,6 +78,11 @@ export const routes: Routes = [
       {
         path: 'configuracion',
         loadComponent: () => import('./features/settings/settings-page/settings-page').then((m) => m.SettingsPage),
+      },
+      {
+        path: 'libro-reclamaciones',
+        loadComponent: () =>
+          import('./features/complaint-book/complaint-list/complaint-list').then((m) => m.ComplaintList),
       },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

@@ -17,4 +17,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Usuarios y Permisos', icon: 'admin_panel_settings', route: '/usuarios', available: true },
   { label: 'Auditoría', icon: 'fact_check', route: '/auditoria', available: true },
   { label: 'Configuración', icon: 'settings', route: '/configuracion', available: true },
+  { label: 'Libro de Reclamaciones', icon: 'gavel', route: '/libro-reclamaciones', available: true },
 ];

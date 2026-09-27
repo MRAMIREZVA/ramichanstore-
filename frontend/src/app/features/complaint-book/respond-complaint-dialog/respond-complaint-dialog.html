@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Responder {{ data.complaint.folioNumber }}</h2>
+
+<mat-dialog-content>
+  <div class="summary">
+    <div>
+      <span class="label">Consumidor</span>
+      <span>{{ data.complaint.consumerFullName }} — {{ data.complaint.consumerDocumentType }} {{ data.complaint.consumerDocumentNumber }}</span>
+    </div>
+    <div>
+      <span class="label">Bien/servicio</span>
+      <span>{{ data.complaint.goodDescription }}</span>
+    </div>
+    <div>
+      <span class="label">Detalle</span>
+      <span class="detail-text">{{ data.complaint.detail }}</span>
+    </div>
+    <div>
+      <span class="label">Pedido concreto</span>
+      <span class="detail-text">{{ data.complaint.consumerRequest }}</span>
+    </div>
+  </div>
+
+  <form [formGroup]="form" class="response-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Estado</mat-label>
+      <mat-select formControlName="status">
+        @for (opt of statusOptions; track opt[0]) {
+          <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Acciones adoptadas por el proveedor</mat-label>
+      <textarea matInput formControlName="providerResponse" rows="4"></textarea>
+      @if (form.controls.providerResponse.touched && form.controls.providerResponse.invalid) {
+        <mat-error>La respuesta es obligatoria</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="confirm()" [disabled]="saving()">Guardar respuesta</button>
+</mat-dialog-actions>
