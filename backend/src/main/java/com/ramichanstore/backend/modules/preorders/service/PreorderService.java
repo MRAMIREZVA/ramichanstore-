@@ -11,6 +11,7 @@ import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerPaymentRe
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerPaymentResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerResponse;
+import com.ramichanstore.backend.modules.preorders.dto.PreorderPublicInfo;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderResponse;
 import com.ramichanstore.backend.modules.preorders.entity.Preorder;
@@ -31,6 +32,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -63,6 +65,18 @@ public class PreorderService {
         Specification<Preorder> spec = specs.isEmpty() ? null : Specification.allOf(specs);
         return preorderRepository.findAll(spec, pageable)
                 .map(p -> PreorderResponse.from(p, preorderCustomerRepository.sumReservedQuantity(p.getId())));
+    }
+
+    /** Para el detalle público del catálogo (Fase 44, barra de progreso/cuenta regresiva) — ver CatalogService. */
+    @Transactional(readOnly = true)
+    public Optional<PreorderPublicInfo> findActivePublicInfo(Long productId) {
+        return preorderRepository.findFirstByProductIdAndStatusOrderByCreatedAtDesc(productId, PreorderStatus.ACTIVE)
+                .map(p -> {
+                    int reserved = preorderCustomerRepository.sumReservedQuantity(p.getId());
+                    return new PreorderPublicInfo(
+                            Math.max(0, p.getAvailableQuantity() - reserved), p.getAvailableQuantity(),
+                            p.getLimitDate(), p.getEstimatedArrivalDate());
+                });
     }
 
     @Transactional(readOnly = true)

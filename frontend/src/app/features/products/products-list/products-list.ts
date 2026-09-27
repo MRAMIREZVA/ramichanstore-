@@ -141,6 +141,19 @@ export class ProductsList implements OnInit {
     return this.statusLabels[status];
   }
 
+  /** Nudge visual (Fase 44): ¿tiene algún dato de la ficha técnica de Fase 41 cargado? */
+  hasSpecSheet(p: Product): boolean {
+    return !!(
+      p.material ||
+      p.hasArticulations !== null ||
+      p.includedAccessories ||
+      p.packagingMaterial ||
+      p.originCountry ||
+      p.releaseDate ||
+      p.packagedWeightGrams != null
+    );
+  }
+
   /** Punto de color por categoría, para escanear la columna de un vistazo — hash determinista, no depende del orden en que llegue la lista. */
   private readonly categoryPalette = ['#6D4AFF', '#2CA9C9', '#D64BA0', '#4C6EF5', '#A67C52', '#5B6472'];
 

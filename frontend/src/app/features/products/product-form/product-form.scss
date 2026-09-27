@@ -73,6 +73,36 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+.stock-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.stock-alert-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  font-size: 13px;
+
+  .alert-name {
+    font-weight: 600;
+  }
+
+  .alert-phone {
+    color: var(--mat-sys-on-surface-variant);
+    margin-right: auto;
+  }
+
+  .whatsapp-link {
+    color: #1e7a3a;
+  }
+}
+
 .barcode-row {
   display: flex;
   align-items: flex-start;

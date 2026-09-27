@@ -21,6 +21,13 @@
   }
 </section>
 
+@if (storeInfo()?.freeShippingThreshold; as threshold) {
+  <div class="mb-6 flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-center text-sm font-semibold text-emerald-700">
+    <mat-icon class="!h-5 !w-5 !text-[20px]">local_shipping</mat-icon>
+    Envío gratis en compras mayores a S/ {{ threshold.toFixed(2) }}
+  </div>
+}
+
 <div class="compact-filters mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-black/5 bg-white p-3 shadow-sm sm:gap-3 sm:p-4">
   <mat-form-field appearance="outline" class="filter-field w-full sm:min-w-[240px] sm:w-auto sm:flex-[3_1_280px]">
     <mat-label>Buscar por nombre, personaje o franquicia</mat-label>
@@ -109,6 +116,20 @@
       } @else if (p.lowStock) {
         <span class="stock-badge low">Últimas unidades</span>
       }
+      <button
+        type="button"
+        class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm"
+        [attr.aria-label]="isWishlisted(p.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+        (click)="toggleWishlist(p, $event)"
+      >
+        <mat-icon
+          class="!h-4 !w-4 !text-[16px]"
+          [class.text-red-500]="isWishlisted(p.id)"
+          [class.text-gray-400]="!isWishlisted(p.id)"
+        >
+          {{ isWishlisted(p.id) ? 'favorite' : 'favorite_border' }}
+        </mat-icon>
+      </button>
     </div>
     <div class="flex flex-col gap-0.5 px-3 pb-3 pt-2.5">
       <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{{ p.brandName }}</span>

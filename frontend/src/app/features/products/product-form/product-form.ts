@@ -18,6 +18,9 @@ import { resolveImageUrl } from '../../../core/utils/image-url';
 import { parseIsoDate } from '../../../core/utils/date';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductService } from '../../../core/services/product.service';
+import { StockAlertService } from '../../../core/services/stock-alert.service';
+import { StockAlert } from '../../../core/models/stock-alert.model';
+import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { BarcodeScannerDialogComponent } from '../../../shared/components/barcode-scanner-dialog/barcode-scanner-dialog';
 import { PrintLabelDialogComponent } from '../../../shared/components/print-label-dialog/print-label-dialog';
 
@@ -53,6 +56,7 @@ export class ProductFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly catalogService = inject(CatalogService);
   private readonly productService = inject(ProductService);
+  private readonly stockAlertService = inject(StockAlertService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<ProductFormComponent>);
@@ -79,6 +83,9 @@ export class ProductFormComponent {
 
   readonly statusOptions = Object.entries(PRODUCT_STATUS_LABELS) as [ProductStatus, string][];
   readonly resolveImageUrl = resolveImageUrl;
+
+  /** "Avísame cuando esté disponible" (Fase 44) — solo tiene sentido al editar un producto ya existente. */
+  readonly pendingStockAlerts = signal<StockAlert[]>([]);
 
   readonly form = this.fb.group({
     barcode: [this.isDuplicate ? '' : (this.prefill?.barcode ?? '')],
@@ -126,6 +133,29 @@ export class ProductFormComponent {
         this.loadingCatalogs.set(false);
       },
       error: () => this.loadingCatalogs.set(false),
+    });
+
+    if (this.data.product) {
+      this.loadPendingStockAlerts(this.data.product.id);
+    }
+  }
+
+  private loadPendingStockAlerts(productId: number): void {
+    this.stockAlertService.findPendingByProduct(productId).subscribe({
+      next: (res) => this.pendingStockAlerts.set(res.data),
+      error: () => {},
+    });
+  }
+
+  stockAlertWhatsAppLink(alert: StockAlert): string {
+    const product = this.product();
+    const message = `Hola ${alert.customerName}, te escribo de RamichanStore — ya volvió a haber stock de "${product?.name ?? ''}", ¿te sigue interesando?`;
+    return whatsAppLink(alert.customerPhone, message);
+  }
+
+  markAlertNotified(alert: StockAlert): void {
+    this.stockAlertService.markNotified(alert.id).subscribe(() => {
+      this.pendingStockAlerts.update((alerts) => alerts.filter((a) => a.id !== alert.id));
     });
   }
 

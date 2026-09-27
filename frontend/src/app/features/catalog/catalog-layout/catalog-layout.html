@@ -13,6 +13,17 @@
       }
       <a
         mat-button
+        routerLink="/catalogo/favoritos"
+        [matBadge]="wishlistTotalItems() > 0 ? wishlistTotalItems() : null"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+        aria-label="Favoritos"
+      >
+        <mat-icon>favorite_border</mat-icon>
+        <span class="label">Favoritos</span>
+      </a>
+      <a
+        mat-button
         routerLink="/catalogo/carrito"
         [matBadge]="cartTotalItems() > 0 ? cartTotalItems() : null"
         matBadgeColor="warn"

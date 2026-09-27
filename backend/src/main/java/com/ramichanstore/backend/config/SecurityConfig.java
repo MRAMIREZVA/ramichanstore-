@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/order-requests/*/status").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments/izipay/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/complaints").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/stock-alerts").permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

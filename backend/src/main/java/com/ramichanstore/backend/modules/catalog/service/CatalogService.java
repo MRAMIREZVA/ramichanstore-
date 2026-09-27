@@ -15,11 +15,14 @@ import com.ramichanstore.backend.modules.catalog.repository.CatalogBannerReposit
 import com.ramichanstore.backend.modules.categories.service.CategoryService;
 import com.ramichanstore.backend.modules.deliveryagencies.dto.DeliveryAgencyResponse;
 import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
+import com.ramichanstore.backend.modules.preorders.service.PreorderService;
 import com.ramichanstore.backend.modules.productlines.service.ProductLineService;
+import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -51,6 +54,7 @@ public class CatalogService {
             List.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
     private final ProductService productService;
+    private final PreorderService preorderService;
     private final CategoryService categoryService;
     private final BrandService brandService;
     private final ProductLineService productLineService;
@@ -69,7 +73,13 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public PublicProductResponse findProductById(Long id) {
-        return PublicProductResponse.from(productService.findPublicById(id));
+        var product = productService.findPublicById(id);
+        // Solo se resuelve la campaña activa cuando de verdad hace falta (producto en preventa) —
+        // nunca en el listado (searchProducts), para no pagar una consulta extra por producto por página.
+        var preorderInfo = product.getStatus() == ProductStatus.PREORDER
+                ? preorderService.findActivePublicInfo(id).orElse(null)
+                : null;
+        return PublicProductResponse.from(product, preorderInfo);
     }
 
     @Transactional(readOnly = true)
@@ -125,8 +135,10 @@ public class CatalogService {
         String announcementImageUrl = catalogAnnouncementRepository.findById(ANNOUNCEMENT_ID)
                 .map(a -> "/api/catalog/announcement/file?v=" + a.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                 .orElse(null);
+        String freeShippingRaw = settingService.getValue("FREE_SHIPPING_THRESHOLD");
+        BigDecimal freeShippingThreshold = StringUtils.hasText(freeShippingRaw) ? new BigDecimal(freeShippingRaw) : null;
         return new StoreInfoResponse(
-                storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl);
+                storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl, freeShippingThreshold);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.ramichanstore.backend.modules.catalog.dto;
 
+import com.ramichanstore.backend.modules.preorders.dto.PreorderPublicInfo;
 import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
@@ -27,9 +28,18 @@ public record PublicProductResponse(
         ProductStatus status,
         String material, Boolean hasArticulations, String includedAccessories,
         String packagingMaterial, String originCountry, LocalDate releaseDate,
-        BigDecimal packagedWeightGrams) {
+        BigDecimal packagedWeightGrams,
+        PreorderPublicInfo preorderInfo) {
 
     public static PublicProductResponse from(Product p) {
+        return from(p, null);
+    }
+
+    /**
+     * {@code preorderInfo} solo se resuelve en el detalle público (findPublicById) — nunca en el
+     * listado, para no pagar una consulta extra por producto en cada página del catálogo.
+     */
+    public static PublicProductResponse from(Product p, PreorderPublicInfo preorderInfo) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
         String mainImageUrl = images.stream()
                 .filter(ProductImageResponse::isMain)
@@ -51,6 +61,7 @@ public record PublicProductResponse(
                 p.getStatus(),
                 p.getMaterial(), p.getHasArticulations(), p.getIncludedAccessories(),
                 p.getPackagingMaterial(), p.getOriginCountry(), p.getReleaseDate(),
-                p.getPackagedWeightGrams());
+                p.getPackagedWeightGrams(),
+                preorderInfo);
     }
 }

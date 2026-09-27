@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { CartService } from '../../../core/services/cart.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
+import { WishlistService } from '../../../core/services/wishlist.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { AnnouncementPopupComponent } from '../announcement-popup/announcement-popup';
@@ -20,9 +21,11 @@ import { AnnouncementPopupComponent } from '../announcement-popup/announcement-p
 export class CatalogLayout implements OnInit, OnDestroy {
   private readonly catalogService = inject(PublicCatalogService);
   private readonly cartService = inject(CartService);
+  private readonly wishlistService = inject(WishlistService);
   private readonly dialog = inject(MatDialog);
 
   readonly cartTotalItems = this.cartService.totalItems;
+  readonly wishlistTotalItems = this.wishlistService.totalItems;
 
   /** null si el admin no configuró STORE_WHATSAPP en Configuración. */
   readonly contactWhatsAppUrl = signal<string | null>(null);

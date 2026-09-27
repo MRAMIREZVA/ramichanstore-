@@ -260,6 +260,25 @@
         <mat-label>Observaciones</mat-label>
         <textarea matInput formControlName="notes" rows="2"></textarea>
       </mat-form-field>
+
+      @if (pendingStockAlerts().length > 0) {
+        <h3 class="section-title">Avisos de stock pendientes ({{ pendingStockAlerts().length }})</h3>
+        <p class="hint">Personas que pidieron aviso cuando este producto tuviera stock de nuevo.</p>
+        <div class="stock-alerts-list">
+          @for (alert of pendingStockAlerts(); track alert.id) {
+            <div class="stock-alert-row">
+              <span class="alert-name">{{ alert.customerName }}</span>
+              <span class="alert-phone">{{ alert.customerPhone }}</span>
+              <a mat-icon-button class="whatsapp-link" [href]="stockAlertWhatsAppLink(alert)" target="_blank" rel="noopener" matTooltip="Avisar por WhatsApp">
+                <mat-icon>chat</mat-icon>
+              </a>
+              <button mat-icon-button (click)="markAlertNotified(alert)" matTooltip="Marcar como notificado">
+                <mat-icon>done</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
     </form>
   }
 </mat-dialog-content>

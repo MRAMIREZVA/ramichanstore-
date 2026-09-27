@@ -129,6 +129,14 @@
             @if (p.franchise) {
               <span class="franchise-chip">{{ p.franchise }}</span>
             }
+            <div class="completeness-hints">
+              @if (!hasSpecSheet(p)) {
+                <mat-icon class="hint-icon" matTooltip="Sin ficha técnica">description</mat-icon>
+              }
+              @if (!p.barcode) {
+                <mat-icon class="hint-icon" matTooltip="Sin código de barras">qr_code_2</mat-icon>
+              }
+            </div>
           </td>
         </ng-container>
 

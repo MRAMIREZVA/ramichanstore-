@@ -18,6 +18,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PRODUCT_STATUS_LABELS, ProductStatus } from '../../../core/models/product.model';
 import { CatalogFilterOption, PublicProduct, StoreInfo } from '../../../core/models/public-catalog.model';
 import { CartService } from '../../../core/services/cart.service';
+import { WishlistService } from '../../../core/services/wishlist.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 
@@ -51,6 +52,7 @@ export class CatalogHome implements OnInit {
   private readonly catalogService = inject(PublicCatalogService);
   private readonly router = inject(Router);
   private readonly cartService = inject(CartService);
+  private readonly wishlistService = inject(WishlistService);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly resolveImageUrl = resolveImageUrl;
@@ -187,6 +189,15 @@ export class CatalogHome implements OnInit {
     if (!product.inStock) return;
     this.cartService.add(product, 1);
     this.snackBar.open(`${product.name} agregado al carrito`, 'Cerrar', { duration: 2500 });
+  }
+
+  isWishlisted(productId: number): boolean {
+    return this.wishlistService.isWishlisted(productId);
+  }
+
+  toggleWishlist(product: PublicProduct, event: Event): void {
+    event.stopPropagation();
+    this.wishlistService.toggle(product);
   }
 
   filterByFranchise(franchise: string): void {
