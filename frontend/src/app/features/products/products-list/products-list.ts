@@ -1,7 +1,8 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +21,7 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductFilters, ProductService } from '../../../core/services/product.service';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { BarcodeScannerDialogComponent } from '../../../shared/components/barcode-scanner-dialog/barcode-scanner-dialog';
+import { PrintLabelDialogComponent } from '../../../shared/components/print-label-dialog/print-label-dialog';
 import { ProductFormComponent, ProductFormData } from '../product-form/product-form';
 
 @Component({
@@ -38,6 +40,7 @@ import { ProductFormComponent, ProductFormData } from '../product-form/product-f
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatDialogModule,
+    MatCheckboxModule,
   ],
   templateUrl: './products-list.html',
   styleUrl: './products-list.scss',
@@ -50,7 +53,15 @@ export class ProductsList implements OnInit {
 
   readonly statusLabels = PRODUCT_STATUS_LABELS;
   readonly resolveImageUrl = resolveImageUrl;
-  readonly displayedColumns = ['image', 'product', 'category', 'price', 'stock', 'status', 'actions'];
+  readonly displayedColumns = ['select', 'image', 'product', 'category', 'price', 'stock', 'status', 'actions'];
+
+  /**
+   * Map (no Set de ids) para conservar los datos completos del producto aunque el usuario
+   * cambie de página — `products()` se reemplaza en cada `load()`, así que un Set de ids
+   * perdería el nombre/precio/sku de lo seleccionado en una página anterior.
+   */
+  readonly selectedProducts = signal<Map<number, Product>>(new Map());
+  readonly selectedCount = computed(() => this.selectedProducts().size);
 
   readonly loading = signal(true);
   readonly products = signal<Product[]>([]);
@@ -167,6 +178,37 @@ export class ProductsList implements OnInit {
     this.page = event.pageIndex;
     this.pageSize = event.pageSize;
     this.load();
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedProducts().has(id);
+  }
+
+  toggleSelect(product: Product): void {
+    this.selectedProducts.update((map) => {
+      const next = new Map(map);
+      if (next.has(product.id)) {
+        next.delete(product.id);
+      } else {
+        next.set(product.id, product);
+      }
+      return next;
+    });
+  }
+
+  clearSelection(): void {
+    this.selectedProducts.set(new Map());
+  }
+
+  /** Imprime en una sola hoja las etiquetas de todos los productos marcados (no solo copias de uno). */
+  printSelected(): void {
+    const items = [...this.selectedProducts().values()].map((p) => ({ sku: p.sku, name: p.name, salePrice: p.salePrice }));
+    if (items.length === 0) return;
+    this.dialog.open(PrintLabelDialogComponent, {
+      data: { items },
+      width: '640px',
+      maxWidth: '95vw',
+    });
   }
 
   openCreate(): void {

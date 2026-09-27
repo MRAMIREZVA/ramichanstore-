@@ -302,7 +302,7 @@ export class ProductFormComponent {
     const product = this.product();
     if (!product) return;
     this.dialog.open(PrintLabelDialogComponent, {
-      data: { sku: product.sku, name: product.name, salePrice: product.salePrice },
+      data: { items: [{ sku: product.sku, name: product.name, salePrice: product.salePrice }] },
       width: '600px',
       maxWidth: '95vw',
     });
