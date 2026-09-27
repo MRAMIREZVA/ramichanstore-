@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -18,6 +18,7 @@ import {
 import { Product } from '../../../core/models/product.model';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { ProductService } from '../../../core/services/product.service';
+import { BarcodeScannerDialogComponent } from '../../../shared/components/barcode-scanner-dialog/barcode-scanner-dialog';
 
 export interface MovementFormData {
   product: Product | null;
@@ -45,6 +46,7 @@ export class MovementFormComponent {
   private readonly productService = inject(ProductService);
   private readonly inventoryService = inject(InventoryService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<MovementFormComponent>);
   readonly data = inject<MovementFormData>(MAT_DIALOG_DATA);
 
@@ -104,6 +106,21 @@ export class MovementFormComponent {
     this.selectedProduct.set(product);
     this.form.controls.productSearch.setValue(this.productLabel(product), { emitEvent: false });
     this.productOptions.set([]);
+  }
+
+  /** Escanea el código de la caja (de fábrica o SKU propio) para elegir el producto sin escribir. */
+  scanProduct(): void {
+    const ref = this.dialog.open<BarcodeScannerDialogComponent, void, string | null>(BarcodeScannerDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+    });
+    ref.afterClosed().subscribe((code) => {
+      if (!code) return;
+      this.productService.findByCode(code).subscribe({
+        next: (res) => this.onProductSelected(res.data),
+        error: () => this.snackBar.open(`No se encontró ningún producto con el código "${code}"`, 'Cerrar', { duration: 4000 }),
+      });
+    });
   }
 
   get previewNewStock(): number | null {

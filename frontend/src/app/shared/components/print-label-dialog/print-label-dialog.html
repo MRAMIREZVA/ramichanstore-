@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>Imprimir etiquetas @if (items().length > 1) { ({{ totalLabels() }} en total) }</h2>
+
+<mat-dialog-content>
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Copias</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of items(); track item.sku; let i = $index) {
+        <tr>
+          <td class="item-name">{{ item.sku }} — {{ item.name }}</td>
+          <td>
+            <mat-form-field appearance="outline" class="copies-field">
+              <input matInput type="number" min="1" max="50" [ngModel]="item.copies" (ngModelChange)="setCopies(i, $event)" />
+            </mat-form-field>
+          </td>
+          <td>
+            @if (items().length > 1) {
+              <button mat-icon-button type="button" (click)="removeItem(i)" matTooltip="Quitar">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="print-label-area">
+    @for (item of labelInstances(); track $index) {
+      <div class="label">
+        <span class="label-name">{{ item.name }}</span>
+        <svg #barcodeSvg></svg>
+        <span class="label-price">S/ {{ item.salePrice.toFixed(2) }}</span>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+  <button mat-flat-button color="primary" (click)="print()" [disabled]="items().length === 0">
+    <mat-icon>print</mat-icon>
+    Imprimir
+  </button>
+</mat-dialog-actions>

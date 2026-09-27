@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record ProductResponse(
-        Long id, String sku, String name, String characterName, String franchise,
+        Long id, String sku, String barcode, String name, String characterName, String franchise,
         Long brandId, String brandName,
         Long categoryId, String categoryName,
         Long lineId, String lineName,
@@ -31,7 +31,7 @@ public record ProductResponse(
                 .orElse(p.getMainImageUrl());
 
         return new ProductResponse(
-                p.getId(), p.getSku(), p.getName(), p.getCharacterName(), p.getFranchise(),
+                p.getId(), p.getSku(), p.getBarcode(), p.getName(), p.getCharacterName(), p.getFranchise(),
                 p.getBrand().getId(), p.getBrand().getName(),
                 p.getCategory().getId(), p.getCategory().getName(),
                 p.getLine() != null ? p.getLine().getId() : null,

@@ -20,6 +20,8 @@ export interface ProductImage {
 export interface Product {
   id: number;
   sku: string;
+  /** Código de barras de FÁBRICA (EAN/JAN de la caja) — distinto del SKU, opcional. */
+  barcode: string | null;
   name: string;
   characterName: string | null;
   franchise: string | null;
@@ -61,6 +63,7 @@ export interface Product {
 export interface ProductRequest {
   /** Opcional: si no se envía, el backend genera uno (ver ProductService.generateSku). */
   sku?: string | null;
+  barcode: string | null;
   name: string;
   characterName: string | null;
   franchise: string | null;

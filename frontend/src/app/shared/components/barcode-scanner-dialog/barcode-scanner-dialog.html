@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Escanear código</h2>
+
+<mat-dialog-content>
+  <div class="scanner-frame">
+    <!-- muted+playsinline+autoplay: sin esto, la política de autoplay del navegador rechaza
+         el .play() interno de zxing (necesita gesto de usuario o el video silenciado). -->
+    <video #video class="scanner-video" muted playsinline autoplay></video>
+    @if (starting()) {
+      <div class="scanner-overlay">
+        <mat-spinner diameter="32" />
+        <span>Iniciando cámara…</span>
+      </div>
+    }
+    @if (!starting() && !errorMessage()) {
+      <div class="scanner-guide"></div>
+    }
+  </div>
+  @if (errorMessage()) {
+    <p class="error-hint">{{ errorMessage() }}</p>
+  } @else {
+    <p class="hint">Apunta la cámara al código de barras o QR del producto.</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancelar</button>
+</mat-dialog-actions>

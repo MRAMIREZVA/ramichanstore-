@@ -9,6 +9,22 @@
   width: 100%;
 }
 
+.product-search-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .full-width {
+    flex: 1 1 260px;
+    width: auto;
+  }
+
+  .scan-button {
+    margin-top: 8px;
+  }
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

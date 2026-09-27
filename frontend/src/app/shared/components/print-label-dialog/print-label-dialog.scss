@@ -1,0 +1,73 @@
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--mat-sys-on-surface-variant);
+    padding: 0 8px 6px;
+  }
+
+  td {
+    padding: 2px 8px;
+    vertical-align: middle;
+  }
+
+  .item-name {
+    font-size: 13px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.copies-field {
+  width: 90px;
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+.print-label-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  width: 220px;
+  // Evita que una etiqueta quede partida entre dos hojas al imprimir varias.
+  break-inside: avoid;
+}
+
+.label-name {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.label-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}

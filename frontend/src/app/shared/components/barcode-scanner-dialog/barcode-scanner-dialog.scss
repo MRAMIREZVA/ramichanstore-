@@ -1,0 +1,49 @@
+.scanner-frame {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.scanner-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.scanner-guide {
+  position: absolute;
+  inset: 20% 10%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.hint,
+.error-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  text-align: center;
+}
+
+.error-hint {
+  color: var(--mat-sys-error, #b3261e);
+}

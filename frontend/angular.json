@@ -27,7 +27,8 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "allowedCommonJsDependencies": [
-              "@lyracom/embedded-form-glue"
+              "@lyracom/embedded-form-glue",
+              "jsbarcode"
             ],
             "assets": [
               {

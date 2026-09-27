@@ -2,30 +2,36 @@
 
 <mat-dialog-content>
   <form [formGroup]="form" class="movement-form">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Producto</mat-label>
-      <input
-        matInput
-        formControlName="productSearch"
-        [matAutocomplete]="auto"
-        placeholder="Busca por nombre, SKU, personaje o franquicia"
-      />
-      @if (searching()) {
-        <mat-spinner matSuffix diameter="18" />
-      } @else {
-        <mat-icon matSuffix>search</mat-icon>
-      }
-      <mat-autocomplete #auto="matAutocomplete" [displayWith]="productLabel">
-        @for (p of productOptions(); track p.id) {
-          <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">
-            {{ p.sku }} — {{ p.name }} <span class="option-stock">(stock: {{ p.currentStock }})</span>
-          </mat-option>
+    <div class="product-search-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Producto</mat-label>
+        <input
+          matInput
+          formControlName="productSearch"
+          [matAutocomplete]="auto"
+          placeholder="Busca por nombre, SKU, personaje o franquicia"
+        />
+        @if (searching()) {
+          <mat-spinner matSuffix diameter="18" />
+        } @else {
+          <mat-icon matSuffix>search</mat-icon>
         }
-      </mat-autocomplete>
-      @if (form.controls.productSearch.touched && form.controls.productSearch.invalid) {
-        <mat-error>Selecciona un producto</mat-error>
-      }
-    </mat-form-field>
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="productLabel">
+          @for (p of productOptions(); track p.id) {
+            <mat-option [value]="p" (onSelectionChange)="onProductSelected(p)">
+              {{ p.sku }} — {{ p.name }} <span class="option-stock">(stock: {{ p.currentStock }})</span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (form.controls.productSearch.touched && form.controls.productSearch.invalid) {
+          <mat-error>Selecciona un producto</mat-error>
+        }
+      </mat-form-field>
+      <button mat-stroked-button type="button" class="scan-button" (click)="scanProduct()">
+        <mat-icon>qr_code_scanner</mat-icon>
+        Escanear
+      </button>
+    </div>
 
     @if (selectedProduct(); as product) {
       <div class="stock-preview">
