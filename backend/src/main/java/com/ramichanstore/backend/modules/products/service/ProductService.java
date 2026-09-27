@@ -199,6 +199,13 @@ public class ProductService {
         product.setEntryDate(request.entryDate());
         product.setSupplier(resolveSupplier(request.supplierId()));
         product.setNotes(request.notes());
+        product.setMaterial(request.material());
+        product.setHasArticulations(request.hasArticulations());
+        product.setIncludedAccessories(request.includedAccessories());
+        product.setPackagingMaterial(request.packagingMaterial());
+        product.setOriginCountry(request.originCountry());
+        product.setReleaseDate(request.releaseDate());
+        product.setPackagedWeightGrams(request.packagedWeightGrams());
 
         applyCalculatedCosts(product, request.purchasePrice(), request.additionalCosts(), request.salePrice());
     }

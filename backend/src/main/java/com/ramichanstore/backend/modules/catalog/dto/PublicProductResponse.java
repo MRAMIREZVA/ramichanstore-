@@ -4,6 +4,7 @@ import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -11,13 +12,22 @@ import java.util.List;
  * costo de compra, gastos adicionales, costo total, ganancia, margen,
  * ubicación, proveedor ni observaciones internas — esos son datos de negocio,
  * no de catálogo. Solo lo que un cliente necesita para ver/elegir un producto.
+ *
+ * <p>{@code material}/{@code hasArticulations}/{@code includedAccessories}/
+ * {@code packagingMaterial}/{@code originCountry}/{@code releaseDate}/
+ * {@code packagedWeightGrams} son la "ficha técnica" (Fase 41) — todos
+ * opcionales a propósito: el frontend solo muestra la sección/fila que
+ * tenga dato, nunca un campo vacío.</p>
  */
 public record PublicProductResponse(
         Long id, String sku, String name, String characterName, String franchise,
         String brandName, String categoryName, String lineName,
         String description, String mainImageUrl, List<ProductImageResponse> images,
         String size, BigDecimal salePrice, boolean inStock, boolean lowStock, int availableQuantity,
-        ProductStatus status) {
+        ProductStatus status,
+        String material, Boolean hasArticulations, String includedAccessories,
+        String packagingMaterial, String originCountry, LocalDate releaseDate,
+        BigDecimal packagedWeightGrams) {
 
     public static PublicProductResponse from(Product p) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
@@ -38,6 +48,9 @@ public record PublicProductResponse(
                 p.getDescription(), mainImageUrl, images,
                 p.getSize(), p.getSalePrice(),
                 inStock, lowStock, p.getCurrentStock(),
-                p.getStatus());
+                p.getStatus(),
+                p.getMaterial(), p.getHasArticulations(), p.getIncludedAccessories(),
+                p.getPackagingMaterial(), p.getOriginCountry(), p.getReleaseDate(),
+                p.getPackagedWeightGrams());
     }
 }

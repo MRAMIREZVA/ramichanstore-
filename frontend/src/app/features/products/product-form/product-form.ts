@@ -96,6 +96,13 @@ export class ProductFormComponent {
     entryDate: [!this.isDuplicate ? parseIsoDate(this.prefill?.entryDate) : null],
     supplierId: [this.prefill?.supplierId ?? null],
     notes: [this.prefill?.notes ?? ''],
+    material: [this.prefill?.material ?? ''],
+    hasArticulations: [this.prefill?.hasArticulations ?? null],
+    includedAccessories: [this.prefill?.includedAccessories ?? ''],
+    packagingMaterial: [this.prefill?.packagingMaterial ?? ''],
+    originCountry: [this.prefill?.originCountry ?? ''],
+    releaseDate: [parseIsoDate(this.prefill?.releaseDate)],
+    packagedWeightGrams: [this.prefill?.packagedWeightGrams ?? null, Validators.min(0)],
   });
 
   constructor() {
@@ -173,6 +180,13 @@ export class ProductFormComponent {
       entryDate: v.entryDate ? this.toIsoDate(v.entryDate as unknown as Date) : null,
       supplierId: v.supplierId || null,
       notes: v.notes || null,
+      material: v.material || null,
+      hasArticulations: v.hasArticulations ?? null,
+      includedAccessories: v.includedAccessories || null,
+      packagingMaterial: v.packagingMaterial || null,
+      originCountry: v.originCountry || null,
+      releaseDate: v.releaseDate ? this.toIsoDate(v.releaseDate as unknown as Date) : null,
+      packagedWeightGrams: v.packagedWeightGrams != null && v.packagedWeightGrams !== ('' as unknown) ? Number(v.packagedWeightGrams) : null,
     };
 
     const current = this.product();

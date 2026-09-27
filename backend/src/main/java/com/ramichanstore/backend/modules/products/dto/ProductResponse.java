@@ -17,7 +17,10 @@ public record ProductResponse(
         BigDecimal salePrice, BigDecimal profit, BigDecimal marginPercent,
         int currentStock, int minStock, boolean lowStock,
         ProductStatus status, String location, LocalDate entryDate,
-        Long supplierId, String supplierName, String notes) {
+        Long supplierId, String supplierName, String notes,
+        String material, Boolean hasArticulations, String includedAccessories,
+        String packagingMaterial, String originCountry, LocalDate releaseDate,
+        BigDecimal packagedWeightGrams) {
 
     public static ProductResponse from(Product p) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
@@ -41,6 +44,9 @@ public record ProductResponse(
                 p.getStatus(), p.getLocation(), p.getEntryDate(),
                 p.getSupplier() != null ? p.getSupplier().getId() : null,
                 p.getSupplier() != null ? p.getSupplier().getName() : null,
-                p.getNotes());
+                p.getNotes(),
+                p.getMaterial(), p.getHasArticulations(), p.getIncludedAccessories(),
+                p.getPackagingMaterial(), p.getOriginCountry(), p.getReleaseDate(),
+                p.getPackagedWeightGrams());
     }
 }

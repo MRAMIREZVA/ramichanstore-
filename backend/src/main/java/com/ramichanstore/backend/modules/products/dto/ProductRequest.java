@@ -39,5 +39,12 @@ public record ProductRequest(
         @Size(max = 100) String location,
         LocalDate entryDate,
         Long supplierId,
-        @Size(max = 500) String notes) {
+        @Size(max = 500) String notes,
+        @Size(max = 150) String material,
+        Boolean hasArticulations,
+        @Size(max = 300) String includedAccessories,
+        @Size(max = 150) String packagingMaterial,
+        @Size(max = 100) String originCountry,
+        LocalDate releaseDate,
+        @DecimalMin(value = "0", inclusive = true) BigDecimal packagedWeightGrams) {
 }

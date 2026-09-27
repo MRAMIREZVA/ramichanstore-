@@ -21,6 +21,14 @@ export interface PublicProduct {
   /** Stock real disponible — tope de cantidad al agregar al carrito (ver catalog-product-detail/cart-page). */
   availableQuantity: number;
   status: ProductStatus;
+  /** Ficha técnica (Fase 41) — todos opcionales, se muestran en el detalle solo si tienen dato. */
+  material: string | null;
+  hasArticulations: boolean | null;
+  includedAccessories: string | null;
+  packagingMaterial: string | null;
+  originCountry: string | null;
+  releaseDate: string | null;
+  packagedWeightGrams: number | null;
 }
 
 export interface CatalogFilterOption {
