@@ -101,6 +101,35 @@ body.portal-scope .mat-mdc-dialog-title {
 // del componente (view encapsulation no la alcanzaría). Oculta TODO menos .print-label-area
 // al imprimir, y la reposiciona a partir del borde de la hoja (si no, imprimiría en blanco
 // donde el diálogo la centraba en pantalla).
+//
+// Bug real (reportado con captura: aparecía una barra de scroll superpuesta sobre las
+// etiquetas al imprimir/previsualizar): la primera versión usaba `.print-label-area {
+// position: fixed; inset: 0 }` para escapar del recorte del diálogo — pero el propio
+// contenedor del diálogo de Material (`.mdc-dialog__surface`) usa `transform` para su
+// animación de apertura/cierre, y CUALQUIER ancestro con `transform` activo crea un
+// nuevo "containing block" para sus descendientes `position: fixed`, atrapando el área
+// de impresión dentro de la cajita visible del diálogo en pantalla en vez del viewport
+// real — y aunque no fuera por eso, un elemento `fixed` tampoco pagina de forma
+// confiable entre hojas al imprimir en Chrome (queda pegado a una sola "página",
+// mostrando scroll en vez de partir en varias A4). Solución: nunca usar `position:
+// fixed` para esto — se anula TODA la cadena de contenedores del overlay/diálogo
+// (no solo el inmediato, cualquiera puede seguir recortando aunque sea invisible) y
+// `.print-label-area` queda en flujo normal (`position: static`), dejando que el
+// motor de impresión pagine solo, como con cualquier documento normal.
+//
+// Segundo bug real, encontrado al verificar el fix de arriba con Playwright (`getComputedStyle`
+// + PDF de impresión real, no solo mirar la pantalla): con TODOS los ancestros forzados a
+// `width: auto`, `.mdc-dialog__surface` (un `display:flex` de Material, hijo único de un
+// contenedor flex sin `flex-grow`) se ENCOGE a su contenido en vez de estirarse a lo ancho
+// de la hoja — y un contenedor con `flex-wrap: wrap` cuyo propio ancho es "auto" se mide con
+// el algoritmo "max-content" (asume espacio infinito) ANTES de decidir si envuelve, así que
+// nunca envolvía: crecía lo suficiente para meter las 6 etiquetas en una sola fila y la 6ª
+// quedaba cortada en el borde de la hoja física. Los `width:auto`/`max-width:none` en la
+// cadena de ancestros se quitaron (no hacen falta — son invisibles, solo importa que no
+// recorten) y `.print-label-area` recibió un ancho explícito en milímetros (`190mm`, el
+// imprimible real de una hoja A4 con márgenes) — un ancho en unidades físicas no depende de
+// que ningún ancestro se calcule bien, así que el `flex-wrap` por fin envuelve contra el
+// tamaño real del papel.
 @media print {
   body * {
     visibility: hidden;
@@ -109,9 +138,25 @@ body.portal-scope .mat-mdc-dialog-title {
   .print-label-area * {
     visibility: visible;
   }
+  .cdk-overlay-container,
+  .cdk-global-overlay-wrapper,
+  .cdk-overlay-pane,
+  .mat-mdc-dialog-container,
+  .mdc-dialog__container,
+  .mdc-dialog__surface,
+  .mat-mdc-dialog-content {
+    position: static !important;
+    inset: auto !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
   .print-label-area {
-    position: fixed;
-    inset: 0;
+    position: static;
+    width: 190mm;
+    max-width: 190mm;
     max-height: none;
     overflow: visible;
   }
