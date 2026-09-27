@@ -115,6 +115,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/catalog/checkout-page/checkout-page').then((m) => m.CheckoutPage),
       },
       {
+        path: 'mi-pedido',
+        loadComponent: () => import('./features/catalog/order-lookup-page/order-lookup-page').then((m) => m.OrderLookupPage),
+      },
+      {
         path: ':id',
         loadComponent: () =>
           import('./features/catalog/catalog-product-detail/catalog-product-detail').then(

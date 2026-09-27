@@ -3,7 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { OrderRequest, OrderRequestStatus, OrderRequestStatusInfo, OrderRequestSubmission } from '../models/order-request.model';
+import {
+  OrderRequest,
+  OrderRequestStatus,
+  OrderRequestStatusInfo,
+  OrderRequestSubmission,
+  PublicOrderRequestInfo,
+} from '../models/order-request.model';
 import { PageResponse } from '../models/page-response.model';
 
 export interface OrderRequestFilters {
@@ -50,5 +56,11 @@ export class OrderRequestService {
 
   reject(id: number, reason: string): Observable<ApiResponse<OrderRequest>> {
     return this.http.post<ApiResponse<OrderRequest>>(`${this.baseUrl}/${id}/reject`, { reason });
+  }
+
+  /** Público — "Buscar mi pedido" (Fase 47), sin cuenta: exige el id que el checkout ya le mostró al cliente + su propio teléfono. */
+  lookup(id: number, phone: string): Observable<ApiResponse<PublicOrderRequestInfo>> {
+    const params = new HttpParams().set('id', id).set('phone', phone);
+    return this.http.get<ApiResponse<PublicOrderRequestInfo>>(`${this.baseUrl}/lookup`, { params });
   }
 }

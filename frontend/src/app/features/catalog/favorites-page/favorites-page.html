@@ -21,7 +21,7 @@
         <a [routerLink]="['/catalogo', item.productId]" class="block">
           <div class="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
             @if (item.mainImageUrl) {
-              <img class="absolute inset-0 h-full w-full object-cover" [src]="resolveImageUrl(item.mainImageUrl)" [alt]="item.name" />
+              <img class="absolute inset-0 h-full w-full object-cover" [src]="resolveImageUrl(item.mainImageUrl)" [alt]="item.name" loading="lazy" />
             } @else {
               <div class="absolute inset-0 flex items-center justify-center">
                 <mat-icon class="!h-8 !w-8 !text-[32px] text-gray-300">image</mat-icon>

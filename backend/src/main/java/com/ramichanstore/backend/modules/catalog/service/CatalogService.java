@@ -25,9 +25,11 @@ import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,8 +69,21 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public Page<PublicProductResponse> searchProducts(
             String term, Long categoryId, Long brandId, Long lineId, String franchise, boolean onlyPreorder, Pageable pageable) {
-        return productService.searchPublic(term, categoryId, brandId, lineId, franchise, onlyPreorder, pageable)
+        Page<PublicProductResponse> page = productService
+                .searchPublic(term, categoryId, brandId, lineId, franchise, onlyPreorder, pageable)
                 .map(PublicProductResponse::from);
+        // Pedido explícito del dueño: los agotados no deben aparecer mezclados con los
+        // disponibles. Reordenamiento POR PÁGINA (no una ordenación global en SQL) con un
+        // comparador ESTABLE — `Stream.sorted` preserva el orden relativo dentro de cada grupo,
+        // así que el orden que haya elegido el visitante (nombre, anime, precio) se respeta
+        // DENTRO de "disponibles" y DENTRO de "agotados", solo se separan los dos bloques. Un
+        // agotado en la página 1 no salta a la última página del catálogo completo, pero deja
+        // de aparecer intercalado con los disponibles de esa misma página, que era el problema
+        // real reportado.
+        List<PublicProductResponse> reordered = page.getContent().stream()
+                .sorted(Comparator.comparing(p -> p.inStock() ? 0 : 1))
+                .toList();
+        return new PageImpl<>(reordered, pageable, page.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -137,8 +152,12 @@ public class CatalogService {
                 .orElse(null);
         String freeShippingRaw = settingService.getValue("FREE_SHIPPING_THRESHOLD");
         BigDecimal freeShippingThreshold = StringUtils.hasText(freeShippingRaw) ? new BigDecimal(freeShippingRaw) : null;
+        String googleAnalyticsId = settingService.getValue("GOOGLE_ANALYTICS_ID");
+        String metaPixelId = settingService.getValue("META_PIXEL_ID");
         return new StoreInfoResponse(
-                storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl, freeShippingThreshold);
+                storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl, freeShippingThreshold,
+                StringUtils.hasText(googleAnalyticsId) ? googleAnalyticsId : null,
+                StringUtils.hasText(metaPixelId) ? metaPixelId : null);
     }
 
     /**
