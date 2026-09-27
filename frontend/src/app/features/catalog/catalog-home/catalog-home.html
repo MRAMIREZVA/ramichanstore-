@@ -172,6 +172,14 @@
         </mat-select>
       </mat-form-field>
 
+      <mat-form-field appearance="outline" class="filter-field w-full">
+        <mat-label>Ordenar por</mat-label>
+        <mat-select [formControl]="sortControl">
+          <mat-option [value]="null">Nombre (A-Z)</mat-option>
+          <mat-option value="franchise,asc">Anime (A-Z)</mat-option>
+        </mat-select>
+      </mat-form-field>
+
       <mat-slide-toggle class="mt-1" [formControl]="onlyPreorderControl">Solo preventas</mat-slide-toggle>
     </div>
   </mat-sidenav>

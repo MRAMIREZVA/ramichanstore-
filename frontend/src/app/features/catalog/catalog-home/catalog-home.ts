@@ -90,6 +90,8 @@ export class CatalogHome implements OnInit {
   readonly lineControl = new FormControl<number | null>(null);
   readonly franchiseControl = new FormControl<string | null>(null);
   readonly onlyPreorderControl = new FormControl(false);
+  /** Pedido explícito del dueño: poder ordenar el listado por anime. `null` = orden por defecto (nombre A-Z). */
+  readonly sortControl = new FormControl<string | null>(null);
 
   readonly categories = signal<CatalogFilterOption[]>([]);
   readonly brands = signal<CatalogFilterOption[]>([]);
@@ -117,7 +119,8 @@ export class CatalogHome implements OnInit {
       this.brandControl.value ||
       this.lineControl.value ||
       this.franchiseControl.value ||
-      this.onlyPreorderControl.value
+      this.onlyPreorderControl.value ||
+      this.sortControl.value
     );
   }
 
@@ -162,6 +165,10 @@ export class CatalogHome implements OnInit {
       this.page = 0;
       this.load();
     });
+    this.sortControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
 
     this.load();
   }
@@ -176,6 +183,7 @@ export class CatalogHome implements OnInit {
         lineId: this.lineControl.value,
         franchise: this.franchiseControl.value,
         onlyPreorder: !!this.onlyPreorderControl.value,
+        sort: this.sortControl.value,
         page: this.page,
         size: this.pageSize,
       })
@@ -196,6 +204,7 @@ export class CatalogHome implements OnInit {
     this.lineControl.setValue(null, { emitEvent: false });
     this.franchiseControl.setValue(null, { emitEvent: false });
     this.onlyPreorderControl.setValue(false, { emitEvent: false });
+    this.sortControl.setValue(null, { emitEvent: false });
     this.page = 0;
     this.load();
   }
