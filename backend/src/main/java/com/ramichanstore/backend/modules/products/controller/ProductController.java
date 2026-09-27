@@ -49,6 +49,13 @@ public class ProductController {
         return ApiResponse.ok(productService.findDistinctFranchises());
     }
 
+    /** Búsqueda por código escaneado con la cámara (código de barras de fábrica o SKU de la etiqueta propia). */
+    @GetMapping("/lookup")
+    @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
+    public ApiResponse<ProductResponse> lookupByCode(@RequestParam String code) {
+        return ApiResponse.ok(productService.findByCode(code));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('PERM_PRODUCT_VIEW')")
     public ApiResponse<ProductResponse> findById(@PathVariable Long id) {

@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -18,6 +18,8 @@ import { resolveImageUrl } from '../../../core/utils/image-url';
 import { parseIsoDate } from '../../../core/utils/date';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductService } from '../../../core/services/product.service';
+import { BarcodeScannerDialogComponent } from '../../../shared/components/barcode-scanner-dialog/barcode-scanner-dialog';
+import { PrintLabelDialogComponent } from '../../../shared/components/print-label-dialog/print-label-dialog';
 
 export interface ProductFormData {
   product: Product | null;
@@ -52,6 +54,7 @@ export class ProductFormComponent {
   private readonly catalogService = inject(CatalogService);
   private readonly productService = inject(ProductService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<ProductFormComponent>);
   readonly data = inject<ProductFormData>(MAT_DIALOG_DATA);
 
@@ -78,6 +81,7 @@ export class ProductFormComponent {
   readonly resolveImageUrl = resolveImageUrl;
 
   readonly form = this.fb.group({
+    barcode: [this.isDuplicate ? '' : (this.prefill?.barcode ?? '')],
     name: [this.prefill?.name ?? '', [Validators.required, Validators.maxLength(200)]],
     characterName: [this.prefill?.characterName ?? ''],
     franchise: [this.prefill?.franchise ?? ''],
@@ -162,6 +166,7 @@ export class ProductFormComponent {
 
     const v = this.form.getRawValue();
     const request: ProductRequest = {
+      barcode: v.barcode || null,
       name: v.name!,
       characterName: v.characterName || null,
       franchise: v.franchise || null,
@@ -277,6 +282,30 @@ export class ProductFormComponent {
 
   close(): void {
     this.dialogRef.close(this.changed());
+  }
+
+  /** Escanea el código de FÁBRICA de la caja (una sola vez, al recibir el producto) y lo precarga en el campo. */
+  scanBarcode(): void {
+    const ref = this.dialog.open<BarcodeScannerDialogComponent, void, string | null>(BarcodeScannerDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+    });
+    ref.afterClosed().subscribe((code) => {
+      if (code) {
+        this.form.controls.barcode.setValue(code);
+      }
+    });
+  }
+
+  /** Solo disponible con el producto ya guardado (necesita un SKU real para codificar). */
+  printLabel(): void {
+    const product = this.product();
+    if (!product) return;
+    this.dialog.open(PrintLabelDialogComponent, {
+      data: { sku: product.sku, name: product.name, salePrice: product.salePrice },
+      width: '600px',
+      maxWidth: '95vw',
+    });
   }
 
   private toIsoDate(date: Date): string {

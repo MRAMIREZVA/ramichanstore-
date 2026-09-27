@@ -22,6 +22,7 @@ import java.time.LocalDate;
  */
 public record ProductRequest(
         @Size(max = 50) String sku,
+        @Size(max = 64) String barcode,
         @NotBlank(message = "El nombre es obligatorio") @Size(max = 200) String name,
         @Size(max = 150) String characterName,
         @Size(max = 150) String franchise,

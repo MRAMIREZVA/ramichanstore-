@@ -78,6 +78,18 @@ public class ProductService {
     }
 
     /**
+     * Búsqueda por código escaneado (cámara del celular, ver BarcodeScannerDialog): prueba primero
+     * el código de barras de fábrica y luego el SKU, para que un solo flujo de escaneo sirva tanto
+     * para una caja con EAN de fábrica como para la etiqueta propia impresa desde el admin.
+     */
+    @Transactional(readOnly = true)
+    public ProductResponse findByCode(String code) {
+        Product product = productRepository.findFirstByBarcodeIgnoreCaseOrSkuIgnoreCase(code, code)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró ningún producto con el código \"" + code + "\""));
+        return ProductResponse.from(product);
+    }
+
+    /**
      * Para el catálogo público (sin login): mismos filtros que {@link #search}, pero nunca
      * incluye descontinuados ni agotados (un producto sin stock no es una vitrina útil para
      * un visitante que no puede comprarlo). {@code onlyPreorder} agrega el filtro "Solo preventas".
@@ -184,6 +196,7 @@ public class ProductService {
     }
 
     private void applyRequest(Product product, ProductRequest request) {
+        product.setBarcode(StringUtils.hasText(request.barcode()) ? request.barcode().trim() : null);
         product.setName(request.name());
         product.setCharacterName(request.characterName());
         product.setFranchise(request.franchise());

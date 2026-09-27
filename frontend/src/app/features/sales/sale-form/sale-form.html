@@ -110,6 +110,10 @@
             </mat-autocomplete>
           </mat-form-field>
 
+          <button mat-icon-button type="button" matTooltip="Escanear código" (click)="scanProduct(i)">
+            <mat-icon>qr_code_scanner</mat-icon>
+          </button>
+
           <mat-form-field appearance="outline" class="qty-field">
             <mat-label>Cant.</mat-label>
             <input matInput type="number" [value]="line.quantity" (input)="updateLine(i, { quantity: +$any($event.target).value })" />

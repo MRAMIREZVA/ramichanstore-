@@ -73,6 +73,21 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+.barcode-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .barcode-field {
+    flex: 1 1 260px;
+  }
+
+  button {
+    margin-top: 8px;
+  }
+}
+
 .image-gallery {
   display: flex;
   flex-wrap: wrap;

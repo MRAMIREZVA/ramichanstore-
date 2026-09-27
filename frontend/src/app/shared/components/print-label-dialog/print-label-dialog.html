@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>Imprimir etiqueta</h2>
+
+<mat-dialog-content>
+  <mat-form-field appearance="outline" class="copies-field">
+    <mat-label>Cantidad de copias</mat-label>
+    <input matInput type="number" min="1" max="50" [ngModel]="copies()" (ngModelChange)="setCopies($event)" />
+  </mat-form-field>
+
+  <div class="print-label-area">
+    @for (i of labelIndexes(); track i) {
+      <div class="label">
+        <span class="label-name">{{ data.name }}</span>
+        <svg #barcodeSvg></svg>
+        <span class="label-price">S/ {{ data.salePrice.toFixed(2) }}</span>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+  <button mat-flat-button color="primary" (click)="print()">
+    <mat-icon>print</mat-icon>
+    Imprimir
+  </button>
+</mat-dialog-actions>

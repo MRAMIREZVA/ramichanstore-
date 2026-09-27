@@ -44,6 +44,11 @@ export class ProductService {
     return this.http.get<ApiResponse<Product>>(`${this.baseUrl}/${id}`);
   }
 
+  /** Búsqueda por código escaneado con la cámara — código de barras de fábrica o SKU (ver BarcodeScannerDialog). */
+  findByCode(code: string): Observable<ApiResponse<Product>> {
+    return this.http.get<ApiResponse<Product>>(`${this.baseUrl}/lookup`, { params: { code } });
+  }
+
   create(request: ProductRequest): Observable<ApiResponse<Product>> {
     return this.http.post<ApiResponse<Product>>(this.baseUrl, request);
   }

@@ -3,13 +3,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { Customer } from '../../../core/models/customer.model';
 import { Product } from '../../../core/models/product.model';
@@ -27,6 +28,7 @@ import {
 import { CustomerService } from '../../../core/services/customer.service';
 import { ProductService } from '../../../core/services/product.service';
 import { SaleService } from '../../../core/services/sale.service';
+import { BarcodeScannerDialogComponent } from '../../../shared/components/barcode-scanner-dialog/barcode-scanner-dialog';
 
 interface SaleLineDraft {
   product: Product | null;
@@ -63,6 +65,7 @@ function emptyLine(): SaleLineDraft {
     MatDatepickerModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
   ],
   templateUrl: './sale-form.html',
   styleUrl: './sale-form.scss',
@@ -73,6 +76,7 @@ export class SaleFormComponent {
   private readonly customerService = inject(CustomerService);
   private readonly saleService = inject(SaleService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<SaleFormComponent>);
 
   readonly typeOptions = Object.entries(SALE_TYPE_LABELS) as [SaleType, string][];
@@ -177,6 +181,21 @@ export class SaleFormComponent {
       productSearchTerm: this.productLabel(product),
       productOptions: [],
       unitPrice: product.salePrice,
+    });
+  }
+
+  /** Escanea el código de la caja (de fábrica o SKU propio) para agregar el producto sin escribir. */
+  scanProduct(index: number): void {
+    const ref = this.dialog.open<BarcodeScannerDialogComponent, void, string | null>(BarcodeScannerDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+    });
+    ref.afterClosed().subscribe((code) => {
+      if (!code) return;
+      this.productService.findByCode(code).subscribe({
+        next: (res) => this.onProductSelected(index, res.data),
+        error: () => this.snackBar.open(`No se encontró ningún producto con el código "${code}"`, 'Cerrar', { duration: 4000 }),
+      });
     });
   }
 

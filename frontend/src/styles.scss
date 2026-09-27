@@ -95,3 +95,24 @@ body.catalog-scope .mat-mdc-dialog-title,
 body.portal-scope .mat-mdc-dialog-title {
   font-family: 'Poppins', 'Inter', Roboto, sans-serif;
 }
+
+// Impresión de etiquetas de producto (Fase 42, PrintLabelDialog): el diálogo vive en el
+// cdk-overlay-container, colgado de <body> — por eso esta regla es global, no del SCSS
+// del componente (view encapsulation no la alcanzaría). Oculta TODO menos .print-label-area
+// al imprimir, y la reposiciona a partir del borde de la hoja (si no, imprimiría en blanco
+// donde el diálogo la centraba en pantalla).
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-label-area,
+  .print-label-area * {
+    visibility: visible;
+  }
+  .print-label-area {
+    position: fixed;
+    inset: 0;
+    max-height: none;
+    overflow: visible;
+  }
+}

@@ -36,6 +36,25 @@
           </mat-autocomplete>
         </mat-form-field>
       </div>
+      <div class="barcode-row">
+        <mat-form-field appearance="outline" class="barcode-field">
+          <mat-label>Código de barras (de fábrica, opcional)</mat-label>
+          <input matInput formControlName="barcode" placeholder="Escanéalo o escríbelo a mano" />
+        </mat-form-field>
+        <button mat-stroked-button type="button" (click)="scanBarcode()">
+          <mat-icon>qr_code_scanner</mat-icon>
+          Escanear
+        </button>
+        @if (product()) {
+          <button mat-stroked-button type="button" (click)="printLabel()">
+            <mat-icon>print</mat-icon>
+            Imprimir etiqueta
+          </button>
+        }
+      </div>
+      @if (!product()) {
+        <p class="hint">Guarda el producto primero para poder imprimir su etiqueta (necesita el SKU ya generado).</p>
+      }
 
       <h3 class="section-title">Clasificación</h3>
       <div class="grid-3">

@@ -4,10 +4,16 @@
       <h1>Productos</h1>
       <p>Catálogo de figuras y coleccionables — costos, precios y stock.</p>
     </div>
-    <button mat-flat-button color="primary" (click)="openCreate()">
-      <mat-icon>add</mat-icon>
-      Nuevo producto
-    </button>
+    <div class="header-actions">
+      <button mat-stroked-button color="primary" (click)="scanToFind()">
+        <mat-icon>qr_code_scanner</mat-icon>
+        Escanear
+      </button>
+      <button mat-flat-button color="primary" (click)="openCreate()">
+        <mat-icon>add</mat-icon>
+        Nuevo producto
+      </button>
+    </div>
   </header>
 
   <div class="filters">

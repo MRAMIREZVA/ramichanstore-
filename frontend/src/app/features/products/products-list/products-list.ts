@@ -19,6 +19,7 @@ import { resolveImageUrl } from '../../../core/utils/image-url';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ProductFilters, ProductService } from '../../../core/services/product.service';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { BarcodeScannerDialogComponent } from '../../../shared/components/barcode-scanner-dialog/barcode-scanner-dialog';
 import { ProductFormComponent, ProductFormData } from '../product-form/product-form';
 
 @Component({
@@ -170,6 +171,21 @@ export class ProductsList implements OnInit {
 
   openCreate(): void {
     this.openForm(null);
+  }
+
+  /** Escanea un código (de fábrica o SKU propio) y abre directo la ficha del producto encontrado. */
+  scanToFind(): void {
+    const ref = this.dialog.open<BarcodeScannerDialogComponent, void, string | null>(BarcodeScannerDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+    });
+    ref.afterClosed().subscribe((code) => {
+      if (!code) return;
+      this.productService.findByCode(code).subscribe({
+        next: (res) => this.openForm(res.data),
+        error: () => this.snackBar.open(`No se encontró ningún producto con el código "${code}"`, 'Cerrar', { duration: 4000 }),
+      });
+    });
   }
 
   openEdit(product: Product): void {

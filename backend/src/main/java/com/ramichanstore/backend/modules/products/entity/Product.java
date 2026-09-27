@@ -36,6 +36,10 @@ public class Product extends BaseEntity {
     @Column(nullable = false, unique = true, length = 50)
     private String sku;
 
+    /** Código de barras de FÁBRICA (EAN/JAN de la caja), distinto del SKU interno — ver V38. */
+    @Column(length = 64)
+    private String barcode;
+
     @Column(nullable = false, length = 200)
     private String name;
 
