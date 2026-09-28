@@ -1,7 +1,7 @@
-@if (showYapeSuccess()) {
+@if (showPaySuccess()) {
   <div class="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
     <mat-icon class="!h-14 !w-14 !text-[56px] text-rs-ok">check_circle</mat-icon>
-    <h1 class="font-display mt-2 text-2xl font-extrabold text-rs-ink">¡Pago con Yape exitoso!</h1>
+    <h1 class="font-display mt-2 text-2xl font-extrabold text-rs-ink">¡Pago exitoso!</h1>
     <p class="mb-2 text-sm text-rs-ink-soft">
       Tu pago quedó confirmado y tu compra ya se registró
       @if (convertedSaleId()) { como la venta #{{ convertedSaleId() }} }
@@ -9,37 +9,37 @@
     </p>
     <a mat-button class="!rounded-xl" routerLink="/catalogo">Volver al catálogo</a>
   </div>
-} @else if (showYapeWidget()) {
+} @else if (showPayWidget()) {
   <div class="mx-auto max-w-md rounded-3xl border border-rs-border bg-rs-surface p-6 shadow-sm sm:p-8">
-    <h1 class="font-display mb-4 text-xl font-extrabold text-rs-ink">Pago con Yape</h1>
+    <h1 class="font-display mb-4 text-xl font-extrabold text-rs-ink">Pago con tarjeta</h1>
 
-    @if (yapeStage() === 'starting') {
+    @if (payStage() === 'starting') {
       <div class="flex flex-col items-center gap-3 py-10 text-center text-rs-ink-soft">
         <mat-spinner diameter="32" />
         <p>Preparando el pago...</p>
       </div>
     }
 
-    <div id="kr-payment-form" [style.display]="yapeStage() === 'widget' ? 'block' : 'none'">
+    <div id="kr-payment-form" [style.display]="payStage() === 'widget' ? 'block' : 'none'">
       <div class="kr-smart-form"></div>
     </div>
 
-    @if (yapeStage() === 'confirming') {
+    @if (payStage() === 'confirming') {
       <div class="flex flex-col items-center gap-3 py-10 text-center text-rs-ink-soft">
         <mat-spinner diameter="32" />
         <p>Confirmando tu pago...</p>
       </div>
     }
 
-    @if (yapeStage() === 'failed') {
+    @if (payStage() === 'failed') {
       <div class="flex flex-col items-center gap-3 py-8 text-center">
         <mat-icon class="text-rs-urgent">error_outline</mat-icon>
-        <p class="text-sm text-rs-ink-soft">{{ yapeErrorMessage() }}</p>
+        <p class="text-sm text-rs-ink-soft">{{ payErrorMessage() }}</p>
         <button mat-stroked-button color="primary" class="!rounded-xl" (click)="retryWithWhatsApp()">Coordinar por WhatsApp</button>
       </div>
     }
 
-    @if (yapeStage() === 'delayed') {
+    @if (payStage() === 'delayed') {
       <div class="flex flex-col items-center gap-3 py-8 text-center text-rs-ink-soft">
         <mat-icon>schedule</mat-icon>
         <p class="text-sm">Tu pago fue aprobado y estamos terminando de confirmar tu pedido — puede tardar unos segundos más.</p>
@@ -193,8 +193,8 @@
       }
 
       <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-rs-ink">Pago</h2>
-      @if (selectedPaymentMethod() === 'YAPE') {
-        <p class="-mt-1 text-xs text-rs-ink-soft">Pagarás en línea con Yape, al instante, aquí mismo en la página.</p>
+      @if (paysOnline()) {
+        <p class="-mt-1 text-xs text-rs-ink-soft">Pagarás en línea con tu tarjeta, al instante, aquí mismo en la página.</p>
       } @else {
         <p class="-mt-1 text-xs text-rs-ink-soft">Elige cómo prefieres pagar — coordinaremos el pago real contigo por WhatsApp.</p>
       }

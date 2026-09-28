@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * Credenciales de Izipay (pago con Yape en el checkout, Fase 37) — ver `application.yml` (app.izipay.*)
+ * Credenciales de Izipay (pago en línea en el checkout, Fase 37) — ver `application.yml` (app.izipay.*)
  * y CLAUDE.md sección 7. Nunca hardcodear valores reales acá; vienen de application-local.yml
  * (gitignored) o de las variables de entorno IZIPAY_* en producción.
  */
@@ -22,7 +22,7 @@ public class IzipayProperties {
     private String hmacSha256Key;
     private String apiBaseUrl = "https://api.micuentaweb.pe";
 
-    /** El botón de Yape en el carrito solo debe ofrecerse si las 4 credenciales están configuradas. */
+    /** El pago en línea del checkout solo debe ofrecerse si las 4 credenciales están configuradas. */
     public boolean isConfigured() {
         return StringUtils.hasText(username)
                 && StringUtils.hasText(password)

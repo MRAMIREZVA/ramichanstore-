@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Pago con Yape vía Izipay en el checkout del catálogo (Fase 37) — ambos endpoints son públicos a
+ * Pago en línea vía Izipay en el checkout del catálogo (Fase 37) — ambos endpoints son públicos a
  * propósito (ver SecurityConfig, permitAll para "/api/payments/izipay/**"): `form-token` lo llama
  * el propio checkout sin login, e `ipn` lo llama el servidor de Izipay directo, nunca un navegador.
  */
