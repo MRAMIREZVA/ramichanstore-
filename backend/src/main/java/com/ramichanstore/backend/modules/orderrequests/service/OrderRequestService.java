@@ -19,6 +19,9 @@ import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestItem;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestType;
 import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRepository;
+import com.ramichanstore.backend.modules.payments.entity.IzipayTransaction;
+import com.ramichanstore.backend.modules.payments.entity.IzipayTransactionStatus;
+import com.ramichanstore.backend.modules.payments.repository.IzipayTransactionRepository;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.entity.Preorder;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
@@ -34,15 +37,20 @@ import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.SaleType;
 import com.ramichanstore.backend.modules.sales.service.SaleService;
 import com.ramichanstore.backend.security.SecurityUser;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Pedidos enviados desde el carrito del catálogo público (Fase 18). `submit`
@@ -58,6 +66,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderRequestService {
 
     private static final String MODULE = "ORDER_REQUESTS";
+    /** Mismos límites que las imágenes de producto (ver ProductImageService, sección 6.1 de CLAUDE.md). */
+    private static final long MAX_VOUCHER_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final List<String> ALLOWED_VOUCHER_TYPES =
+            List.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
     private final OrderRequestRepository orderRequestRepository;
     private final ProductService productService;
@@ -67,6 +79,7 @@ public class OrderRequestService {
     private final DeliveryAgencyService deliveryAgencyService;
     private final PreorderRepository preorderRepository;
     private final PreorderService preorderService;
+    private final IzipayTransactionRepository izipayTransactionRepository;
     private final AuditService auditService;
 
     @Transactional
@@ -136,12 +149,25 @@ public class OrderRequestService {
         Page<OrderRequest> page = status != null
                 ? orderRequestRepository.findByStatus(status, pageable)
                 : orderRequestRepository.findAll(pageable);
-        return page.map(OrderRequestResponse::from);
+        return page.map(o -> OrderRequestResponse.from(o, onlinePaymentStatus(o.getId())));
     }
 
     @Transactional(readOnly = true)
     public OrderRequestResponse findResponseById(Long id) {
-        return OrderRequestResponse.from(findById(id));
+        OrderRequest orderRequest = findById(id);
+        return OrderRequestResponse.from(orderRequest, onlinePaymentStatus(id));
+    }
+
+    /**
+     * Resultado del último intento de pago en línea del pedido, o null si nunca hubo uno — el caso
+     * normal, porque un pedido web nace solo "enviado" (Fase 53). Se inyecta el REPOSITORIO de
+     * pagos y no su service a propósito: `IzipayService` ya depende de este service, así que
+     * inyectarlo de vuelta crearía un ciclo de beans.
+     */
+    private IzipayTransactionStatus onlinePaymentStatus(Long orderRequestId) {
+        return izipayTransactionRepository.findTopByOrderRequestIdOrderByCreatedAtDesc(orderRequestId)
+                .map(IzipayTransaction::getStatus)
+                .orElse(null);
     }
 
     /**
@@ -166,6 +192,60 @@ public class OrderRequestService {
     @Transactional(readOnly = true)
     public OrderRequest findById(Long id) {
         return orderRequestRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Pedido web", id));
+    }
+
+    /**
+     * El cliente sube la captura de su pago con Yape (Fase 52). Es una operación PÚBLICA —
+     * quien acaba de hacer el pedido no tiene sesión — así que exige el teléfono del pedido
+     * como prueba de pertenencia: los ids son correlativos y sin esto cualquiera podría
+     * adjuntarle un comprobante al pedido de otra persona. Mismo criterio y mismo 404
+     * indistinto que {@link #findPublicByIdAndPhone} (nunca revela si el pedido existe).
+     * <p>
+     * Solo se acepta sobre un pedido PENDIENTE: una vez que el admin lo convirtió o rechazó,
+     * el comprobante ya no cambia nada y solo serviría para confundir.
+     */
+    @Transactional
+    public void attachPaymentVoucher(Long id, String phone, MultipartFile file) {
+        OrderRequest orderRequest = orderRequestRepository.findById(id)
+                .filter(o -> o.getGuestPhone() != null && o.getGuestPhone().trim().equalsIgnoreCase(phone.trim()))
+                .orElseThrow(() -> ResourceNotFoundException.of("Pedido web", id));
+
+        if (orderRequest.getStatus() != OrderRequestStatus.PENDING) {
+            throw new BusinessRuleException("Este pedido ya fue procesado, no se le puede adjuntar un comprobante");
+        }
+        if (file.isEmpty()) {
+            throw new BusinessRuleException("El archivo está vacío");
+        }
+        if (file.getSize() > MAX_VOUCHER_SIZE_BYTES) {
+            throw new BusinessRuleException("La imagen no debe superar 5MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_VOUCHER_TYPES.contains(contentType.toLowerCase())) {
+            throw new BusinessRuleException("Formato no soportado (usa JPG, PNG, WEBP o GIF)");
+        }
+
+        try {
+            orderRequest.setPaymentVoucherData(file.getBytes());
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el comprobante", e);
+        }
+        orderRequest.setPaymentVoucherFileName(file.getOriginalFilename());
+        orderRequest.setPaymentVoucherContentType(contentType);
+        orderRequest.setPaymentVoucherUploadedAt(LocalDateTime.now());
+        orderRequestRepository.save(orderRequest);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "OrderRequest.paymentVoucher", id.toString(),
+                null, "comprobante de pago subido por el cliente");
+    }
+
+    /** Sirve el comprobante al admin (nunca público: es un dato de pago de un cliente). */
+    @Transactional(readOnly = true)
+    public OrderRequest findWithVoucher(Long id) {
+        OrderRequest orderRequest = findById(id);
+        if (orderRequest.getPaymentVoucherData() == null) {
+            throw ResourceNotFoundException.of("Comprobante del pedido web", id);
+        }
+        return orderRequest;
     }
 
     @Transactional

@@ -24,7 +24,19 @@ import { whatsAppLink } from '../../../core/utils/whatsapp';
  *  sandbox y producción, solo las credenciales cambian (ver IzipayProperties en el backend). */
 const IZIPAY_STATIC_ENDPOINT = 'https://static.micuentaweb.pe';
 
-type YapeStage = 'idle' | 'starting' | 'widget' | 'confirming' | 'confirmed' | 'failed' | 'delayed' | 'unavailable';
+/**
+ * Métodos de pago que abren el formulario de pago en línea de Izipay. Hoy solo TARJETA:
+ * se verificó contra la API real (decodificando el formToken que devuelve Izipay) que
+ * esta cuenta tiene habilitadas ÚNICAMENTE tarjetas — `categories.debitCreditCards`
+ * con VISA/MASTERCARD/AMEX/DINERS, y ni rastro de Yape. Ofrecer el widget a quien elige
+ * "Yape" le mostraría un formulario de tarjeta, que es peor que no ofrecerlo.
+ *
+ * Cuando Izipay active Yape en la cuenta (trámite comercial, no de código), basta agregar
+ * 'YAPE' a esta lista: el mismo widget muestra los métodos que la cuenta tenga habilitados.
+ */
+const ONLINE_PAYMENT_METHODS: PaymentMethod[] = ['TARJETA'];
+
+type OnlinePayStage = 'idle' | 'starting' | 'widget' | 'confirming' | 'confirmed' | 'failed' | 'delayed' | 'unavailable';
 
 const MAX_POLL_ATTEMPTS = 15; // ~30s a 2s de intervalo, esperando la confirmación IPN
 
@@ -33,17 +45,18 @@ const MAX_POLL_ATTEMPTS = 15; // ~30s a 2s de intervalo, esperando la confirmaci
  * + método de entrega + método de pago preferido y envía el pedido como una
  * "solicitud pendiente" (OrderRequestService.submit) — NO es una venta real
  * todavía, el admin la revisa en Pedidos → "Pedidos web", SALVO que el cliente
- * elija Yape (Fase 37): ahí se paga en línea de inmediato con Izipay dentro de
- * esta misma página y, apenas Izipay confirma el pago por IPN al backend, el
- * pedido se convierte solo en una venta real (ver IzipayService.handleIpn).
+ * elija un método de ONLINE_PAYMENT_METHODS (hoy, tarjeta): ahí se paga en línea
+ * de inmediato con Izipay dentro de esta misma página y, apenas Izipay confirma el
+ * pago por IPN al backend, el pedido se convierte solo en una venta real (ver
+ * IzipayService.handleIpn).
  *
  * El carrito puede traer productos en stock y en preventa mezclados (el
  * bloqueo de CartService se quitó): acá se separan en 2 `submit()` distintos
  * (uno homogéneo STOCK, otro homogéneo PREORDER — el backend nunca acepta un
  * pedido mixto) para que cada uno se convierta después por su cuenta: STOCK
- * en una venta, PREORDER en reserva(s) — ver "Pedidos web" en el admin. Yape
- * (pago en línea) solo se ofrece cuando hay un único pedido 100% en stock; un
- * carrito mixto o 100% preventa siempre cae al flujo de WhatsApp.
+ * en una venta, PREORDER en reserva(s) — ver "Pedidos web" en el admin. El pago
+ * en línea solo se ofrece cuando hay un único pedido 100% en stock; un carrito
+ * mixto o 100% preventa siempre cae al flujo de WhatsApp.
  */
 @Component({
   selector: 'app-checkout-page',
@@ -83,17 +96,34 @@ export class CheckoutPage implements OnInit {
   readonly whatsAppUrl = signal<string | null>(null);
   readonly storeHasWhatsapp = signal(true);
 
-  readonly yapeStage = signal<YapeStage>('idle');
-  readonly yapeErrorMessage = signal<string | null>(null);
+  // Pago con Yape por comprobante (Fase 52) — se muestra en la pantalla de confirmación
+  // cuando el cliente eligió Yape y la tienda tiene un número configurado.
+  readonly yapeNumber = signal<string | null>(null);
+  readonly yapeHolderName = signal<string | null>(null);
+  readonly voucherUploading = signal(false);
+  readonly voucherUploaded = signal(false);
+  readonly voucherError = signal<string | null>(null);
+  readonly showYapeBox = computed(() => {
+    const orders = this.submittedOrders();
+    // Solo con UN pedido: un carrito mixto genera dos y el monto a yapear sería ambiguo.
+    return orders.length === 1 && orders[0].preferredPaymentMethod === 'YAPE' && !!this.yapeNumber();
+  });
+
+  readonly payStage = signal<OnlinePayStage>('idle');
+  readonly payErrorMessage = signal<string | null>(null);
   readonly convertedSaleId = signal<number | null>(null);
   private themeAssetsLoaded = false;
   private pollAttempts = 0;
 
-  readonly showYapeWidget = computed(() =>
-    this.submittedOrder()?.preferredPaymentMethod === 'YAPE' &&
-    ['starting', 'widget', 'confirming', 'failed', 'delayed'].includes(this.yapeStage()),
-  );
-  readonly showYapeSuccess = computed(() => this.yapeStage() === 'confirmed');
+  readonly showPayWidget = computed(() => {
+    const method = this.submittedOrder()?.preferredPaymentMethod;
+    return (
+      !!method &&
+      ONLINE_PAYMENT_METHODS.includes(method) &&
+      ['starting', 'widget', 'confirming', 'failed', 'delayed'].includes(this.payStage())
+    );
+  });
+  readonly showPaySuccess = computed(() => this.payStage() === 'confirmed');
 
   readonly form = this.fb.group({
     guestName: ['', [Validators.required, Validators.maxLength(200)]],
@@ -121,6 +151,8 @@ export class CheckoutPage implements OnInit {
   });
   private readonly deliveryMethodValue = signal<DeliveryMethod>('PICKUP');
   readonly selectedPaymentMethod = signal<PaymentMethod>('YAPE');
+  /** Si el método elegido se cobra en línea acá mismo (ver ONLINE_PAYMENT_METHODS) o se coordina por WhatsApp. */
+  readonly paysOnline = computed(() => ONLINE_PAYMENT_METHODS.includes(this.selectedPaymentMethod()));
   readonly deliveryAgencies = signal<DeliveryAgency[]>([]);
   readonly departments = PERU_DEPARTMENTS;
 
@@ -202,8 +234,8 @@ export class CheckoutPage implements OnInit {
     this.saving.set(true);
     if (stockLines.length > 0 && preorderLines.length > 0) {
       // Carrito mixto: el backend nunca acepta un pedido con ambos tipos — se envían
-      // como 2 pedidos web separados. Sin pago en línea acá (Yape solo aplica a un
-      // pedido 100% en stock): ambos quedan pendientes y se coordina todo por WhatsApp.
+      // como 2 pedidos web separados. Sin pago en línea acá (solo aplica a un pedido
+      // 100% en stock): ambos quedan pendientes y se coordina todo por WhatsApp.
       forkJoin([this.orderRequestService.submit(buildRequest(stockLines)), this.orderRequestService.submit(buildRequest(preorderLines))]).subscribe({
         next: ([stockRes, preorderRes]) => {
           this.saving.set(false);
@@ -219,9 +251,9 @@ export class CheckoutPage implements OnInit {
           this.saving.set(false);
           this.submittedOrders.set([res.data]);
           this.cartService.clear();
-          if (res.data.preferredPaymentMethod === 'YAPE' && res.data.requestType === 'STOCK') {
+          if (ONLINE_PAYMENT_METHODS.includes(res.data.preferredPaymentMethod) && res.data.requestType === 'STOCK') {
             this.submittedOrder.set(res.data);
-            this.startYapePayment(res.data);
+            this.startOnlinePayment(res.data);
           } else {
             this.buildWhatsAppLink([res.data]);
           }
@@ -231,27 +263,27 @@ export class CheckoutPage implements OnInit {
     }
   }
 
-  /** El cliente eligió pagar por otro medio en vez de esperar/reintentar el widget de Yape. */
+  /** El cliente eligió pagar por otro medio en vez de esperar/reintentar el pago en línea. */
   retryWithWhatsApp(): void {
     const order = this.submittedOrder();
     if (!order) return;
-    this.yapeStage.set('unavailable');
+    this.payStage.set('unavailable');
     this.buildWhatsAppLink([order]);
   }
 
-  private startYapePayment(order: OrderRequest): void {
-    this.yapeStage.set('starting');
+  private startOnlinePayment(order: OrderRequest): void {
+    this.payStage.set('starting');
     this.paymentService.createFormToken(order.id).subscribe({
       next: (res) => {
-        this.yapeStage.set('widget');
+        this.payStage.set('widget');
         // El contenedor #kr-payment-form recién existe en el DOM tras el cambio de señal de arriba.
         setTimeout(() => this.loadKryptonWidget(res.data.formToken, res.data.publicKey), 0);
       },
       error: () => {
-        // El pago en línea con Yape no está disponible todavía (ej. Izipay sin configurar, o este
-        // pedido es de preventa — ver IzipayService.createFormToken) — caemos sin fricción al
-        // flujo de siempre: declarar preferencia y coordinar por WhatsApp.
-        this.yapeStage.set('unavailable');
+        // El pago en línea no está disponible (ej. Izipay sin configurar, o este pedido es de
+        // preventa — ver IzipayService.createFormToken) — caemos sin fricción al flujo de
+        // siempre: declarar preferencia y coordinar por WhatsApp.
+        this.payStage.set('unavailable');
         this.buildWhatsAppLink([order]);
       },
     });
@@ -264,11 +296,11 @@ export class CheckoutPage implements OnInit {
       await KR.setFormConfig({ formToken, 'kr-language': 'es-ES' });
       await KR.renderElements('#kr-payment-form');
       await KR.onSubmit((response) => {
-        this.handleYapeSubmit(response.rawClientAnswer, response.hash, response.clientAnswer?.orderStatus);
+        this.handlePaySubmit(response.rawClientAnswer, response.hash, response.clientAnswer?.orderStatus);
         return false; // controlamos nosotros la pantalla de resultado, no dejamos que el widget redirija
       });
     } catch {
-      this.yapeStage.set('unavailable');
+      this.payStage.set('unavailable');
       const order = this.submittedOrder();
       if (order) this.buildWhatsAppLink([order]);
     }
@@ -286,13 +318,13 @@ export class CheckoutPage implements OnInit {
     this.renderer.appendChild(document.head, script);
   }
 
-  private handleYapeSubmit(krAnswer: string, krHash: string, orderStatus: string | undefined): void {
-    this.yapeStage.set('confirming');
+  private handlePaySubmit(krAnswer: string, krHash: string, orderStatus: string | undefined): void {
+    this.payStage.set('confirming');
     this.paymentService.validate(krAnswer, krHash).subscribe({
       next: (res) => {
         if (!res.data || orderStatus !== 'PAID') {
-          this.yapeStage.set('failed');
-          this.yapeErrorMessage.set(
+          this.payStage.set('failed');
+          this.payErrorMessage.set(
             'El pago no se pudo completar. Puedes intentarlo de nuevo o coordinar el pago por WhatsApp.',
           );
           return;
@@ -301,9 +333,9 @@ export class CheckoutPage implements OnInit {
         this.pollOrderStatus();
       },
       error: () => {
-        this.yapeStage.set('failed');
-        this.yapeErrorMessage.set(
-          'No se pudo verificar el pago. Si Yape ya te descontó el monto, escríbenos por WhatsApp.',
+        this.payStage.set('failed');
+        this.payErrorMessage.set(
+          'No se pudo verificar el pago. Si ya te hicieron el cobro, escríbenos por WhatsApp.',
         );
       },
     });
@@ -316,7 +348,7 @@ export class CheckoutPage implements OnInit {
     this.orderRequestService.getStatus(order.id).subscribe({
       next: (res) => {
         if (res.data.status === 'CONVERTED') {
-          this.yapeStage.set('confirmed');
+          this.payStage.set('confirmed');
           this.convertedSaleId.set(res.data.convertedSaleId);
           return;
         }
@@ -328,17 +360,46 @@ export class CheckoutPage implements OnInit {
 
   private continuePollingOrGiveUp(order: OrderRequest): void {
     if (this.pollAttempts >= MAX_POLL_ATTEMPTS) {
-      this.yapeStage.set('delayed');
+      this.payStage.set('delayed');
       this.buildWhatsAppLink([order]);
       return;
     }
     setTimeout(() => this.pollOrderStatus(), 2000);
   }
 
+  copyYapeNumber(): void {
+    const number = this.yapeNumber();
+    if (number) navigator.clipboard?.writeText(number);
+  }
+
+  /** El cliente sube la captura de su pago con Yape (Fase 52). */
+  onVoucherSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const order = this.submittedOrders()[0];
+    if (!file || !order) return;
+
+    this.voucherUploading.set(true);
+    this.voucherError.set(null);
+    this.orderRequestService.uploadVoucher(order.id, this.form.controls.guestPhone.value ?? '', file).subscribe({
+      next: () => {
+        this.voucherUploading.set(false);
+        this.voucherUploaded.set(true);
+      },
+      error: () => {
+        this.voucherUploading.set(false);
+        this.voucherError.set('No se pudo subir la captura. Intenta de nuevo o envíanosla por WhatsApp.');
+      },
+    });
+    input.value = ''; // permite volver a elegir el mismo archivo si falló
+  }
+
   /** Uno o dos pedidos (carrito mixto, ver submit()) en un solo mensaje de WhatsApp. */
   private buildWhatsAppLink(orders: OrderRequest[]): void {
     this.catalogService.getStoreInfo().subscribe({
       next: (res) => {
+        this.yapeNumber.set(res.data.yapeNumber);
+        this.yapeHolderName.set(res.data.yapeHolderName);
         if (!res.data.whatsapp) {
           this.storeHasWhatsapp.set(false);
           return;

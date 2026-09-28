@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -96,6 +97,25 @@ public class OrderRequest extends BaseEntity {
 
     @Column(name = "converted_sale_id")
     private Long convertedSaleId;
+
+    /**
+     * Captura del pago con Yape que sube el propio cliente tras hacer el pedido (Fase 52).
+     * Binario en BD, mismo criterio que el resto de imágenes del proyecto (ver sección 6.1 de
+     * CLAUDE.md); va como columnas directas y no como tabla hija porque es UNA sola imagen
+     * por pedido. `LocalDateTime` y no `Instant`: Hibernate mapea Instant a DATETIMEOFFSET en
+     * SQL Server, no a DATETIME2 (lección de la Fase 23).
+     */
+    @Column(name = "payment_voucher_file_name", length = 255)
+    private String paymentVoucherFileName;
+
+    @Column(name = "payment_voucher_content_type", length = 100)
+    private String paymentVoucherContentType;
+
+    @Column(name = "payment_voucher_data")
+    private byte[] paymentVoucherData;
+
+    @Column(name = "payment_voucher_uploaded_at")
+    private LocalDateTime paymentVoucherUploadedAt;
 
     @OneToMany(mappedBy = "orderRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id")

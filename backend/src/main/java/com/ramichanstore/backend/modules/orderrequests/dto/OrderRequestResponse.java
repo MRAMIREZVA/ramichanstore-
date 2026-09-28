@@ -3,6 +3,7 @@ package com.ramichanstore.backend.modules.orderrequests.dto;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestType;
+import com.ramichanstore.backend.modules.payments.entity.IzipayTransactionStatus;
 import com.ramichanstore.backend.modules.sales.entity.DeliveryMethod;
 import com.ramichanstore.backend.modules.sales.entity.PaymentMethod;
 import java.math.BigDecimal;
@@ -19,9 +20,22 @@ public record OrderRequestResponse(
         String notes,
         List<OrderRequestItemResponse> items, BigDecimal total,
         OrderRequestType requestType, OrderRequestStatus status, String rejectionReason, Long convertedSaleId,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        /** Si el cliente subió la captura de su pago con Yape (Fase 52) — el binario se sirve aparte. */
+        boolean hasPaymentVoucher, LocalDateTime paymentVoucherUploadedAt,
+        /**
+         * Resultado del último intento de pago EN LÍNEA (Izipay) de este pedido, o null si nunca
+         * hubo uno — que es el caso normal: un pedido web nace solo "enviado", sin pago (Fase 53).
+         * Junto con {@code hasPaymentVoucher} es lo que le dice al admin si ya le pagaron.
+         */
+        IzipayTransactionStatus onlinePaymentStatus) {
 
+    /** Sin información de pago en línea (ej. el pedido recién creado, que por definición no la tiene). */
     public static OrderRequestResponse from(OrderRequest o) {
+        return from(o, null);
+    }
+
+    public static OrderRequestResponse from(OrderRequest o, IzipayTransactionStatus onlinePaymentStatus) {
         List<OrderRequestItemResponse> items = o.getItems().stream().map(OrderRequestItemResponse::from).toList();
         BigDecimal total = items.stream().map(OrderRequestItemResponse::subtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         var agency = o.getDeliveryAgency();
@@ -35,6 +49,8 @@ public record OrderRequestResponse(
                 o.getNotes(),
                 items, total,
                 o.getRequestType(), o.getStatus(), o.getRejectionReason(), o.getConvertedSaleId(),
-                o.getCreatedAt());
+                o.getCreatedAt(),
+                o.getPaymentVoucherData() != null, o.getPaymentVoucherUploadedAt(),
+                onlinePaymentStatus);
     }
 }

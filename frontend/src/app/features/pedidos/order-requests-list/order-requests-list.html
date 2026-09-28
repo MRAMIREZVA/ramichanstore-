@@ -46,8 +46,13 @@
       </ng-container>
 
       <ng-container matColumnDef="payment">
-        <th mat-header-cell *matHeaderCellDef>Pago preferido</th>
-        <td mat-cell *matCellDef="let o">{{ paymentMethodLabel(o.preferredPaymentMethod) }}</td>
+        <th mat-header-cell *matHeaderCellDef>Pago</th>
+        <td mat-cell *matCellDef="let o">
+          <div class="payment-cell">
+            <span>{{ paymentMethodLabel(o.preferredPaymentMethod) }}</span>
+            <span class="pay-chip" [attr.data-state]="paymentState(o)">{{ paymentStateLabel(o) }}</span>
+          </div>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="delivery">
@@ -70,6 +75,9 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let o">
+          <button mat-icon-button matTooltip="Ver detalle del pedido" (click)="openDetail(o)">
+            <mat-icon>visibility</mat-icon>
+          </button>
           <a
             mat-icon-button
             class="whatsapp-link"

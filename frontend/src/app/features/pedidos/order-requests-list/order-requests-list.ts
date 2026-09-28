@@ -13,15 +13,19 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../core/models/sale.model';
 import {
+  ORDER_PAYMENT_STATE_LABELS,
   ORDER_REQUEST_STATUS_LABELS,
   ORDER_REQUEST_TYPE_LABELS,
+  OrderPaymentState,
   OrderRequest,
   OrderRequestStatus,
   OrderRequestType,
+  orderPaymentState,
 } from '../../../core/models/order-request.model';
 import { OrderRequestFilters, OrderRequestService } from '../../../core/services/order-request.service';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { OrderRequestDetailComponent } from '../order-request-detail/order-request-detail';
 import { ConvertToReservationsDialogComponent, ConvertToReservationsDialogData } from '../convert-to-reservations-dialog/convert-to-reservations-dialog';
 import {
   RejectOrderRequestDialogComponent,
@@ -102,6 +106,19 @@ export class OrderRequestsList implements OnInit {
 
   itemsSummary(order: OrderRequest): string {
     return `${order.items.length} producto(s)`;
+  }
+
+  /** Detalle completo del pedido: qué productos pidió y si pagó (Fase 53). */
+  openDetail(order: OrderRequest): void {
+    this.dialog.open(OrderRequestDetailComponent, { data: order, maxWidth: '96vw' });
+  }
+
+  paymentState(order: OrderRequest): OrderPaymentState {
+    return orderPaymentState(order);
+  }
+
+  paymentStateLabel(order: OrderRequest): string {
+    return ORDER_PAYMENT_STATE_LABELS[orderPaymentState(order)];
   }
 
   /**

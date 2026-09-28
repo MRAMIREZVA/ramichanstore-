@@ -65,4 +65,8 @@ export interface StoreInfo {
   googleAnalyticsId: string | null;
   /** ID del Meta Pixel; null desactiva el tracking. */
   metaPixelId: string | null;
+  /** Número de Yape de la tienda (Fase 52); null hace que el checkout no ofrezca pagar por comprobante. */
+  yapeNumber: string | null;
+  /** Titular que le aparece al cliente al yapear, para que confirme antes de pagar. */
+  yapeHolderName: string | null;
 }

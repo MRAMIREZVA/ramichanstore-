@@ -102,4 +102,28 @@ export interface OrderRequest {
   rejectionReason: string | null;
   convertedSaleId: number | null;
   createdAt: string;
+  /** El cliente subió la captura de su pago con Yape (Fase 52); la imagen se pide aparte, autenticada. */
+  hasPaymentVoucher: boolean;
+  paymentVoucherUploadedAt: string | null;
+  /** Resultado del último intento de pago EN LÍNEA, o null si nunca hubo uno (lo normal: el pedido solo se envió). */
+  onlinePaymentStatus: OnlinePaymentStatus | null;
 }
+
+export type OnlinePaymentStatus = 'PENDING' | 'PAID' | 'UNPAID';
+
+/** Cómo llegó el dinero (o si no llegó) — derivado de los dos datos de pago que trae el pedido. */
+export type OrderPaymentState = 'PAID_ONLINE' | 'VOUCHER' | 'ATTEMPT_FAILED' | 'NONE';
+
+export function orderPaymentState(order: OrderRequest): OrderPaymentState {
+  if (order.onlinePaymentStatus === 'PAID') return 'PAID_ONLINE';
+  if (order.hasPaymentVoucher) return 'VOUCHER';
+  if (order.onlinePaymentStatus === 'UNPAID') return 'ATTEMPT_FAILED';
+  return 'NONE';
+}
+
+export const ORDER_PAYMENT_STATE_LABELS: Record<OrderPaymentState, string> = {
+  PAID_ONLINE: 'Pagado en línea',
+  VOUCHER: 'Comprobante por validar',
+  ATTEMPT_FAILED: 'Intento de pago fallido',
+  NONE: 'Sin pago',
+};

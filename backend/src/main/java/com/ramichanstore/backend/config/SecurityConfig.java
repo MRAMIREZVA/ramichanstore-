@@ -62,6 +62,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/images/*/file").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/catalog/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/order-requests").permitAll()
+                        // El cliente sube la captura de su pago con Yape sin tener sesión (Fase 52);
+                        // la pertenencia se prueba con el teléfono del pedido, no con el id (correlativo).
+                        .requestMatchers(HttpMethod.POST, "/api/order-requests/*/voucher").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/order-requests/*/status").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/order-requests/lookup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments/izipay/**").permitAll()

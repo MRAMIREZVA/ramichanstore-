@@ -35,11 +35,17 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Pago con Yape (código de aprobación) vía Izipay en el checkout del catálogo (Fase 37).
+ * Pago en línea vía Izipay en el checkout del catálogo (Fase 37).
+ * <p>
+ * <b>Qué métodos de pago se ofrecen no lo decide este código</b>: los define la cuenta de Izipay y
+ * vienen dentro del propio formToken. Verificado contra la API real decodificando el token: esta
+ * cuenta tiene habilitadas SOLO tarjetas (VISA/MASTERCARD/AMEX/DINERS), no Yape — habilitar Yape es
+ * un trámite comercial con Izipay, y cuando ocurra aparece solo en el mismo widget, sin tocar nada
+ * acá (en el frontend hay que sumar 'YAPE' a ONLINE_PAYMENT_METHODS, ver checkout-page.ts).
  * <p>
  * Flujo: 1) el frontend pide un formToken para un {@link OrderRequest} ya creado (mismo total que
  * ya quedó guardado ahí, nunca un monto que mande el propio frontend); 2) Izipay procesa el pago
- * directo con su servidor cuando el cliente ingresa su código Yape en el widget embebido;
+ * directo con su servidor cuando el cliente paga en el widget embebido;
  * 3) Izipay nos avisa el resultado por IPN (servidor a servidor) — SOLO esa notificación, verificada
  * con firma HMAC-SHA256, es la fuente de verdad de que el pago se realizó; nunca se confía en una
  * señal del navegador del cliente para convertir el pedido en venta real.
@@ -60,14 +66,14 @@ public class IzipayService {
     private final RestClient restClient = RestClient.create();
 
     /**
-     * Genera el formToken para desplegar el widget de Yape. El monto SIEMPRE se recalcula acá desde
+     * Genera el formToken para desplegar el widget de pago. El monto SIEMPRE se recalcula acá desde
      * los `OrderRequestItem` ya guardados (nunca desde un valor que mande el frontend) — mismo
      * criterio que {@code OrderRequestResponse.from} usa para el total mostrado en el admin.
      */
     @Transactional
     public FormTokenResponse createFormToken(Long orderRequestId) {
         if (!izipayProperties.isConfigured()) {
-            throw new BusinessRuleException("El pago en línea con Yape no está configurado todavía");
+            throw new BusinessRuleException("El pago en línea no está configurado todavía");
         }
         OrderRequest orderRequest = orderRequestService.findById(orderRequestId);
         if (orderRequest.getStatus() != OrderRequestStatus.PENDING) {
@@ -121,13 +127,13 @@ public class IzipayService {
                     .body(JsonNode.class);
         } catch (RestClientResponseException e) {
             log.error("Izipay CreatePayment respondió {} — cuerpo: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BusinessRuleException("No se pudo iniciar el pago con Yape, intenta de nuevo en un momento");
+            throw new BusinessRuleException("No se pudo iniciar el pago en línea, intenta de nuevo en un momento");
         }
 
         String formToken = response != null ? response.path("answer").path("formToken").asText(null) : null;
         if (formToken == null || formToken.isBlank()) {
             log.error("Izipay CreatePayment no devolvió formToken. Respuesta: {}", response);
-            throw new BusinessRuleException("No se pudo iniciar el pago con Yape, intenta de nuevo en un momento");
+            throw new BusinessRuleException("No se pudo iniciar el pago en línea, intenta de nuevo en un momento");
         }
 
         IzipayTransaction transaction = new IzipayTransaction();

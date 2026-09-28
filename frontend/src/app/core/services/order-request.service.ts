@@ -28,6 +28,28 @@ export class OrderRequestService {
     return this.http.post<ApiResponse<OrderRequest>>(this.baseUrl, request);
   }
 
+  /**
+   * Público (Fase 52): el cliente sube la captura de su pago con Yape. El teléfono es la
+   * prueba de pertenencia — los ids de pedido son correlativos, así que sin él cualquiera
+   * podría adjuntarle un comprobante al pedido de otro.
+   */
+  uploadVoucher(id: number, phone: string, file: File): Observable<ApiResponse<void>> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/${id}/voucher`, body, {
+      params: new HttpParams().set('phone', phone),
+    });
+  }
+
+  /**
+   * Admin: el comprobante NO es público, así que no sirve un <img src> directo (no manda el
+   * token) — se trae como blob autenticado y se arma un objectURL, mismo patrón que las fotos
+   * de artículo de Embarques (Fase 19).
+   */
+  getVoucherBlob(id: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${id}/voucher/file`, { responseType: 'blob' });
+  }
+
   search(filters: OrderRequestFilters): Observable<ApiResponse<PageResponse<OrderRequest>>> {
     let params = new HttpParams()
       .set('page', filters.page ?? 0)

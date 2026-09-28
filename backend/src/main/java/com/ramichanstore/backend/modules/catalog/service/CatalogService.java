@@ -154,10 +154,16 @@ public class CatalogService {
         BigDecimal freeShippingThreshold = StringUtils.hasText(freeShippingRaw) ? new BigDecimal(freeShippingRaw) : null;
         String googleAnalyticsId = settingService.getValue("GOOGLE_ANALYTICS_ID");
         String metaPixelId = settingService.getValue("META_PIXEL_ID");
+        // Pago con Yape por comprobante (Fase 52): sin número configurado, el checkout no
+        // ofrece esa opción y Yape se sigue coordinando por WhatsApp.
+        String yapeNumber = settingService.getValue("YAPE_NUMBER");
+        String yapeHolderName = settingService.getValue("YAPE_HOLDER_NAME");
         return new StoreInfoResponse(
                 storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl, freeShippingThreshold,
                 StringUtils.hasText(googleAnalyticsId) ? googleAnalyticsId : null,
-                StringUtils.hasText(metaPixelId) ? metaPixelId : null);
+                StringUtils.hasText(metaPixelId) ? metaPixelId : null,
+                StringUtils.hasText(yapeNumber) ? yapeNumber : null,
+                StringUtils.hasText(yapeHolderName) ? yapeHolderName : null);
     }
 
     /**
