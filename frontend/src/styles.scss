@@ -22,6 +22,33 @@
 // (esos ya lo heredan solos, ver regla `.catalog-shell h1...` más abajo).
 @theme {
   --font-display: 'Poppins', 'Inter', Roboto, sans-serif;
+
+  // Paleta "Vitrina" (Fase 49) — elegida por el dueño entre 3 rutas prototipadas.
+  // Declararlas acá, dentro de @theme, es lo que hace que Tailwind genere las
+  // utilidades `bg-rs-*`/`text-rs-*`/`border-rs-*` usables en las plantillas, en
+  // vez de tener que escribir `bg-[var(--x)]` a mano en cada elemento.
+  //
+  // El criterio de fondo (por qué estos colores y no otros): el violeta es MARCA
+  // (identidad, links, estado de preventa) y el dorado es ACCIÓN (solo botones de
+  // compra) — nunca el mismo color para ambos roles, o el botón deja de resaltar,
+  // que era justo el problema del diseño anterior. El verde queda RESERVADO a
+  // WhatsApp, así que nada más del sitio lo usa.
+  --color-rs-canvas: #131019;
+  --color-rs-surface: #1c1825;
+  --color-rs-surface2: #241f30;
+  --color-rs-border: #302a3d;
+  --color-rs-ink: #f6f3fb;
+  --color-rs-ink-soft: #a7a0b6;
+  --color-rs-ink-faint: #6b6478;
+  --color-rs-brand: #a970ff;
+  --color-rs-brand-ink: #1a0533;
+  --color-rs-cta: #ffb224;
+  --color-rs-cta-ink: #1a1206;
+  --color-rs-ok: #34d399;
+  --color-rs-urgent: #ff5e5b;
+  --color-rs-urgent-ink: #2b0806;
+  --color-rs-wa: #25d366;
+  --color-rs-wa-ink: #06251a;
 }
 
 // Identidad RamichanStore: violeta índigo (marca) + acento cálido naranja/coral
@@ -78,8 +105,15 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 // se renderiza en el cdk-overlay-container, que cuelga de <body> — NO es
 // descendiente de .catalog-shell/.portal-shell, así que sin el toggle esos
 // overlays se verían con la tipografía por defecto en vez de la de marca.
+// `.brand-type` es solo la tipografía de marca, sin el tema oscuro: la usan las
+// páginas legales (privacidad, libro de reclamaciones), que antes reutilizaban
+// `.catalog-shell` para heredar las fuentes. Desde la Fase 49 esa clase también
+// trae la paleta oscura, y esas dos páginas se quedan CLARAS a propósito — la
+// constancia del libro de reclamaciones se imprime, y los navegadores no imprimen
+// colores de fondo por defecto: un texto claro saldría casi invisible en papel.
 .catalog-shell,
 .portal-shell,
+.brand-type,
 body.catalog-scope,
 body.portal-scope {
   font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif;
@@ -91,9 +125,97 @@ body.portal-scope {
 .portal-shell h1,
 .portal-shell h2,
 .portal-shell h3,
+.brand-type h1,
+.brand-type h2,
+.brand-type h3,
 body.catalog-scope .mat-mdc-dialog-title,
 body.portal-scope .mat-mdc-dialog-title {
   font-family: 'Poppins', 'Inter', Roboto, sans-serif;
+}
+
+// Tema oscuro "Vitrina" SOLO para el catálogo público (Fase 49) — el panel admin
+// y el portal de clientes siguen claros, sin tocar. Se reasignan los tokens
+// `--mat-sys-*` (los que genera `mat.theme()` arriba, en `html`) dentro de este
+// scope: como son variables CSS heredadas, cualquier componente de Material que
+// viva dentro del catálogo toma automáticamente estos valores sin necesidad de
+// un segundo `mat.theme()` ni de tocar componente por componente.
+//
+// `body.catalog-scope` (no solo `.catalog-shell`) es imprescindible: un
+// mat-select/mat-dialog/tooltip/snackbar abierto desde el catálogo se renderiza
+// en el cdk-overlay-container, que cuelga de <body> y NO es descendiente de
+// `.catalog-shell` — sin esa parte del selector, los desplegables saldrían
+// blancos sobre la página oscura (mismo motivo por el que existe el toggle de
+// clase de la Fase 29, ver arriba).
+//
+// `color-scheme: dark` va aparte de los tokens porque es lo único que afecta a
+// lo que dibuja el NAVEGADOR y no Material: barras de scroll, el desplegable
+// nativo de un <select>, el relleno de autocompletado y los controles de
+// formulario nativos. Gana sobre el `color-scheme: light` de `body` de más
+// arriba por especificidad (`body.catalog-scope` = 0,1,1 vs `body` = 0,0,1).
+.catalog-shell,
+body.catalog-scope {
+  color-scheme: dark;
+
+  --mat-sys-background: #131019;
+  --mat-sys-on-background: #f6f3fb;
+  --mat-sys-surface: #1c1825;
+  --mat-sys-surface-dim: #131019;
+  --mat-sys-surface-bright: #302a3d;
+  --mat-sys-surface-container-lowest: #131019;
+  --mat-sys-surface-container-low: #241f30;
+  --mat-sys-surface-container: #241f30;
+  --mat-sys-surface-container-high: #302a3d;
+  --mat-sys-surface-container-highest: #3a3348;
+  --mat-sys-on-surface: #f6f3fb;
+  --mat-sys-surface-variant: #241f30;
+  --mat-sys-on-surface-variant: #a7a0b6;
+  --mat-sys-outline: #4a4358;
+  --mat-sys-outline-variant: #302a3d;
+  --mat-sys-primary: #a970ff;
+  --mat-sys-on-primary: #1a0533;
+  --mat-sys-primary-container: #3a2a58;
+  --mat-sys-on-primary-container: #dcc8ff;
+  --mat-sys-secondary: #c9bede;
+  --mat-sys-on-secondary: #1a1523;
+  --mat-sys-secondary-container: #2e2840;
+  --mat-sys-on-secondary-container: #e4dcf5;
+  --mat-sys-tertiary: #ffb224;
+  --mat-sys-on-tertiary: #1a1206;
+  --mat-sys-tertiary-container: #4a3310;
+  --mat-sys-on-tertiary-container: #ffd68a;
+  --mat-sys-error: #ff6b68;
+  --mat-sys-on-error: #2b0806;
+  --mat-sys-error-container: #5c1d1b;
+  --mat-sys-on-error-container: #ffd4d3;
+  --mat-sys-inverse-surface: #f6f3fb;
+  --mat-sys-inverse-on-surface: #1c1825;
+  --mat-sys-shadow: #000000;
+  --mat-sys-scrim: #000000;
+}
+
+// El botón de acción del catálogo va DORADO, no violeta: el violeta es la marca
+// (lo usan el precio, los links y el chip de preventa), así que un botón violeta
+// se perdería entre todo lo demás. Se declara una sola vez acá, sobre el atributo
+// que Angular deja en el DOM, para que cualquier CTA nuevo del catálogo salga
+// dorado solo, sin depender de que alguien recuerde agregarle clases.
+// Los botones de WhatsApp son la excepción a propósito (van verdes) y se pintan
+// con clases `!bg-rs-wa` en su plantilla — el `!important` de Tailwind gana sobre
+// esta regla sin importar el orden de capas.
+//
+// Los `var(...)` llevan el hex de respaldo a propósito: Tailwind 4 SOLO emite las
+// variables de `@theme` que alguna clase de utilidad usa de verdad (las demás las
+// elimina del CSS final). Hoy `rs-cta` se usa como clase en las plantillas, así que
+// la variable existe — pero si en el futuro se quita el último uso, esta regla se
+// quedaría sin color y el botón de comprar saldría transparente sin que nada falle
+// en el build. El respaldo lo vuelve imposible.
+.catalog-shell button[mat-flat-button][color='primary']:not(:disabled),
+.catalog-shell a[mat-flat-button][color='primary'],
+body.catalog-scope button[mat-flat-button][color='primary']:not(:disabled),
+body.catalog-scope a[mat-flat-button][color='primary'] {
+  --mdc-filled-button-container-color: var(--color-rs-cta, #ffb224);
+  --mdc-filled-button-label-text-color: var(--color-rs-cta-ink, #1a1206);
+  background-color: var(--color-rs-cta, #ffb224);
+  color: var(--color-rs-cta-ink, #1a1206);
 }
 
 // Impresión de etiquetas de producto (Fase 42, PrintLabelDialog): el diálogo vive en el

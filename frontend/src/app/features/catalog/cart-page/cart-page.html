@@ -1,31 +1,31 @@
-<h1 class="font-display mb-6 text-2xl font-extrabold text-gray-900 sm:text-3xl">Tu carrito</h1>
+<h1 class="font-display mb-6 text-2xl font-extrabold text-rs-ink sm:text-3xl">Tu carrito</h1>
 
 @if (lines().length === 0) {
-  <div class="flex flex-col items-center gap-3 rounded-3xl border border-black/5 bg-white py-20 text-center shadow-sm">
-    <mat-icon class="!h-12 !w-12 !text-[48px] text-gray-300">shopping_cart</mat-icon>
-    <p class="text-gray-500">Tu carrito está vacío.</p>
+  <div class="flex flex-col items-center gap-3 rounded-3xl border border-rs-border bg-rs-surface py-20 text-center shadow-sm">
+    <mat-icon class="!h-12 !w-12 !text-[48px] text-rs-ink-faint">shopping_cart</mat-icon>
+    <p class="text-rs-ink-soft">Tu carrito está vacío.</p>
     <a mat-flat-button color="primary" class="!rounded-xl" routerLink="/catalogo">Ver catálogo</a>
   </div>
 } @else {
   <div class="flex flex-col gap-3">
     @for (line of lines(); track line.productId) {
-      <div class="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-3 shadow-sm sm:p-4">
+      <div class="flex items-center gap-4 rounded-2xl border border-rs-border bg-rs-surface p-3 shadow-sm sm:p-4">
         @if (line.mainImageUrl) {
           <img [src]="resolveImageUrl(line.mainImageUrl)" [alt]="line.name" class="h-16 w-16 flex-none rounded-xl object-cover sm:h-20 sm:w-20" loading="lazy" />
         } @else {
-          <div class="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-gray-100 sm:h-20 sm:w-20">
-            <mat-icon class="text-gray-300">image</mat-icon>
+          <div class="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-rs-surface2 sm:h-20 sm:w-20">
+            <mat-icon class="text-rs-ink-faint">image</mat-icon>
           </div>
         }
         <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="line-clamp-2 text-sm font-semibold text-gray-900 sm:text-base">{{ line.name }}</span>
-          <span class="text-xs text-gray-400">{{ line.sku }}</span>
-          <span class="text-xs text-gray-500 sm:text-sm">S/ {{ line.unitPrice.toFixed(2) }} c/u</span>
+          <span class="line-clamp-2 text-sm font-semibold text-rs-ink sm:text-base">{{ line.name }}</span>
+          <span class="text-xs text-rs-ink-faint">{{ line.sku }}</span>
+          <span class="text-xs text-rs-ink-soft sm:text-sm">S/ {{ line.unitPrice.toFixed(2) }} c/u</span>
           @if (line.quantity >= line.availableQuantity) {
-            <span class="text-xs font-semibold text-amber-600">Máximo disponible: {{ line.availableQuantity }}</span>
+            <span class="text-xs font-semibold text-rs-urgent">Máximo disponible: {{ line.availableQuantity }}</span>
           }
         </div>
-        <div class="flex flex-none items-center gap-1 rounded-full border border-gray-200 px-1 py-0.5">
+        <div class="flex flex-none items-center gap-1 rounded-full border border-rs-border px-1 py-0.5">
           <button mat-icon-button class="!h-8 !w-8" type="button" (click)="decrement(line)">
             <mat-icon class="!text-[18px]">remove</mat-icon>
           </button>
@@ -34,19 +34,19 @@
             <mat-icon class="!text-[18px]">add</mat-icon>
           </button>
         </div>
-        <span class="font-display hidden w-24 flex-none text-right text-base font-bold text-[var(--mat-sys-primary)] sm:block">
+        <span class="font-display hidden w-24 flex-none text-right text-base font-bold text-rs-ink sm:block">
           S/ {{ (line.unitPrice * line.quantity).toFixed(2) }}
         </span>
-        <button mat-icon-button matTooltip="Quitar" class="flex-none text-gray-400 hover:text-red-500" (click)="remove(line)">
+        <button mat-icon-button matTooltip="Quitar" class="flex-none text-rs-ink-faint hover:text-rs-urgent" (click)="remove(line)">
           <mat-icon>delete_outline</mat-icon>
         </button>
       </div>
     }
   </div>
 
-  <div class="mt-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white p-4 shadow-sm sm:p-5">
-    <span class="text-sm font-semibold uppercase tracking-wide text-gray-500">Total</span>
-    <span class="font-display text-xl font-extrabold text-[var(--mat-sys-primary)] sm:text-2xl">S/ {{ totalAmount().toFixed(2) }}</span>
+  <div class="mt-6 flex items-center justify-between rounded-2xl border border-rs-border bg-rs-surface p-4 shadow-sm sm:p-5">
+    <span class="text-sm font-semibold uppercase tracking-wide text-rs-ink-soft">Total</span>
+    <span class="font-display text-xl font-extrabold text-rs-ink sm:text-2xl">S/ {{ totalAmount().toFixed(2) }}</span>
   </div>
 
   <div class="mt-5 flex flex-wrap items-center justify-between gap-3">

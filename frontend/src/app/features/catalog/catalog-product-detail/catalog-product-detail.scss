@@ -8,16 +8,18 @@
   letter-spacing: 0.03em;
   padding: 3px 10px;
   border-radius: 10px;
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
+  // Mismos colores reservados que el badge de la tarjeta en catalog-home (Fase 49):
+  // violeta = preventa/próximamente, coral = urgencia, gris = agotado.
+  background: var(--color-rs-brand, #a970ff);
+  color: var(--color-rs-brand-ink, #1a0533);
 
   &.out {
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
+    background: var(--color-rs-ink-faint, #6b6478);
+    color: var(--color-rs-canvas, #131019);
   }
 
   &.low {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--color-rs-urgent, #ff5e5b);
+    color: var(--color-rs-urgent-ink, #2b0806);
   }
 }

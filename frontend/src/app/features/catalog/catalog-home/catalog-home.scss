@@ -104,7 +104,7 @@
 
   &.mat-drawer-side {
     background: transparent;
-    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    border-right: 1px solid var(--color-rs-border, #302a3d);
   }
 
   // En mobile ("over") necesita fondo SÓLIDO — a diferencia de "side" (donde queda
@@ -112,7 +112,7 @@
   // (incluido el header) y sin esto se veía el logo/texto del header transparentándose
   // detrás del propio título "Filtros" del panel.
   &.mat-drawer-over {
-    background: var(--mat-sys-surface, #fff);
+    background: var(--mat-sys-surface, #1c1825);
     z-index: 21;
   }
 }
@@ -136,17 +136,15 @@
   }
 }
 
+// Fase 49 (paleta "Vitrina"): el banner deja de ser un degradado violeta saturado
+// y pasa a ser un panel plano del color de superficie con un filo violeta a la
+// izquierda. El motivo no es estético sino de jerarquía: la grilla de abajo son 24
+// fotos de figuras muy coloridas, y un bloque violeta a pantalla completa competía
+// con ellas por la atención. El violeta se conserva, pero como acento de marca.
 .hero-banner {
-  background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #4c1d95 100%);
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.18) 0, transparent 45%),
-      radial-gradient(circle at 15% 85%, rgba(255, 255, 255, 0.12) 0, transparent 40%);
-    pointer-events: none;
-  }
+  background: var(--color-rs-surface, #1c1825);
+  border: 1px solid var(--color-rs-border, #302a3d);
+  border-left: 4px solid var(--color-rs-brand, #a970ff);
 
   /* Con imagen propia (tipo portada de Facebook, bien ancha) el banner necesita más
      alto para no recortarla tanto — se usa aspect-ratio en vez de una altura fija
@@ -159,34 +157,52 @@
     aspect-ratio: 2.7 / 1;
     min-height: 220px;
     max-height: 480px;
+    border-left-width: 1px;
 
+    /* Velo oscuro sobre la foto propia para que el texto encima siga legible. El
+       ::before vive acá dentro (no en el bloque base) porque solo hace falta cuando
+       hay imagen: sin foto, el banner ya es un panel plano y un velo encima solo
+       apagaría el contraste del texto. */
     &::before {
-      /* Con foto propia, se cambia el degradado decorativo por un velo oscuro para que el texto siga legible. */
-      background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 70%);
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 70%);
     }
   }
 }
 
+// Fase 49: los estados pasan a los colores reservados de la paleta (violeta =
+// preventa/próximamente, coral = urgencia, gris = agotado), con texto oscuro sobre
+// cada relleno para que se lean bien. Ninguno usa el dorado del CTA ni el verde de
+// WhatsApp a propósito: si "últimas unidades" fuera dorado, competiría con el botón
+// de comprar en la misma tarjeta.
+//
+// Cambia de la esquina derecha a la IZQUIERDA para arreglar un solapamiento real que
+// ya existía: el botón de favoritos de la tarjeta también vive arriba a la derecha
+// (`right-1.5 top-1.5` en el HTML), así que el badge le caía encima en cualquier
+// producto en preventa o con stock bajo.
 .stock-badge {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   padding: 2px 8px;
   border-radius: 10px;
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
+  background: var(--color-rs-brand, #a970ff);
+  color: var(--color-rs-brand-ink, #1a0533);
 
   &.out {
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
+    background: var(--color-rs-ink-faint, #6b6478);
+    color: var(--color-rs-canvas, #131019);
   }
 
   &.low {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--color-rs-urgent, #ff5e5b);
+    color: var(--color-rs-urgent-ink, #2b0806);
   }
 }
