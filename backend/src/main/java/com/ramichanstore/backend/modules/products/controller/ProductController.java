@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,7 +39,13 @@ public class ProductController {
             @RequestParam(required = false) Long lineId,
             @RequestParam(required = false) String franchise,
             @RequestParam(required = false) ProductStatus status,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+            // Orden por defecto por última actualización (pedido explícito del dueño): un producto
+            // recién creado o recién editado debe aparecer primero, sin que el admin tenga que
+            // ordenar manualmente. "sort = campo,desc" como string NO funciona en @PageableDefault
+            // (solo es válido en el query param ?sort= de la request) — hay que usar el atributo
+            // direction aparte (lección ya documentada en CLAUDE.md, repetida varias veces en el
+            // proyecto: InventoryController, ShipmentController).
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         var page = productService.search(search, categoryId, brandId, lineId, franchise, status, pageable);
         return ApiResponse.ok(PageResponse.from(page));
     }
