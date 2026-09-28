@@ -22,6 +22,7 @@ import {
 import { OrderRequestFilters, OrderRequestService } from '../../../core/services/order-request.service';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
 import { ConvertToReservationsDialogComponent, ConvertToReservationsDialogData } from '../convert-to-reservations-dialog/convert-to-reservations-dialog';
 import {
   RejectOrderRequestDialogComponent,
@@ -102,6 +103,26 @@ export class OrderRequestsList implements OnInit {
 
   itemsSummary(order: OrderRequest): string {
     return `${order.items.length} producto(s)`;
+  }
+
+  /**
+   * Muestra la captura del pago con Yape que subió el cliente (Fase 52). El endpoint exige
+   * permiso, así que no sirve un <img src> directo (no manda el token): se trae como blob
+   * autenticado y se arma un objectURL, mismo patrón que las fotos de artículo de Embarques.
+   */
+  openVoucher(order: OrderRequest): void {
+    this.orderRequestService.getVoucherBlob(order.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.dialog
+          .open(ImagePreviewDialogComponent, {
+            data: { imageUrl: url, title: `Comprobante del pedido #${order.id} — ${order.guestName}` },
+            maxWidth: '96vw',
+          })
+          .afterClosed()
+          .subscribe(() => URL.revokeObjectURL(url));
+      },
+    });
   }
 
   /**

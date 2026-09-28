@@ -12,5 +12,6 @@ import java.math.BigDecimal;
  */
 public record StoreInfoResponse(
         String storeName, String whatsapp, String bannerUrl, String announcementImageUrl,
-        BigDecimal freeShippingThreshold, String googleAnalyticsId, String metaPixelId) {
+        BigDecimal freeShippingThreshold, String googleAnalyticsId, String metaPixelId,
+        String yapeNumber, String yapeHolderName) {
 }

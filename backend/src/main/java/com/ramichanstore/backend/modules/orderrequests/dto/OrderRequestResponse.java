@@ -19,7 +19,9 @@ public record OrderRequestResponse(
         String notes,
         List<OrderRequestItemResponse> items, BigDecimal total,
         OrderRequestType requestType, OrderRequestStatus status, String rejectionReason, Long convertedSaleId,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        /** Si el cliente subió la captura de su pago con Yape (Fase 52) — el binario se sirve aparte. */
+        boolean hasPaymentVoucher, LocalDateTime paymentVoucherUploadedAt) {
 
     public static OrderRequestResponse from(OrderRequest o) {
         List<OrderRequestItemResponse> items = o.getItems().stream().map(OrderRequestItemResponse::from).toList();
@@ -35,6 +37,7 @@ public record OrderRequestResponse(
                 o.getNotes(),
                 items, total,
                 o.getRequestType(), o.getStatus(), o.getRejectionReason(), o.getConvertedSaleId(),
-                o.getCreatedAt());
+                o.getCreatedAt(),
+                o.getPaymentVoucherData() != null, o.getPaymentVoucherUploadedAt());
     }
 }

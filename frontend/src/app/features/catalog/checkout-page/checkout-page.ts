@@ -96,6 +96,19 @@ export class CheckoutPage implements OnInit {
   readonly whatsAppUrl = signal<string | null>(null);
   readonly storeHasWhatsapp = signal(true);
 
+  // Pago con Yape por comprobante (Fase 52) — se muestra en la pantalla de confirmación
+  // cuando el cliente eligió Yape y la tienda tiene un número configurado.
+  readonly yapeNumber = signal<string | null>(null);
+  readonly yapeHolderName = signal<string | null>(null);
+  readonly voucherUploading = signal(false);
+  readonly voucherUploaded = signal(false);
+  readonly voucherError = signal<string | null>(null);
+  readonly showYapeBox = computed(() => {
+    const orders = this.submittedOrders();
+    // Solo con UN pedido: un carrito mixto genera dos y el monto a yapear sería ambiguo.
+    return orders.length === 1 && orders[0].preferredPaymentMethod === 'YAPE' && !!this.yapeNumber();
+  });
+
   readonly payStage = signal<OnlinePayStage>('idle');
   readonly payErrorMessage = signal<string | null>(null);
   readonly convertedSaleId = signal<number | null>(null);
@@ -354,10 +367,39 @@ export class CheckoutPage implements OnInit {
     setTimeout(() => this.pollOrderStatus(), 2000);
   }
 
+  copyYapeNumber(): void {
+    const number = this.yapeNumber();
+    if (number) navigator.clipboard?.writeText(number);
+  }
+
+  /** El cliente sube la captura de su pago con Yape (Fase 52). */
+  onVoucherSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const order = this.submittedOrders()[0];
+    if (!file || !order) return;
+
+    this.voucherUploading.set(true);
+    this.voucherError.set(null);
+    this.orderRequestService.uploadVoucher(order.id, this.form.controls.guestPhone.value ?? '', file).subscribe({
+      next: () => {
+        this.voucherUploading.set(false);
+        this.voucherUploaded.set(true);
+      },
+      error: () => {
+        this.voucherUploading.set(false);
+        this.voucherError.set('No se pudo subir la captura. Intenta de nuevo o envíanosla por WhatsApp.');
+      },
+    });
+    input.value = ''; // permite volver a elegir el mismo archivo si falló
+  }
+
   /** Uno o dos pedidos (carrito mixto, ver submit()) en un solo mensaje de WhatsApp. */
   private buildWhatsAppLink(orders: OrderRequest[]): void {
     this.catalogService.getStoreInfo().subscribe({
       next: (res) => {
+        this.yapeNumber.set(res.data.yapeNumber);
+        this.yapeHolderName.set(res.data.yapeHolderName);
         if (!res.data.whatsapp) {
           this.storeHasWhatsapp.set(false);
           return;

@@ -102,4 +102,7 @@ export interface OrderRequest {
   rejectionReason: string | null;
   convertedSaleId: number | null;
   createdAt: string;
+  /** El cliente subió la captura de su pago con Yape (Fase 52); la imagen se pide aparte, autenticada. */
+  hasPaymentVoucher: boolean;
+  paymentVoucherUploadedAt: string | null;
 }

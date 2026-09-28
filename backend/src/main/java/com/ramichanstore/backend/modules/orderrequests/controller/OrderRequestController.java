@@ -8,6 +8,7 @@ import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestStatusRes
 import com.ramichanstore.backend.modules.orderrequests.dto.OrderRequestSubmission;
 import com.ramichanstore.backend.modules.orderrequests.dto.PublicOrderRequestResponse;
 import com.ramichanstore.backend.modules.orderrequests.dto.RejectOrderRequestRequest;
+import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequest;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
 import com.ramichanstore.backend.modules.orderrequests.service.OrderRequestService;
 import com.ramichanstore.backend.security.SecurityUser;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * `POST /api/order-requests` es pública a propósito (ver SecurityConfig,
@@ -76,6 +80,29 @@ public class OrderRequestController {
     @GetMapping("/lookup")
     public ApiResponse<PublicOrderRequestResponse> lookup(@RequestParam Long id, @RequestParam String phone) {
         return ApiResponse.ok(orderRequestService.findPublicByIdAndPhone(id, phone));
+    }
+
+    /**
+     * El cliente sube la captura de su pago con Yape (Fase 52) — pública a propósito (ver
+     * SecurityConfig): quien acaba de hacer el pedido no tiene sesión. El `phone` es la prueba
+     * de pertenencia, porque los ids son correlativos (ver OrderRequestService.attachPaymentVoucher).
+     */
+    @PostMapping("/{id}/voucher")
+    public ApiResponse<Void> uploadVoucher(
+            @PathVariable Long id, @RequestParam String phone, @RequestParam("file") MultipartFile file) {
+        orderRequestService.attachPaymentVoucher(id, phone, file);
+        return ApiResponse.ok("Comprobante recibido", null);
+    }
+
+    /** El comprobante NO es público: es el dato de pago de un cliente, solo lo ve el staff. */
+    @GetMapping("/{id}/voucher/file")
+    @PreAuthorize("hasAuthority('PERM_ORDER_REQUEST_VIEW')")
+    public ResponseEntity<byte[]> voucherFile(@PathVariable Long id) {
+        OrderRequest orderRequest = orderRequestService.findWithVoucher(id);
+        MediaType mediaType = orderRequest.getPaymentVoucherContentType() != null
+                ? MediaType.parseMediaType(orderRequest.getPaymentVoucherContentType())
+                : MediaType.APPLICATION_OCTET_STREAM;
+        return ResponseEntity.ok().contentType(mediaType).body(orderRequest.getPaymentVoucherData());
     }
 
     @PostMapping("/{id}/convert")

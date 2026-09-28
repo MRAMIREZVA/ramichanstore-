@@ -87,6 +87,51 @@
       </div>
     }
 
+    @if (showYapeBox()) {
+      <div class="mb-3 w-full rounded-2xl border border-rs-border bg-rs-surface p-4 text-left">
+        <p class="font-display mb-2 text-sm font-bold uppercase tracking-wide text-rs-cta">Paga con Yape</p>
+        <p class="mb-3 text-sm text-rs-ink-soft">
+          Yapea <span class="font-bold text-rs-ink">S/ {{ submittedOrders()[0].total.toFixed(2) }}</span> al número:
+        </p>
+        <div class="mb-3 flex items-center justify-between gap-3 rounded-xl bg-rs-surface2 px-4 py-3">
+          <div class="flex flex-col">
+            <span class="font-display text-xl font-extrabold tracking-wide text-rs-ink">{{ yapeNumber() }}</span>
+            @if (yapeHolderName()) {
+              <span class="text-xs text-rs-ink-soft">{{ yapeHolderName() }}</span>
+            }
+          </div>
+          <button mat-stroked-button type="button" class="!rounded-xl !border-rs-border !text-rs-ink" (click)="copyYapeNumber()">
+            <mat-icon>content_copy</mat-icon>
+            Copiar
+          </button>
+        </div>
+
+        @if (voucherUploaded()) {
+          <p class="flex items-center gap-2 text-sm font-medium text-rs-ok">
+            <mat-icon class="!h-5 !w-5 !text-[20px]">check_circle</mat-icon>
+            Recibimos tu captura. Validaremos el pago y te confirmamos.
+          </p>
+        } @else {
+          <p class="mb-2 text-sm text-rs-ink-soft">Cuando lo hayas pagado, súbenos la captura para validarlo:</p>
+          <label
+            class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-rs-border bg-rs-surface2 px-4 py-3 text-sm font-semibold text-rs-cta"
+          >
+            @if (voucherUploading()) {
+              <mat-spinner diameter="18" />
+              Subiendo...
+            } @else {
+              <mat-icon class="!h-5 !w-5 !text-[20px]">photo_camera</mat-icon>
+              Subir captura del pago
+            }
+            <input type="file" accept="image/*" class="hidden" [disabled]="voucherUploading()" (change)="onVoucherSelected($event)" />
+          </label>
+          @if (voucherError()) {
+            <p class="mt-2 text-xs text-rs-urgent">{{ voucherError() }}</p>
+          }
+        }
+      </div>
+    }
+
     @if (whatsAppUrl()) {
       <p class="text-sm text-rs-ink-soft">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>
       <a mat-flat-button color="primary" class="!my-1 !rounded-xl !bg-rs-wa !text-rs-wa-ink" [href]="whatsAppUrl()" target="_blank" rel="noopener">
