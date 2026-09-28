@@ -129,6 +129,10 @@
         </div>
       </div>
 
+      <!-- "Solo preventas" va arriba de todo (pedido del dueño): es el filtro de un solo
+           toque que más se usa, y al final de la columna quedaba fuera de vista. -->
+      <mat-slide-toggle class="mb-4" [formControl]="onlyPreorderControl">Solo preventas</mat-slide-toggle>
+
       <mat-form-field appearance="outline" class="filter-field w-full">
         <mat-label>Buscar por nombre, personaje o franquicia</mat-label>
         <input matInput [formControl]="searchControl" placeholder="ej. Goku, One Piece..." />
@@ -182,8 +186,6 @@
           <mat-option value="franchise,asc">Anime (A-Z)</mat-option>
         </mat-select>
       </mat-form-field>
-
-      <mat-slide-toggle class="mt-1" [formControl]="onlyPreorderControl">Solo preventas</mat-slide-toggle>
     </div>
   </mat-sidenav>
 
