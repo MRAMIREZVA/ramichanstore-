@@ -98,7 +98,16 @@ public class CustomerService {
         auditService.log(AuditAction.DELETE, MODULE, "Customer", id.toString(), summarize(customer), null);
     }
 
-    /** Habilita (o re-habilita con credenciales nuevas) el acceso de un cliente al portal de solo lectura. */
+    /**
+     * Habilita (o re-habilita con credenciales nuevas) el acceso de un cliente al portal de
+     * solo lectura. La contraseña ES el número de documento del cliente: se deriva acá, en el
+     * backend, no se acepta una contraseña del frontend — así la regla no depende de que la
+     * pantalla la respete (mismo criterio que los totales de una venta).
+     * <p>
+     * El documento recibido se guarda en el cliente: es la única forma de que entre si el
+     * cliente se había registrado sin él, y evita que la contraseña quede sin respaldo en
+     * ningún dato visible (el hash no se puede leer de vuelta).
+     */
     @Transactional
     public CustomerResponse enablePortalAccess(Long id, EnablePortalAccessRequest request) {
         Customer customer = findById(id);
@@ -108,9 +117,14 @@ public class CustomerService {
         if (usernameTaken) {
             throw new BusinessRuleException("Ya existe un cliente con el usuario de portal '" + request.username() + "'");
         }
+        // Mismo chequeo de unicidad que create/update: `document_number` tiene índice único
+        // filtrado, así que sin esto un documento repetido reventaría como error de base de
+        // datos en vez de un mensaje entendible.
+        validateDocumentNumber(request.documentNumber(), customer.getDocumentNumber());
 
+        customer.setDocumentNumber(request.documentNumber());
         customer.setPortalUsername(request.username());
-        customer.setPortalPasswordHash(passwordEncoder.encode(request.password()));
+        customer.setPortalPasswordHash(passwordEncoder.encode(request.documentNumber()));
         customer.setPortalEnabled(true);
         Customer saved = customerRepository.save(customer);
 

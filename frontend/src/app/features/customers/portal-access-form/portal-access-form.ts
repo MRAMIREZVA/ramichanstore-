@@ -43,12 +43,20 @@ export class PortalAccessFormComponent {
   /** Credenciales recién guardadas — solo viven en memoria para armar el aviso; nunca se vuelven a poder leer del backend (hash). */
   readonly savedCredentials = signal<{ username: string; password: string } | null>(null);
 
+  // Al habilitar, la contraseña ES el documento del cliente, así que no hay campo de
+  // contraseña: se pide el documento (prellenado si el cliente ya lo tenía) y el backend
+  // deriva la contraseña de ahí. Restablecer sí mantiene contraseña libre — el dueño pidió
+  // el cambio solo para la habilitación.
   readonly form = this.fb.group({
     username: [
       this.data.resetOnly ? { value: this.data.customer.portalUsername ?? '', disabled: true } : (this.data.customer.portalUsername ?? ''),
       [Validators.required, Validators.maxLength(50)],
     ],
-    password: ['', [Validators.required, Validators.minLength(8)]],
+    password: ['', this.data.resetOnly ? [Validators.required, Validators.minLength(8)] : []],
+    documentNumber: [
+      this.data.customer.documentNumber ?? '',
+      this.data.resetOnly ? [] : [Validators.required, Validators.minLength(8), Validators.maxLength(20)],
+    ],
   });
 
   save(): void {
@@ -65,8 +73,11 @@ export class PortalAccessFormComponent {
         error: () => this.saving.set(false),
       });
     } else {
-      this.customerService.enablePortalAccess(this.data.customer.id, v.username!, v.password!).subscribe({
-        next: (res) => this.onSuccess(res.message, v.username!, v.password!),
+      const documentNumber = v.documentNumber!.trim();
+      this.customerService.enablePortalAccess(this.data.customer.id, v.username!, documentNumber).subscribe({
+        // La contraseña que se le muestra al admin es el documento: es exactamente lo que
+        // acaba de guardar el backend como contraseña.
+        next: (res) => this.onSuccess(res.message, v.username!, documentNumber),
         error: () => this.saving.set(false),
       });
     }
