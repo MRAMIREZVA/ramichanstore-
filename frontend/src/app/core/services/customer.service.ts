@@ -44,8 +44,9 @@ export class CustomerService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
   }
 
-  enablePortalAccess(id: number, username: string, password: string): Observable<ApiResponse<Customer>> {
-    return this.http.post<ApiResponse<Customer>>(`${this.baseUrl}/${id}/portal-access`, { username, password });
+  /** La contraseña del portal ES el documento del cliente: el backend la deriva de aquí, por eso no se envía. */
+  enablePortalAccess(id: number, username: string, documentNumber: string): Observable<ApiResponse<Customer>> {
+    return this.http.post<ApiResponse<Customer>>(`${this.baseUrl}/${id}/portal-access`, { username, documentNumber });
   }
 
   resetPortalPassword(id: number, newPassword: string): Observable<ApiResponse<void>> {
