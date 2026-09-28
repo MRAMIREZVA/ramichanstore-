@@ -1,8 +1,8 @@
 @if (showYapeSuccess()) {
   <div class="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
-    <mat-icon class="!h-14 !w-14 !text-[56px] text-emerald-600">check_circle</mat-icon>
-    <h1 class="font-display mt-2 text-2xl font-extrabold text-gray-900">¡Pago con Yape exitoso!</h1>
-    <p class="mb-2 text-sm text-gray-500">
+    <mat-icon class="!h-14 !w-14 !text-[56px] text-rs-ok">check_circle</mat-icon>
+    <h1 class="font-display mt-2 text-2xl font-extrabold text-rs-ink">¡Pago con Yape exitoso!</h1>
+    <p class="mb-2 text-sm text-rs-ink-soft">
       Tu pago quedó confirmado y tu compra ya se registró
       @if (convertedSaleId()) { como la venta #{{ convertedSaleId() }} }
       . Nos pondremos en contacto contigo para coordinar la entrega.
@@ -10,11 +10,11 @@
     <a mat-button class="!rounded-xl" routerLink="/catalogo">Volver al catálogo</a>
   </div>
 } @else if (showYapeWidget()) {
-  <div class="mx-auto max-w-md rounded-3xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
-    <h1 class="font-display mb-4 text-xl font-extrabold text-gray-900">Pago con Yape</h1>
+  <div class="mx-auto max-w-md rounded-3xl border border-rs-border bg-rs-surface p-6 shadow-sm sm:p-8">
+    <h1 class="font-display mb-4 text-xl font-extrabold text-rs-ink">Pago con Yape</h1>
 
     @if (yapeStage() === 'starting') {
-      <div class="flex flex-col items-center gap-3 py-10 text-center text-gray-500">
+      <div class="flex flex-col items-center gap-3 py-10 text-center text-rs-ink-soft">
         <mat-spinner diameter="32" />
         <p>Preparando el pago...</p>
       </div>
@@ -25,7 +25,7 @@
     </div>
 
     @if (yapeStage() === 'confirming') {
-      <div class="flex flex-col items-center gap-3 py-10 text-center text-gray-500">
+      <div class="flex flex-col items-center gap-3 py-10 text-center text-rs-ink-soft">
         <mat-spinner diameter="32" />
         <p>Confirmando tu pago...</p>
       </div>
@@ -33,18 +33,18 @@
 
     @if (yapeStage() === 'failed') {
       <div class="flex flex-col items-center gap-3 py-8 text-center">
-        <mat-icon class="text-red-500">error_outline</mat-icon>
-        <p class="text-sm text-gray-600">{{ yapeErrorMessage() }}</p>
+        <mat-icon class="text-rs-urgent">error_outline</mat-icon>
+        <p class="text-sm text-rs-ink-soft">{{ yapeErrorMessage() }}</p>
         <button mat-stroked-button color="primary" class="!rounded-xl" (click)="retryWithWhatsApp()">Coordinar por WhatsApp</button>
       </div>
     }
 
     @if (yapeStage() === 'delayed') {
-      <div class="flex flex-col items-center gap-3 py-8 text-center text-gray-500">
+      <div class="flex flex-col items-center gap-3 py-8 text-center text-rs-ink-soft">
         <mat-icon>schedule</mat-icon>
         <p class="text-sm">Tu pago fue aprobado y estamos terminando de confirmar tu pedido — puede tardar unos segundos más.</p>
         @if (whatsAppUrl()) {
-          <a mat-flat-button color="primary" class="!rounded-xl" [href]="whatsAppUrl()" target="_blank" rel="noopener">
+          <a mat-flat-button color="primary" class="!rounded-xl !bg-rs-wa !text-rs-wa-ink" [href]="whatsAppUrl()" target="_blank" rel="noopener">
             <mat-icon>chat</mat-icon>
             Avisarnos por WhatsApp
           </a>
@@ -54,33 +54,33 @@
   </div>
 } @else if (submittedOrders().length > 0) {
   <div class="mx-auto flex max-w-md flex-col items-center gap-2 py-14 text-center">
-    <mat-icon class="!h-14 !w-14 !text-[56px] text-emerald-600">check_circle</mat-icon>
-    <h1 class="font-display mt-2 text-2xl font-extrabold text-gray-900">¡Pedido enviado!</h1>
+    <mat-icon class="!h-14 !w-14 !text-[56px] text-rs-ok">check_circle</mat-icon>
+    <h1 class="font-display mt-2 text-2xl font-extrabold text-rs-ink">¡Pedido enviado!</h1>
     @if (submittedOrders().length > 1) {
-      <p class="mb-2 text-sm text-gray-500">
+      <p class="mb-2 text-sm text-rs-ink-soft">
         Tu carrito tenía productos en stock y en preventa, así que quedaron registrados como 2 pedidos web —
         #{{ submittedOrders()[0].id }} y #{{ submittedOrders()[1].id }}. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.
       </p>
     } @else {
-      <p class="mb-2 text-sm text-gray-500">
+      <p class="mb-2 text-sm text-rs-ink-soft">
         Tu pedido web #{{ submittedOrders()[0].id }} quedó registrado. Nos pondremos en contacto contigo pronto para coordinar el pago y la entrega.
       </p>
     }
 
     @for (order of submittedOrders(); track order.id) {
-      <div class="mb-2 w-full rounded-2xl border border-black/5 bg-white p-4 text-left shadow-sm">
+      <div class="mb-2 w-full rounded-2xl border border-rs-border bg-rs-surface p-4 text-left shadow-sm">
         @if (submittedOrders().length > 1) {
-          <p class="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">
+          <p class="mb-1 text-xs font-bold uppercase tracking-wide text-rs-ink">
             {{ order.requestType === 'PREORDER' ? 'Preventa' : 'En stock' }} — pedido #{{ order.id }}
           </p>
         }
         @for (item of order.items; track item.id) {
-          <div class="flex justify-between py-1 text-sm text-gray-600">
+          <div class="flex justify-between py-1 text-sm text-rs-ink-soft">
             <span>{{ item.quantity }}x {{ item.productName }}</span>
             <span>S/ {{ item.subtotal.toFixed(2) }}</span>
           </div>
         }
-        <div class="mt-1 flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
+        <div class="mt-1 flex justify-between border-t border-rs-border pt-2 text-sm font-bold text-rs-ink">
           <span>Total</span>
           <span>S/ {{ order.total.toFixed(2) }}</span>
         </div>
@@ -88,28 +88,28 @@
     }
 
     @if (whatsAppUrl()) {
-      <p class="text-sm text-gray-500">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>
-      <a mat-flat-button color="primary" class="!my-1 !rounded-xl" [href]="whatsAppUrl()" target="_blank" rel="noopener">
+      <p class="text-sm text-rs-ink-soft">Para que veamos tu pedido cuanto antes, avísanos por WhatsApp:</p>
+      <a mat-flat-button color="primary" class="!my-1 !rounded-xl !bg-rs-wa !text-rs-wa-ink" [href]="whatsAppUrl()" target="_blank" rel="noopener">
         <mat-icon>chat</mat-icon>
         Enviar por WhatsApp
       </a>
     } @else if (!storeHasWhatsapp()) {
-      <p class="text-sm text-gray-500">La tienda todavía no configuró un WhatsApp de contacto — quedará pendiente de revisión igual.</p>
+      <p class="text-sm text-rs-ink-soft">La tienda todavía no configuró un WhatsApp de contacto — quedará pendiente de revisión igual.</p>
     }
 
-    <p class="mt-1 text-xs text-gray-400">
+    <p class="mt-1 text-xs text-rs-ink-faint">
       Puedes consultar el estado de tu pedido más adelante en
-      <a routerLink="/catalogo/mi-pedido" class="font-semibold text-[var(--mat-sys-primary)]">Buscar mi pedido</a>.
+      <a routerLink="/catalogo/mi-pedido" class="font-semibold text-rs-ink">Buscar mi pedido</a>.
     </p>
 
     <a mat-button class="!rounded-xl" routerLink="/catalogo">Volver al catálogo</a>
   </div>
 } @else {
-  <h1 class="font-display mb-6 text-2xl font-extrabold text-gray-900 sm:text-3xl">Finalizar pedido</h1>
+  <h1 class="font-display mb-6 text-2xl font-extrabold text-rs-ink sm:text-3xl">Finalizar pedido</h1>
 
   <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-    <form [formGroup]="form" class="flex flex-col gap-4 rounded-3xl border border-black/5 bg-white p-5 shadow-sm sm:p-7" (ngSubmit)="submit()">
-      <h2 class="font-display text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Tus datos</h2>
+    <form [formGroup]="form" class="flex flex-col gap-4 rounded-3xl border border-rs-border bg-rs-surface p-5 shadow-sm sm:p-7" (ngSubmit)="submit()">
+      <h2 class="font-display text-sm font-bold uppercase tracking-wide text-rs-ink">Tus datos</h2>
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Nombre completo</mat-label>
         <input matInput formControlName="guestName" />
@@ -125,7 +125,7 @@
         </mat-form-field>
       </div>
 
-      <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Entrega</h2>
+      <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-rs-ink">Entrega</h2>
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Tipo de entrega</mat-label>
         <mat-select formControlName="deliveryMethod">
@@ -149,8 +149,8 @@
       }
 
       @if (locationMode() === 'agency') {
-        <div class="rounded-2xl bg-gray-50 p-4">
-          <p class="mb-3 text-sm font-semibold text-gray-700">Datos de quien recoge el paquete en la agencia</p>
+        <div class="rounded-2xl bg-rs-surface2 p-4">
+          <p class="mb-3 text-sm font-semibold text-rs-ink-soft">Datos de quien recoge el paquete en la agencia</p>
           <div class="grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2">
             <mat-form-field appearance="outline">
               <mat-label>DNI</mat-label>
@@ -192,11 +192,11 @@
         </div>
       }
 
-      <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Pago</h2>
+      <h2 class="font-display mt-2 text-sm font-bold uppercase tracking-wide text-rs-ink">Pago</h2>
       @if (selectedPaymentMethod() === 'YAPE') {
-        <p class="-mt-1 text-xs text-gray-500">Pagarás en línea con Yape, al instante, aquí mismo en la página.</p>
+        <p class="-mt-1 text-xs text-rs-ink-soft">Pagarás en línea con Yape, al instante, aquí mismo en la página.</p>
       } @else {
-        <p class="-mt-1 text-xs text-gray-500">Elige cómo prefieres pagar — coordinaremos el pago real contigo por WhatsApp.</p>
+        <p class="-mt-1 text-xs text-rs-ink-soft">Elige cómo prefieres pagar — coordinaremos el pago real contigo por WhatsApp.</p>
       }
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Método de pago preferido</mat-label>
@@ -221,19 +221,19 @@
       </button>
     </form>
 
-    <aside class="rounded-3xl border border-black/5 bg-white p-5 shadow-sm lg:sticky lg:top-4">
-      <h2 class="font-display mb-3 text-sm font-bold uppercase tracking-wide text-[var(--mat-sys-primary)]">Tu pedido</h2>
+    <aside class="rounded-3xl border border-rs-border bg-rs-surface p-5 shadow-sm lg:sticky lg:top-4">
+      <h2 class="font-display mb-3 text-sm font-bold uppercase tracking-wide text-rs-ink">Tu pedido</h2>
       @for (line of lines(); track line.productId) {
-        <div class="flex justify-between py-1 text-sm text-gray-600">
+        <div class="flex justify-between py-1 text-sm text-rs-ink-soft">
           <span>{{ line.quantity }}x {{ line.name }}</span>
           <span>S/ {{ (line.unitPrice * line.quantity).toFixed(2) }}</span>
         </div>
       }
-      <div class="mt-2 flex justify-between border-t border-gray-100 pt-2 text-base font-bold text-gray-900">
+      <div class="mt-2 flex justify-between border-t border-rs-border pt-2 text-base font-bold text-rs-ink">
         <span>Total</span>
         <span>S/ {{ totalAmount().toFixed(2) }}</span>
       </div>
-      <a class="mt-3 inline-block text-xs font-semibold text-[var(--mat-sys-primary)]" routerLink="/catalogo/carrito">Editar carrito</a>
+      <a class="mt-3 inline-block text-xs font-semibold text-rs-ink" routerLink="/catalogo/carrito">Editar carrito</a>
     </aside>
   </div>
 }

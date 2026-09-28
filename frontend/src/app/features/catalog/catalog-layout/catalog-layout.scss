@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--mat-sys-surface-container-lowest, #f9f9f7);
+  background: var(--mat-sys-surface-container-lowest, #131019);
 }
 
 .catalog-header {
@@ -45,8 +45,11 @@
   gap: 8px;
 }
 
+// Verde de WhatsApp, el único verde del catálogo (Fase 49) — sobre fondo oscuro
+// hace falta el tono claro de la marca, no el verde oscuro que se usaba en el
+// tema claro anterior (quedaba ilegible contra #1c1825).
 .whatsapp-link {
-  color: #1e7a3a;
+  color: var(--color-rs-wa, #25d366);
 }
 
 .catalog-content {
@@ -75,6 +78,21 @@
 
   &:hover {
     color: var(--mat-sys-primary);
+  }
+}
+
+/* Bug PREEXISTENTE encontrado durante la Fase 49 (confirmado idéntico en producción
+   antes de tocar nada: scrollWidth 417 contra un viewport de 390): en pantallas muy
+   angostas los 4 botones de acción del header miden 256px y, sumados al logo más el
+   texto "RamichanStore" (~110px) y los 32px de padding, piden 440px — el header
+   desbordaba y arrastraba scroll horizontal a TODA la página del catálogo. La Fase 21
+   ya había ocultado las etiquetas de los botones, pero no previó que la marca en texto
+   tampoco cabe. Se oculta solo el texto: el logo sigue visible y el enlace conserva su
+   nombre accesible por el alt de la imagen. El corte va en 440px (no en los 560px de
+   abajo) para que los teléfonos medianos sigan mostrando el nombre de la tienda. */
+@media (max-width: 440px) {
+  .brand-name {
+    display: none;
   }
 }
 

@@ -22,7 +22,9 @@
 </section>
 
 @if (storeInfo()?.freeShippingThreshold; as threshold) {
-  <div class="mb-6 flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-center text-sm font-semibold text-emerald-700">
+  <div
+    class="mb-6 flex items-center justify-center gap-2 rounded-2xl border border-rs-border bg-rs-surface2 px-4 py-2.5 text-center text-sm font-semibold text-rs-cta"
+  >
     <mat-icon class="!h-5 !w-5 !text-[20px]">local_shipping</mat-icon>
     Envío gratis en compras mayores a S/ {{ threshold.toFixed(2) }}
   </div>
@@ -30,10 +32,10 @@
 
 <ng-template #productCard let-p>
   <mat-card
-    class="product-card group cursor-pointer overflow-hidden rounded-2xl border border-black/5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+    class="product-card group cursor-pointer overflow-hidden rounded-2xl border border-rs-border !bg-rs-surface shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
     (click)="openProduct(p)"
   >
-    <div class="relative aspect-square overflow-hidden bg-gray-100">
+    <div class="relative aspect-square overflow-hidden bg-rs-surface2">
       <!-- position:absolute saca la imagen del flujo — un contenedor con aspect-ratio no
            fuerza esa proporción a un <img> normal si su contenido intrínseco es más alto
            (ver CLAUDE.md, lección de Fase 21 mobile). -->
@@ -46,7 +48,7 @@
         />
       } @else {
         <div class="absolute inset-0 flex items-center justify-center">
-          <mat-icon class="!h-10 !w-10 !text-[40px] text-gray-300">image</mat-icon>
+          <mat-icon class="!h-10 !w-10 !text-[40px] text-rs-ink-faint">image</mat-icon>
         </div>
       }
       @if (p.status !== 'AVAILABLE') {
@@ -58,30 +60,30 @@
       }
       <button
         type="button"
-        class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm"
+        class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-rs-surface/85 shadow-sm"
         [attr.aria-label]="isWishlisted(p.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
         (click)="toggleWishlist(p, $event)"
       >
         <mat-icon
           class="!h-4 !w-4 !text-[16px]"
-          [class.text-red-500]="isWishlisted(p.id)"
-          [class.text-gray-400]="!isWishlisted(p.id)"
+          [class.text-rs-urgent]="isWishlisted(p.id)"
+          [class.text-rs-ink-soft]="!isWishlisted(p.id)"
         >
           {{ isWishlisted(p.id) ? 'favorite' : 'favorite_border' }}
         </mat-icon>
       </button>
     </div>
     <div class="flex flex-col gap-0.5 px-3 pb-3 pt-2.5">
-      <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{{ p.brandName }}</span>
-      <span class="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{{ p.name }}</span>
+      <span class="text-[11px] font-semibold uppercase tracking-wide text-rs-brand">{{ p.brandName }}</span>
+      <span class="line-clamp-2 text-sm font-semibold leading-snug text-rs-ink">{{ p.name }}</span>
       @if (p.characterName) {
-        <span class="line-clamp-1 text-xs text-gray-500">{{ p.characterName }}</span>
+        <span class="line-clamp-1 text-xs text-rs-ink-soft">{{ p.characterName }}</span>
       }
       <div class="mt-1.5 flex items-center justify-between">
-        <span class="font-display text-base font-bold text-[var(--mat-sys-primary)]">S/ {{ p.salePrice.toFixed(2) }}</span>
+        <span class="font-display text-base font-bold text-rs-ink">S/ {{ p.salePrice.toFixed(2) }}</span>
         <button
           mat-icon-button
-          class="!h-8 !w-8 !p-0 [&_mat-icon]:!h-[18px] [&_mat-icon]:!w-[18px] [&_mat-icon]:!text-[18px]"
+          class="!h-8 !w-8 !bg-rs-cta !p-0 !text-rs-cta-ink disabled:!bg-rs-surface2 disabled:!text-rs-ink-faint [&_mat-icon]:!h-[18px] [&_mat-icon]:!w-[18px] [&_mat-icon]:!text-[18px]"
           [disabled]="!p.inStock"
           matTooltip="Agregar al carrito"
           (click)="addToCart(p, $event)"
@@ -104,7 +106,7 @@
   >
     <div class="compact-filters filters-panel">
       <div class="mb-4 flex items-center justify-between">
-        <span class="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-gray-700">
+        <span class="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-rs-ink">
           <mat-icon class="!h-[18px] !w-[18px] !text-[18px]">tune</mat-icon>
           Filtros
         </span>
@@ -112,7 +114,7 @@
           <button
             mat-button
             type="button"
-            class="!min-w-0 !px-2 !text-xs !text-gray-500"
+            class="!min-w-0 !px-2 !text-xs !text-rs-ink-soft"
             [disabled]="!hasActiveFilter()"
             (click)="clearFilters()"
           >
@@ -190,7 +192,7 @@
       <button
         mat-stroked-button
         type="button"
-        class="relative mb-4 !rounded-xl !border-gray-300 !text-gray-700"
+        class="relative mb-4 !rounded-xl !border-rs-border !text-rs-ink"
         (click)="filtersDrawer.open()"
       >
         <mat-icon>tune</mat-icon>
@@ -204,7 +206,7 @@
     @if (loading()) {
       <div class="flex justify-center py-16"><mat-spinner diameter="36" /></div>
     } @else if (products().length === 0) {
-      <p class="py-16 text-center text-gray-500">No se encontraron productos con esos filtros.</p>
+      <p class="py-16 text-center text-rs-ink-soft">No se encontraron productos con esos filtros.</p>
     } @else if (hasActiveFilter()) {
       <div class="mb-6 grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
         @for (p of products(); track p.id) {
@@ -222,8 +224,8 @@
     } @else {
       @for (group of groupedByFranchise(); track group.franchise) {
         <div class="mb-8">
-          <div class="mb-3 flex items-center justify-between border-b border-gray-200 pb-2">
-            <h2 class="font-display text-lg font-bold text-gray-900">{{ group.franchise }}</h2>
+          <div class="mb-3 flex items-center justify-between border-b border-rs-border pb-2">
+            <h2 class="font-display text-lg font-bold text-rs-ink">{{ group.franchise }}</h2>
             <button mat-button (click)="filterByFranchise(group.franchise)">
               Ver todo
               <mat-icon iconPositionEnd>arrow_forward</mat-icon>
