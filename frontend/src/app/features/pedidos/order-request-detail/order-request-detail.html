@@ -1,0 +1,119 @@
+<h2 mat-dialog-title class="detail-title">
+  Pedido web #{{ order.id }}
+  <span class="status-chip" [attr.data-status]="order.status">{{ statusLabel(order.status) }}</span>
+  <span class="status-chip" [attr.data-status]="order.requestType">{{ typeLabel(order.requestType) }}</span>
+</h2>
+
+<mat-dialog-content>
+  <!-- Lo primero que el admin necesita saber: si ya le pagaron o no. -->
+  <div class="payment-banner" [attr.data-state]="paymentState">
+    <mat-icon>{{ paymentState === 'PAID_ONLINE' ? 'verified' : paymentState === 'VOUCHER' ? 'receipt_long' : 'schedule' }}</mat-icon>
+    <div class="payment-text">
+      <span class="payment-label">{{ paymentStateLabel }}</span>
+      <span class="payment-hint">
+        @switch (paymentState) {
+          @case ('PAID_ONLINE') {
+            El cobro se confirmó con la pasarela — el pedido ya debería estar convertido en venta.
+          }
+          @case ('VOUCHER') {
+            El cliente subió su captura de pago. Revísala antes de convertir el pedido en venta.
+          }
+          @case ('ATTEMPT_FAILED') {
+            El cliente intentó pagar en línea y no se completó. Coordina el pago con él.
+          }
+          @default {
+            El pedido solo fue enviado: el cliente todavía no pagó nada por la web.
+          }
+        }
+      </span>
+    </div>
+    @if (order.hasPaymentVoucher) {
+      <button mat-stroked-button type="button" [disabled]="loadingVoucher()" (click)="openVoucher()">
+        <mat-icon>image</mat-icon>
+        Ver comprobante
+      </button>
+    }
+  </div>
+
+  <h3 class="section-title">Productos</h3>
+  <div class="items">
+    @for (item of order.items; track item.id) {
+      <div class="item-row">
+        <div class="item-thumb">
+          @if (item.productMainImageUrl) {
+            <img [src]="resolveImageUrl(item.productMainImageUrl)" [alt]="item.productName" />
+          } @else {
+            <mat-icon>image</mat-icon>
+          }
+        </div>
+        <div class="item-info">
+          <span class="item-name">{{ item.productName }}</span>
+          <span class="item-sku">{{ item.productSku }}</span>
+        </div>
+        <span class="item-qty">{{ item.quantity }} x S/ {{ item.unitPrice.toFixed(2) }}</span>
+        <span class="item-subtotal">S/ {{ item.subtotal.toFixed(2) }}</span>
+      </div>
+    }
+    <div class="total-row">
+      <span>Total</span>
+      <span class="total-amount">S/ {{ order.total.toFixed(2) }}</span>
+    </div>
+  </div>
+
+  <div class="columns">
+    <div>
+      <h3 class="section-title">Cliente</h3>
+      <div class="field"><span class="field-label">Nombre</span><span>{{ order.guestName }}</span></div>
+      <div class="field"><span class="field-label">Teléfono</span><span>{{ order.guestPhone }}</span></div>
+      @if (order.guestWhatsapp) {
+        <div class="field"><span class="field-label">WhatsApp</span><span>{{ order.guestWhatsapp }}</span></div>
+      }
+      <a mat-stroked-button class="whatsapp-btn" [href]="whatsAppUrl" target="_blank" rel="noopener">
+        <mat-icon>chat</mat-icon>
+        Escribirle por WhatsApp
+      </a>
+    </div>
+
+    <div>
+      <h3 class="section-title">Entrega y pago</h3>
+      <div class="field"><span class="field-label">Entrega</span><span>{{ deliveryMethodLabel(order.deliveryMethod) }}</span></div>
+      @if (order.deliveryAgencyName) {
+        <div class="field"><span class="field-label">Agencia</span><span>{{ order.deliveryAgencyName }}</span></div>
+      }
+      @if (order.guestAddress) {
+        <div class="field"><span class="field-label">Dirección</span><span>{{ order.guestAddress }}</span></div>
+      }
+      @if (order.guestDistrict || order.guestProvince || order.guestDepartment) {
+        <div class="field">
+          <span class="field-label">Ubicación</span>
+          <span>{{ [order.guestDistrict, order.guestProvince, order.guestDepartment].join(' · ') }}</span>
+        </div>
+      }
+      @if (order.recipientName || order.recipientDni) {
+        <div class="field">
+          <span class="field-label">Recoge</span>
+          <span>{{ order.recipientName }} @if (order.recipientDni) { (DNI {{ order.recipientDni }}) }</span>
+        </div>
+      }
+      <div class="field"><span class="field-label">Pago preferido</span><span>{{ paymentMethodLabel(order.preferredPaymentMethod) }}</span></div>
+      <div class="field"><span class="field-label">Fecha</span><span>{{ order.createdAt.slice(0, 10) }}</span></div>
+      @if (order.convertedSaleId) {
+        <div class="field"><span class="field-label">Venta</span><span>#{{ order.convertedSaleId }}</span></div>
+      }
+    </div>
+  </div>
+
+  @if (order.notes) {
+    <h3 class="section-title">Observaciones del cliente</h3>
+    <p class="notes">{{ order.notes }}</p>
+  }
+
+  @if (order.rejectionReason) {
+    <h3 class="section-title">Motivo del rechazo</h3>
+    <p class="notes">{{ order.rejectionReason }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

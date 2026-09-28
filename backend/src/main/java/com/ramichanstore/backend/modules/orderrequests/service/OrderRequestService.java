@@ -19,6 +19,9 @@ import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestItem;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
 import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestType;
 import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRepository;
+import com.ramichanstore.backend.modules.payments.entity.IzipayTransaction;
+import com.ramichanstore.backend.modules.payments.entity.IzipayTransactionStatus;
+import com.ramichanstore.backend.modules.payments.repository.IzipayTransactionRepository;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.entity.Preorder;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
@@ -76,6 +79,7 @@ public class OrderRequestService {
     private final DeliveryAgencyService deliveryAgencyService;
     private final PreorderRepository preorderRepository;
     private final PreorderService preorderService;
+    private final IzipayTransactionRepository izipayTransactionRepository;
     private final AuditService auditService;
 
     @Transactional
@@ -145,12 +149,25 @@ public class OrderRequestService {
         Page<OrderRequest> page = status != null
                 ? orderRequestRepository.findByStatus(status, pageable)
                 : orderRequestRepository.findAll(pageable);
-        return page.map(OrderRequestResponse::from);
+        return page.map(o -> OrderRequestResponse.from(o, onlinePaymentStatus(o.getId())));
     }
 
     @Transactional(readOnly = true)
     public OrderRequestResponse findResponseById(Long id) {
-        return OrderRequestResponse.from(findById(id));
+        OrderRequest orderRequest = findById(id);
+        return OrderRequestResponse.from(orderRequest, onlinePaymentStatus(id));
+    }
+
+    /**
+     * Resultado del último intento de pago en línea del pedido, o null si nunca hubo uno — el caso
+     * normal, porque un pedido web nace solo "enviado" (Fase 53). Se inyecta el REPOSITORIO de
+     * pagos y no su service a propósito: `IzipayService` ya depende de este service, así que
+     * inyectarlo de vuelta crearía un ciclo de beans.
+     */
+    private IzipayTransactionStatus onlinePaymentStatus(Long orderRequestId) {
+        return izipayTransactionRepository.findTopByOrderRequestIdOrderByCreatedAtDesc(orderRequestId)
+                .map(IzipayTransaction::getStatus)
+                .orElse(null);
     }
 
     /**

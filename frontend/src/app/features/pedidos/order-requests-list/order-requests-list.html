@@ -46,19 +46,12 @@
       </ng-container>
 
       <ng-container matColumnDef="payment">
-        <th mat-header-cell *matHeaderCellDef>Pago preferido</th>
+        <th mat-header-cell *matHeaderCellDef>Pago</th>
         <td mat-cell *matCellDef="let o">
-          {{ paymentMethodLabel(o.preferredPaymentMethod) }}
-          @if (o.hasPaymentVoucher) {
-            <button
-              mat-icon-button
-              class="voucher-btn"
-              matTooltip="Ver comprobante de pago que subió el cliente"
-              (click)="openVoucher(o)"
-            >
-              <mat-icon>receipt_long</mat-icon>
-            </button>
-          }
+          <div class="payment-cell">
+            <span>{{ paymentMethodLabel(o.preferredPaymentMethod) }}</span>
+            <span class="pay-chip" [attr.data-state]="paymentState(o)">{{ paymentStateLabel(o) }}</span>
+          </div>
         </td>
       </ng-container>
 
@@ -82,6 +75,9 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let o">
+          <button mat-icon-button matTooltip="Ver detalle del pedido" (click)="openDetail(o)">
+            <mat-icon>visibility</mat-icon>
+          </button>
           <a
             mat-icon-button
             class="whatsapp-link"

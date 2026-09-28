@@ -13,16 +13,19 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../core/models/sale.model';
 import {
+  ORDER_PAYMENT_STATE_LABELS,
   ORDER_REQUEST_STATUS_LABELS,
   ORDER_REQUEST_TYPE_LABELS,
+  OrderPaymentState,
   OrderRequest,
   OrderRequestStatus,
   OrderRequestType,
+  orderPaymentState,
 } from '../../../core/models/order-request.model';
 import { OrderRequestFilters, OrderRequestService } from '../../../core/services/order-request.service';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
-import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
+import { OrderRequestDetailComponent } from '../order-request-detail/order-request-detail';
 import { ConvertToReservationsDialogComponent, ConvertToReservationsDialogData } from '../convert-to-reservations-dialog/convert-to-reservations-dialog';
 import {
   RejectOrderRequestDialogComponent,
@@ -105,24 +108,17 @@ export class OrderRequestsList implements OnInit {
     return `${order.items.length} producto(s)`;
   }
 
-  /**
-   * Muestra la captura del pago con Yape que subió el cliente (Fase 52). El endpoint exige
-   * permiso, así que no sirve un <img src> directo (no manda el token): se trae como blob
-   * autenticado y se arma un objectURL, mismo patrón que las fotos de artículo de Embarques.
-   */
-  openVoucher(order: OrderRequest): void {
-    this.orderRequestService.getVoucherBlob(order.id).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        this.dialog
-          .open(ImagePreviewDialogComponent, {
-            data: { imageUrl: url, title: `Comprobante del pedido #${order.id} — ${order.guestName}` },
-            maxWidth: '96vw',
-          })
-          .afterClosed()
-          .subscribe(() => URL.revokeObjectURL(url));
-      },
-    });
+  /** Detalle completo del pedido: qué productos pidió y si pagó (Fase 53). */
+  openDetail(order: OrderRequest): void {
+    this.dialog.open(OrderRequestDetailComponent, { data: order, maxWidth: '96vw' });
+  }
+
+  paymentState(order: OrderRequest): OrderPaymentState {
+    return orderPaymentState(order);
+  }
+
+  paymentStateLabel(order: OrderRequest): string {
+    return ORDER_PAYMENT_STATE_LABELS[orderPaymentState(order)];
   }
 
   /**

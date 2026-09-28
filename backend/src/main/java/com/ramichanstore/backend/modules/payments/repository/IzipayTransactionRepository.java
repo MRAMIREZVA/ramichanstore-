@@ -14,4 +14,11 @@ public interface IzipayTransactionRepository extends JpaRepository<IzipayTransac
      */
     Optional<IzipayTransaction> findTopByIzipayOrderIdAndStatusOrderByCreatedAtDesc(
             String izipayOrderId, IzipayTransactionStatus status);
+
+    /**
+     * Último intento de pago en línea de un pedido web, para que el admin vea en "Pedidos web" si
+     * ese pedido llegó pagado o solo enviado (Fase 53). Se ordena por fecha porque un cliente puede
+     * reintentar el pago y dejar varias filas para el mismo pedido.
+     */
+    Optional<IzipayTransaction> findTopByOrderRequestIdOrderByCreatedAtDesc(Long orderRequestId);
 }

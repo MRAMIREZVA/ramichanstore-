@@ -85,3 +85,26 @@
     flex-direction: column;
   }
 }
+
+// Estado de pago del pedido web (Fase 53): el dueño no tenía forma de distinguir un
+// pedido pagado de uno que solo se envió. Verde = el dinero entró, ámbar = hay un
+// comprobante por validar, rojo = intento fallido, gris = todavía no pagó nada.
+.payment-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pay-chip {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+
+  &[data-state='PAID_ONLINE'] { background: #dcfce7; color: #166534; }
+  &[data-state='VOUCHER'] { background: #fef3c7; color: #92400e; }
+  &[data-state='ATTEMPT_FAILED'] { background: #fee2e2; color: #991b1b; }
+}
