@@ -1,10 +1,17 @@
-<mat-sidenav-container class="shell">
-  <mat-sidenav mode="side" opened class="shell-sidenav" [fixedInViewport]="true" fixedTopGap="0">
-    <app-sidebar />
+<mat-sidenav-container class="shell" [hasBackdrop]="isMobile()">
+  <mat-sidenav
+    class="shell-sidenav"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile() || sidebarOpen()"
+    [fixedInViewport]="isMobile()"
+    fixedTopGap="0"
+    (openedChange)="sidebarOpen.set($event)"
+  >
+    <app-sidebar [isMobile]="isMobile()" (closeRequested)="sidebarOpen.set(false)" />
   </mat-sidenav>
 
   <mat-sidenav-content class="shell-content">
-    <app-header />
+    <app-header [isMobile]="isMobile()" (menuToggle)="sidebarOpen.set(true)" />
     <main class="shell-main">
       <router-outlet />
     </main>

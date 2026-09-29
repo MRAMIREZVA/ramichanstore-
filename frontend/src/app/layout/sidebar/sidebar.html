@@ -2,6 +2,11 @@
   <div class="sidebar-brand">
     <img src="/logo.png" alt="RamichanStore" class="brand-mark" />
     <span class="brand-name">RamichanStore</span>
+    @if (isMobile) {
+      <button mat-icon-button class="close-btn" (click)="closeRequested.emit()" aria-label="Cerrar menú">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
   </div>
 
   <mat-nav-list class="nav-list module-list">
