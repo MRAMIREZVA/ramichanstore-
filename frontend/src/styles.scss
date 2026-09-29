@@ -319,6 +319,16 @@ body.catalog-scope a[mat-flat-button][color='primary'] {
   .cdk-overlay-pane:not(:has(.print-label-area, .print-receipt-area)) {
     display: none !important;
   }
+  // Fuerza fondo blanco de punta a punta, sin importar el tema de dónde se haya abierto el
+  // diálogo (ej. el comprobante de pedido del catálogo, Fase 62, se abre dentro del tema
+  // oscuro "Vitrina" de Fase 49). Sin esto, con "Gráficos de fondo" activado en el diálogo de
+  // impresión del navegador (apagado por defecto en la mayoría, pero no en todos), el fondo
+  // oscuro del catálogo se filtraba alrededor de la tarjeta blanca del recibo -- encontrado
+  // generando el PDF real con `printBackground: true`, invisible con esa opción apagada.
+  html,
+  body {
+    background: #fff !important;
+  }
   .cdk-overlay-container,
   .cdk-global-overlay-wrapper,
   .cdk-overlay-pane,
@@ -333,6 +343,7 @@ body.catalog-scope a[mat-flat-button][color='primary'] {
     max-height: none !important;
     transform: none !important;
     box-shadow: none !important;
+    background: #fff !important;
   }
   // `!important` en las 5 — el propio `print-label-dialog.scss` define
   // `.print-label-area { max-height: 380px; overflow-y: auto; }` (para el scroll EN

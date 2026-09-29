@@ -5,6 +5,7 @@ import { forkJoin, map } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -23,6 +24,7 @@ import { OrderRequestService } from '../../../core/services/order-request.servic
 import { PaymentService } from '../../../core/services/payment.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
+import { OrderReceiptDialogComponent } from '../order-receipt-dialog/order-receipt-dialog';
 
 /** Dominio estático de Izipay/Lyra que sirve el JS/CSS del widget embebido — mismo dominio para
  *  sandbox y producción, solo las credenciales cambian (ver IzipayProperties en el backend). */
@@ -97,6 +99,7 @@ export class CheckoutPage implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly orderRequestService = inject(OrderRequestService);
   private readonly paymentService = inject(PaymentService);
+  private readonly dialog = inject(MatDialog);
   private readonly catalogService = inject(PublicCatalogService);
 
   readonly lines = this.cartService.lines;
@@ -372,6 +375,12 @@ export class CheckoutPage implements OnInit {
     if (!order) return;
     this.payStage.set('unavailable');
     this.buildWhatsAppLink([order]);
+  }
+
+  /** Comprobante en PDF del pedido web (Fase 62) — mismo patrón "Imprimir -> Guardar como PDF"
+   *  ya usado en Etiquetas (Fase 42) y en la Nota de venta del admin (Fase 61). */
+  openReceipt(order: OrderRequest): void {
+    this.dialog.open(OrderReceiptDialogComponent, { data: { order }, width: '720px', maxWidth: '95vw' });
   }
 
   private startOnlinePayment(order: OrderRequest): void {

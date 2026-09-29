@@ -7,6 +7,12 @@
       @if (convertedSaleId()) { como la venta #{{ convertedSaleId() }} }
       . Nos pondremos en contacto contigo para coordinar la entrega.
     </p>
+    @if (submittedOrders()[0]; as order) {
+      <button mat-stroked-button color="primary" class="!my-1 !rounded-xl" (click)="openReceipt(order)">
+        <mat-icon>receipt_long</mat-icon>
+        Descargar comprobante
+      </button>
+    }
     <a mat-button class="!rounded-xl" routerLink="/catalogo">Volver al catálogo</a>
   </div>
 } @else if (showPayWidget()) {
@@ -84,6 +90,10 @@
           <span>Total</span>
           <span>S/ {{ order.total.toFixed(2) }}</span>
         </div>
+        <button mat-stroked-button color="primary" class="!mt-2 !w-full !rounded-xl" (click)="openReceipt(order)">
+          <mat-icon>receipt_long</mat-icon>
+          Descargar comprobante
+        </button>
       </div>
     }
 

@@ -1,11 +1,20 @@
+// Fondo blanco EXPLÍCITO (a diferencia de sale-receipt-dialog.scss, en el admin): este diálogo
+// se abre dentro del scope de tema oscuro "Vitrina" del catálogo (Fase 49) -- sin esto, el
+// texto oscuro del recibo quedaría sobre el fondo oscuro heredado del diálogo, casi ilegible
+// en pantalla y potencialmente mal en la vista previa de impresión.
 .print-receipt-area {
-  // box-sizing: border-box por consistencia/defensivo con order-receipt-dialog.scss (Fase 62)
-  // -- acá no hay padding directo en este elemento hoy, así que el bug de ancho que motivó
-  // agregarlo ahí no aplica todavía, pero cualquier padding que se sume después sí lo evitaría.
+  // box-sizing: border-box es a propósito -- la regla global de impresión (styles.scss) fuerza
+  // `width: 190mm !important` sobre esta clase; con el box-sizing por defecto (content-box) el
+  // padding de acá se sumaría ENCIMA de esos 190mm, empujando el borde derecho fuera del área
+  // imprimible de una hoja A4 y cortando contenido (encontrado generando el PDF real con
+  // `printBackground: true`, no visible con `printBackground: false` ni en una captura normal).
   box-sizing: border-box;
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
   font-family: 'Roboto', sans-serif;
   color: #1a1a1a;
 }
@@ -80,8 +89,7 @@
   margin: 0 0 4px;
 }
 
-.receipt-items-table,
-.receipt-payments-table {
+.receipt-items-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 12px;
@@ -140,12 +148,9 @@
   color: #888 !important;
 }
 
-// El diálogo en sí (título/botones) se oculta al imprimir vía la regla global de
-// styles.scss (mismo mecanismo ya usado por print-label-dialog, Fase 42) — acá solo
-// va lo que ese caso no necesitaba: reventar el ancho máximo del recibo en pantalla
-// para que se vea como hoja completa apenas se abre "Imprimir / Guardar como PDF".
 @media print {
   .print-receipt-area {
     max-width: 100%;
+    border-radius: 0;
   }
 }
