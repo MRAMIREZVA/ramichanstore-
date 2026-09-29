@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatStepperModule } from '@angular/material/stepper';
 import KRGlue from '@lyracom/embedded-form-glue';
 import { PERU_DEPARTMENTS } from '../../../core/constants/peru-departments';
+import { districtsOf, provincesOf } from '../../../core/constants/peru-locations';
 import { DELIVERY_METHOD_LABELS, DeliveryMethod, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../core/models/sale.model';
 import { OrderRequest, OrderRequestSubmission } from '../../../core/models/order-request.model';
 import { CartLine } from '../../../core/models/cart.model';
@@ -178,8 +179,8 @@ export class CheckoutPage implements OnInit {
     shipping: this.fb.group({
       deliveryMethod: ['PICKUP' as DeliveryMethod, Validators.required],
       guestAddress: ['', Validators.maxLength(255)],
-      guestDistrict: ['', Validators.maxLength(100)],
-      guestProvince: ['', Validators.maxLength(100)],
+      guestDistrict: [null as string | null, Validators.maxLength(100)],
+      guestProvince: [null as string | null, Validators.maxLength(100)],
       guestDepartment: [null as string | null],
       deliveryAgencyId: [null as number | null],
       recipientDni: ['', Validators.maxLength(20)],
@@ -209,6 +210,17 @@ export class CheckoutPage implements OnInit {
   readonly deliveryAgencies = signal<DeliveryAgency[]>([]);
   readonly departments = PERU_DEPARTMENTS;
 
+  // Cascada Departamento -> Provincia -> Distrito (Fase 60), mismo patrón que delivery-form.ts:
+  // toSignal sobre valueChanges, nunca un computed() leyendo FormControl.value directo (Fase 35).
+  private readonly guestDepartmentValue = toSignal(this.form.controls.shipping.controls.guestDepartment.valueChanges, {
+    initialValue: this.form.controls.shipping.controls.guestDepartment.value,
+  });
+  private readonly guestProvinceValue = toSignal(this.form.controls.shipping.controls.guestProvince.valueChanges, {
+    initialValue: this.form.controls.shipping.controls.guestProvince.value,
+  });
+  readonly provinceOptions = computed(() => provincesOf(this.guestDepartmentValue()));
+  readonly districtOptions = computed(() => districtsOf(this.guestDepartmentValue(), this.guestProvinceValue()));
+
   /** Recuadro de repaso en el paso 3 ("revisa antes de pagar") — nombre de la agencia elegida. */
   readonly selectedAgencyName = computed(() => {
     const id = this.form.controls.shipping.controls.deliveryAgencyId.value;
@@ -231,6 +243,14 @@ export class CheckoutPage implements OnInit {
     this.form.controls.payment.controls.preferredPaymentMethod.valueChanges.subscribe((value) => {
       this.selectedPaymentMethod.set(value as PaymentMethod);
     });
+    // Si cambia el departamento, la provincia elegida puede ya no pertenecerle -- se limpia (y
+    // con ella el distrito, que depende de la provincia).
+    this.form.controls.shipping.controls.guestDepartment.valueChanges.subscribe(() => {
+      this.form.controls.shipping.controls.guestProvince.setValue(null);
+    });
+    this.form.controls.shipping.controls.guestProvince.valueChanges.subscribe(() => {
+      this.form.controls.shipping.controls.guestDistrict.setValue(null);
+    });
   }
 
   private applyLocationValidators(method: DeliveryMethod): void {
@@ -241,12 +261,15 @@ export class CheckoutPage implements OnInit {
     address.clearValidators();
     address.addValidators(method === 'DELIVERY' ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]);
 
-    district.clearValidators();
-    district.addValidators(method !== 'PICKUP' ? [Validators.required, Validators.maxLength(100)] : [Validators.maxLength(100)]);
+    // Departamento/Provincia/Distrito viajan juntos como la misma cascada (Fase 60) tanto para
+    // envío a domicilio como para agencia -- ya no solo Distrito ni solo agencia: sin elegir
+    // departamento+provincia no hay de dónde sacar las opciones del combo de Distrito.
+    const requiredIfNotPickup = method !== 'PICKUP' ? [Validators.required] : [];
+    department.setValidators(requiredIfNotPickup);
+    province.setValidators([...requiredIfNotPickup, Validators.maxLength(100)]);
+    district.setValidators([...requiredIfNotPickup, Validators.maxLength(100)]);
 
     const requiredIfAgency = method === 'AGENCY' ? [Validators.required] : [];
-    department.setValidators(requiredIfAgency);
-    province.setValidators([...requiredIfAgency, Validators.maxLength(100)]);
     agencyId.setValidators(requiredIfAgency);
     dni.setValidators([...requiredIfAgency, Validators.maxLength(20)]);
     recipientName.setValidators([...requiredIfAgency, Validators.maxLength(200)]);

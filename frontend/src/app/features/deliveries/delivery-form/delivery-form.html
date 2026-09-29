@@ -67,11 +67,21 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Provincia</mat-label>
-        <input matInput formControlName="province" />
+        <mat-select formControlName="province" [disabled]="provinceOptions().length === 0">
+          <mat-option [value]="null">Sin especificar</mat-option>
+          @for (prov of provinceOptions(); track prov) {
+            <mat-option [value]="prov">{{ prov }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Distrito</mat-label>
-        <input matInput formControlName="district" />
+        <mat-select formControlName="district" [disabled]="districtOptions().length === 0">
+          <mat-option [value]="null">Sin especificar</mat-option>
+          @for (dist of districtOptions(); track dist) {
+            <mat-option [value]="dist">{{ dist }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Fecha programada</mat-label>

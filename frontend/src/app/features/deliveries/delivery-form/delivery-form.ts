@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +14,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { PERU_DEPARTMENTS } from '../../../core/constants/peru-departments';
+import { districtsOf, provincesOf } from '../../../core/constants/peru-locations';
 import { Customer } from '../../../core/models/customer.model';
 import { DeliveryAgency } from '../../../core/models/delivery-agency.model';
 import { DELIVERY_STATUS_LABELS, Delivery, DeliveryRequest, DeliveryStatus, PendingPurchase } from '../../../core/models/delivery.model';
@@ -80,9 +82,9 @@ export class DeliveryFormComponent implements OnInit {
     ],
     deliveryType: [this.data.delivery?.deliveryType ?? ('DELIVERY' as DeliveryMethod), Validators.required],
     address: [this.data.delivery?.address ?? ''],
-    district: [this.data.delivery?.district ?? ''],
+    district: [this.data.delivery?.district ?? null],
     department: [this.data.delivery?.department ?? null],
-    province: [this.data.delivery?.province ?? ''],
+    province: [this.data.delivery?.province ?? null],
     deliveryAgencyId: [this.data.delivery?.deliveryAgencyId ?? null],
     recipientDni: [this.data.delivery?.recipientDni ?? ''],
     recipientName: [this.data.delivery?.recipientName ?? ''],
@@ -92,6 +94,19 @@ export class DeliveryFormComponent implements OnInit {
     status: [this.data.delivery?.status ?? ('PENDING' as DeliveryStatus), Validators.required],
     notes: [this.data.delivery?.notes ?? ''],
   });
+
+  // Cascada Departamento -> Provincia -> Distrito (Fase 60). `toSignal` sobre
+  // valueChanges, no un computed() leyendo FormControl.value directo -- lección
+  // ya documentada (Fase 35): un computed() que lee una property normal en vez
+  // de una signal se congela en su primer valor y nunca se vuelve a evaluar.
+  private readonly departmentValue = toSignal(this.form.controls.department.valueChanges, {
+    initialValue: this.form.controls.department.value,
+  });
+  private readonly provinceValue = toSignal(this.form.controls.province.valueChanges, {
+    initialValue: this.form.controls.province.value,
+  });
+  readonly provinceOptions = computed(() => provincesOf(this.departmentValue()));
+  readonly districtOptions = computed(() => districtsOf(this.departmentValue(), this.provinceValue()));
 
   readonly isAgency = computed(() => this.deliveryTypeValue() === 'AGENCY');
   private readonly deliveryTypeValue = signal<DeliveryMethod>(this.data.delivery?.deliveryType ?? 'DELIVERY');
@@ -103,6 +118,14 @@ export class DeliveryFormComponent implements OnInit {
     });
     this.form.controls.deliveryType.valueChanges.subscribe((value) => {
       this.deliveryTypeValue.set(value as DeliveryMethod);
+    });
+    // Si cambia el departamento, la provincia elegida puede ya no pertenecerle
+    // -- se limpia (y con ella el distrito, que depende de la provincia).
+    this.form.controls.department.valueChanges.subscribe(() => {
+      this.form.controls.province.setValue(null);
+    });
+    this.form.controls.province.valueChanges.subscribe(() => {
+      this.form.controls.district.setValue(null);
     });
     this.form.controls.customerSearch.valueChanges
       .pipe(

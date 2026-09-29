@@ -193,16 +193,38 @@
               </mat-select>
             </mat-form-field>
 
-            @if (locationMode() === 'address') {
+            @if (locationMode() !== 'none') {
               <div class="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
                 <mat-form-field appearance="outline">
-                  <mat-label>Distrito</mat-label>
-                  <input matInput formControlName="guestDistrict" />
+                  <mat-label>Departamento</mat-label>
+                  <mat-select formControlName="guestDepartment">
+                    @for (dep of departments; track dep) {
+                      <mat-option [value]="dep">{{ dep }}</mat-option>
+                    }
+                  </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline">
-                  <mat-label>Dirección</mat-label>
-                  <input matInput formControlName="guestAddress" />
+                  <mat-label>Provincia</mat-label>
+                  <mat-select formControlName="guestProvince" [disabled]="provinceOptions().length === 0">
+                    @for (prov of provinceOptions(); track prov) {
+                      <mat-option [value]="prov">{{ prov }}</mat-option>
+                    }
+                  </mat-select>
                 </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Distrito</mat-label>
+                  <mat-select formControlName="guestDistrict" [disabled]="districtOptions().length === 0">
+                    @for (dist of districtOptions(); track dist) {
+                      <mat-option [value]="dist">{{ dist }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                @if (locationMode() === 'address') {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Dirección</mat-label>
+                    <input matInput formControlName="guestAddress" />
+                  </mat-form-field>
+                }
               </div>
             }
 
@@ -229,22 +251,6 @@
                         <mat-option [value]="a.id">{{ a.name }}</mat-option>
                       }
                     </mat-select>
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Departamento</mat-label>
-                    <mat-select formControlName="guestDepartment">
-                      @for (dep of departments; track dep) {
-                        <mat-option [value]="dep">{{ dep }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Provincia</mat-label>
-                    <input matInput formControlName="guestProvince" />
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Distrito</mat-label>
-                    <input matInput formControlName="guestDistrict" />
                   </mat-form-field>
                 </div>
               </div>
