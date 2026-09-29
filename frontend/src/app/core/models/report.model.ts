@@ -38,11 +38,26 @@ export interface CustomerGrowthPoint {
   newCustomers: number;
 }
 
+/** Tráfico del catálogo público en el rango de fechas (Fase 63). */
+export interface CatalogVisitsSummary {
+  totalViews: number;
+  uniqueVisitors: number;
+}
+
+/** Calcado de TopProductPoint pero por vistas de ficha, no por ingresos (Fase 63). */
+export interface TopViewedProductPoint {
+  productId: number;
+  productName: string;
+  views: number;
+}
+
 export interface ReportCharts {
   dailySales: DailySalesPoint[];
   topProducts: TopProductPoint[];
   topCategories: TopCategoryPoint[];
   customerGrowth: CustomerGrowthPoint[];
+  catalogVisits: CatalogVisitsSummary;
+  topViewedProducts: TopViewedProductPoint[];
 }
 
 /** Saldo pendiente de un cliente, desglosado por origen (Ventas/Separaciones/Preventas) — snapshot en vivo, no por rango de fechas. */

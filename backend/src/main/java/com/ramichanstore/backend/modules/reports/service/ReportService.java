@@ -1,5 +1,7 @@
 package com.ramichanstore.backend.modules.reports.service;
 
+import com.ramichanstore.backend.modules.analytics.entity.CatalogEventType;
+import com.ramichanstore.backend.modules.analytics.repository.CatalogPageViewRepository;
 import com.ramichanstore.backend.modules.customers.entity.Customer;
 import com.ramichanstore.backend.modules.customers.repository.CustomerRepository;
 import com.ramichanstore.backend.modules.loyalty.repository.LoyaltyPointMovementRepository;
@@ -11,6 +13,7 @@ import com.ramichanstore.backend.modules.preorders.repository.PreorderCustomerRe
 import com.ramichanstore.backend.modules.preorders.repository.PreorderRepository;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
+import com.ramichanstore.backend.modules.reports.dto.CatalogVisitsSummary;
 import com.ramichanstore.backend.modules.reports.dto.CustomerActivePreorderResponse;
 import com.ramichanstore.backend.modules.reports.dto.CustomerDebtResponse;
 import com.ramichanstore.backend.modules.reports.dto.CustomerGrowthPoint;
@@ -22,6 +25,7 @@ import com.ramichanstore.backend.modules.reports.dto.ReportExportData;
 import com.ramichanstore.backend.modules.reports.dto.SaleExportRow;
 import com.ramichanstore.backend.modules.reports.dto.TopCategoryPoint;
 import com.ramichanstore.backend.modules.reports.dto.TopProductPoint;
+import com.ramichanstore.backend.modules.reports.dto.TopViewedProductPoint;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
 import com.ramichanstore.backend.modules.sales.entity.SaleType;
@@ -69,6 +73,7 @@ public class ReportService {
     private final PreorderCustomerPaymentRepository preorderCustomerPaymentRepository;
     private final LoyaltyPointMovementRepository loyaltyPointMovementRepository;
     private final SettingService settingService;
+    private final CatalogPageViewRepository catalogPageViewRepository;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboardSummary() {
@@ -107,7 +112,17 @@ public class ReportService {
 
         List<CustomerGrowthPoint> customerGrowth = groupCustomersByDay(from, to);
 
-        return new ReportChartsResponse(dailySales, topProducts, topCategories, customerGrowth);
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = LocalDateTime.of(to, LocalTime.MAX);
+        CatalogVisitsSummary catalogVisits = new CatalogVisitsSummary(
+                catalogPageViewRepository.countByEventTypeAndCreatedAtBetween(CatalogEventType.CATALOG_HOME, fromDateTime, toDateTime),
+                catalogPageViewRepository.countDistinctVisitorsBetween(CatalogEventType.CATALOG_HOME, fromDateTime, toDateTime));
+        List<TopViewedProductPoint> topViewedProducts = catalogPageViewRepository
+                .topViewedProductsBetween(fromDateTime, toDateTime, PageRequest.of(0, 8)).stream()
+                .map(row -> new TopViewedProductPoint((Long) row[0], (String) row[1], (Long) row[2]))
+                .toList();
+
+        return new ReportChartsResponse(dailySales, topProducts, topCategories, customerGrowth, catalogVisits, topViewedProducts);
     }
 
     /** Todo lo necesario para el reporte exportable (Excel/PDF/CSV) — mismos totales/tops que {@link #getCharts}, más el detalle de ventas. */

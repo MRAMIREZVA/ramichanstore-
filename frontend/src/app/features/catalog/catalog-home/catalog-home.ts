@@ -21,6 +21,7 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { PRODUCT_STATUS_LABELS, ProductStatus } from '../../../core/models/product.model';
 import { CatalogFilterOption, PublicProduct, StoreInfo } from '../../../core/models/public-catalog.model';
 import { CartService } from '../../../core/services/cart.service';
+import { CatalogTrackingService } from '../../../core/services/catalog-tracking.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
@@ -57,6 +58,7 @@ export class CatalogHome implements OnInit {
   private readonly router = inject(Router);
   private readonly cartService = inject(CartService);
   private readonly wishlistService = inject(WishlistService);
+  private readonly trackingService = inject(CatalogTrackingService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly breakpointObserver = inject(BreakpointObserver);
 
@@ -145,6 +147,7 @@ export class CatalogHome implements OnInit {
   });
 
   ngOnInit(): void {
+    this.trackingService.trackCatalogHome();
     this.catalogService.getCategories().subscribe((res) => this.categories.set(res.data));
     this.catalogService.getBrands().subscribe((res) => this.brands.set(res.data));
     this.catalogService.getLines().subscribe((res) => this.lines.set(res.data));

@@ -77,6 +77,20 @@
                 <span class="stat-value">{{ newCustomersTotal() }}</span>
               </div>
             </mat-card>
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon visits">visibility</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Visitas al catálogo</span>
+                <span class="stat-value">{{ catalogViews() }}</span>
+              </div>
+            </mat-card>
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon visitors">person_pin</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Visitantes únicos</span>
+                <span class="stat-value">{{ catalogUniqueVisitors() }}</span>
+              </div>
+            </mat-card>
           </div>
 
           <div class="charts-grid">
@@ -102,6 +116,16 @@
                 color="#4a3aa7"
                 [integer]="true"
                 emptyMessage="Sin clientes nuevos en el período."
+              />
+            </mat-card>
+
+            <mat-card class="chart-card">
+              <h3><mat-icon>visibility</mat-icon> Productos más vistos en el catálogo</h3>
+              <app-simple-bar-chart
+                [items]="topViewedProductsBars()"
+                color="#0e7c86"
+                [integer]="true"
+                emptyMessage="Sin vistas de producto en el período."
               />
             </mat-card>
           </div>

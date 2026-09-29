@@ -11,6 +11,7 @@ import { PRODUCT_STATUS_LABELS } from '../../../core/models/product.model';
 import { PublicPreorderInfo, PublicProduct } from '../../../core/models/public-catalog.model';
 import { StockAlertSubmission } from '../../../core/models/stock-alert.model';
 import { CartService } from '../../../core/services/cart.service';
+import { CatalogTrackingService } from '../../../core/services/catalog-tracking.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { StockAlertService } from '../../../core/services/stock-alert.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
@@ -40,6 +41,7 @@ export class CatalogProductDetail implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly stockAlertService = inject(StockAlertService);
   private readonly wishlistService = inject(WishlistService);
+  private readonly trackingService = inject(CatalogTrackingService);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly resolveImageUrl = resolveImageUrl;
@@ -105,6 +107,7 @@ export class CatalogProductDetail implements OnInit {
           this.activeImageUrl.set(res.data.mainImageUrl);
           this.loading.set(false);
           this.loadRelatedProducts(res.data);
+          this.trackingService.trackProductView(id);
         },
         error: () => {
           this.notFound.set(true);

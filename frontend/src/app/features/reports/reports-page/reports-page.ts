@@ -73,8 +73,15 @@ export class ReportsPage implements OnInit {
   readonly preorderColumns = ['customer', 'product', 'status', 'balance', 'eta'];
   readonly preorderStatusLabels = PREORDER_STATUS_LABELS;
 
+  /** Tráfico del catálogo público (Fase 63) — 0/0 mientras carga, nunca undefined. */
+  readonly catalogViews = computed(() => this.charts()?.catalogVisits.totalViews ?? 0);
+  readonly catalogUniqueVisitors = computed(() => this.charts()?.catalogVisits.uniqueVisitors ?? 0);
+
   readonly topProductsBars = computed<BarItem[]>(
     () => this.charts()?.topProducts.map((p) => ({ label: p.productName, value: p.revenue })) ?? [],
+  );
+  readonly topViewedProductsBars = computed<BarItem[]>(
+    () => this.charts()?.topViewedProducts.map((p) => ({ label: p.productName, value: p.views })) ?? [],
   );
   readonly topCategoriesBars = computed<BarItem[]>(
     () => this.charts()?.topCategories.map((c) => ({ label: c.categoryName, value: c.revenue })) ?? [],

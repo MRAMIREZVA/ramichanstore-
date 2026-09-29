@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/images/*/file").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/catalog/**").permitAll()
+                        // Tracking de tráfico del catálogo (Fase 63) — telemetría anónima, sin sesión.
+                        .requestMatchers(HttpMethod.POST, "/api/catalog/track").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/order-requests").permitAll()
                         // El cliente sube la captura de su pago con Yape sin tener sesión (Fase 52);
                         // la pertenencia se prueba con el teléfono del pedido, no con el id (correlativo).

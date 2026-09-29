@@ -6,5 +6,7 @@ public record ReportChartsResponse(
         List<DailySalesPoint> dailySales,
         List<TopProductPoint> topProducts,
         List<TopCategoryPoint> topCategories,
-        List<CustomerGrowthPoint> customerGrowth) {
+        List<CustomerGrowthPoint> customerGrowth,
+        CatalogVisitsSummary catalogVisits,
+        List<TopViewedProductPoint> topViewedProducts) {
 }
