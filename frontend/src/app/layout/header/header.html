@@ -1,4 +1,11 @@
 <mat-toolbar class="header">
+  @if (isMobile) {
+    <button mat-icon-button (click)="menuToggle.emit()" aria-label="Abrir menú">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span class="mobile-brand">RamichanStore</span>
+  }
+
   <span class="spacer"></span>
 
   @if (currentUser(); as user) {

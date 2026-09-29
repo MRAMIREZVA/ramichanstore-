@@ -7,6 +7,12 @@
   flex: 1 1 auto;
 }
 
+.mobile-brand {
+  margin-left: 4px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
 .user-btn {
   display: flex;
   align-items: center;
@@ -23,4 +29,13 @@
   font-size: 12px;
   color: var(--mat-sys-on-surface-variant);
   text-transform: uppercase;
+}
+
+/* Con el botón de menú + "RamichanStore" nuevos (Fase 58), el nombre completo del usuario ya
+   no entra junto a todo eso en un teléfono — se deja solo el ícono de cuenta, mismo criterio
+   ya usado en el header del catálogo/portal (Fase 21) para no desbordar en pantallas angostas. */
+@media (max-width: 480px) {
+  .user-name {
+    display: none;
+  }
 }
