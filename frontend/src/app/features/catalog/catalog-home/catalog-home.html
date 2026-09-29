@@ -95,7 +95,7 @@
   </mat-card>
 </ng-template>
 
-<mat-sidenav-container class="filters-shell" [hasBackdrop]="isMobileFilters()">
+<mat-sidenav-container class="filters-shell" [class.drawer-open]="isMobileFilters() && filtersDrawerOpen()" [hasBackdrop]="isMobileFilters()">
   <mat-sidenav
     #filtersDrawer
     class="filters-sidenav"
