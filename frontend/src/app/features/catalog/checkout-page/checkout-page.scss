@@ -1,1 +1,60 @@
-/* Rediseñado con clases de utilidad de Tailwind directo en el template (Fase 38) — ver checkout-page.html. */
+/* Rediseñado con clases de utilidad de Tailwind directo en el template (Fase 38) — ver checkout-page.html.
+   El mat-stepper de la Fase 55 no necesita tema propio: hereda los tokens --mat-sys-* oscuros del
+   catálogo (Fase 49, styles.scss) por vivir dentro de .catalog-shell — acá solo va lo que el
+   proyecto agregó encima del stepper de Material. */
+
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* Paso 1 no tiene botón "Atrás" — un solo hijo en el flex se empujaría a la izquierda por
+   defecto (justify-content: space-between necesita 2 elementos para repartir el espacio). */
+.step-actions:has(> button:only-child) {
+  justify-content: flex-end;
+}
+
+/* Repaso de "Tus datos"/"Envío" en el paso 3 — la parte de "seguro" del pedido: el cliente
+   confirma lo que ya escribió antes de pagar, con un link directo de vuelta a cada paso. */
+.review-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--color-rs-surface2, #241f30);
+}
+
+.review-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.review-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--mat-sys-on-surface, #f6f3fb);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-edit {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-rs-brand, #a970ff);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

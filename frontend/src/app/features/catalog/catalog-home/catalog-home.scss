@@ -83,11 +83,29 @@
 // header — el z-index de sus hijos (drawer, telón de fondo) solo se compara ENTRE SÍ
 // dentro de ese contexto, nunca contra el header, que sí crea uno explícito con
 // `z-index:10`. Por eso hace falta subir TODO el contenedor por encima del header, no
-// solo lo de adentro.
+// solo lo de adentro — PERO únicamente mientras el drawer MÓVIL está de verdad abierto
+// (clase `.drawer-open`, atada en el template a `isMobileFilters() && filtersDrawerOpen()` —
+// las dos condiciones a la vez, no solo la segunda: en desktop el propio `mat-sidenav` dispara
+// `(openedChange)` a `true` desde el arranque porque `[opened]="!isMobileFilters()"` ya nace
+// abierto ahí, así que `filtersDrawerOpen()` sola no alcanza para distinguir "drawer móvil
+// abierto" de "panel de escritorio, que siempre está 'abierto'").
+//
+// Elevar esto SIEMPRE (como quedó en la Fase 45) es lo que causó un bug real reportado
+// después: `.filters-shell` envuelve TODA la grilla de productos, que se sigue mostrando (y
+// haciendo scroll) con el drawer cerrado — con el contenedor permanentemente por encima del
+// header, al bajar lo suficiente la propia grilla (incluidos los espacios "vacíos" entre
+// tarjetas, que igual pertenecen a su caja) tapaba los clics de "Carrito"/"Favoritos" del
+// header sticky, aunque se siguieran viendo con normalidad (el z-index más alto gana el
+// hit-test aunque no haya nada opaco pintado encima). Con el z-index condicionado a
+// `.drawer-open`, el contenedor vuelve a quedar por DEBAJO del header el 100% del tiempo
+// salvo el instante real en que el drawer móvil está desplegado.
 .filters-shell {
   position: relative;
-  z-index: 15;
   background: transparent;
+
+  &.drawer-open {
+    z-index: 15;
+  }
 
   ::ng-deep .mat-drawer-inner-container {
     overflow-x: hidden;
