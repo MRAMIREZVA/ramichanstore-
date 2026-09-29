@@ -117,6 +117,20 @@ export class CheckoutPage implements OnInit {
   private themeAssetsLoaded = false;
   private pollAttempts = 0;
 
+  /**
+   * Pestaña de WhatsApp abierta EN BLANCO en el propio clic de "Confirmar y enviar pedido"
+   * (Fase 57, pedido explícito del dueño: "que lo haga cuando envía su pedido", sin que el
+   * cliente tenga que apretar un segundo botón). Los navegadores bloquean un `window.open()`
+   * disparado después de una llamada HTTP asíncrona (ya no cuenta como gesto directo del
+   * usuario) — pero SÍ permiten uno disparado de forma síncrona dentro del propio evento de
+   * clic, aunque todavía no se sepa la URL final. El truco estándar: abrir la pestaña en blanco
+   * ahí mismo, guardar la referencia, y recién navegarla a la URL real de WhatsApp cuando
+   * `buildWhatsAppLink()` la termine de armar (después de crear el pedido y consultar
+   * `getStoreInfo()`). El botón visible "Enviar por WhatsApp" de la plantilla se conserva como
+   * respaldo manual, por si el navegador bloqueó igual el truco o el cliente cerró la pestaña.
+   */
+  private pendingWaWindow: Window | null = null;
+
   readonly showPayWidget = computed(() => {
     const method = this.submittedOrder()?.preferredPaymentMethod;
     return (
@@ -270,9 +284,19 @@ export class CheckoutPage implements OnInit {
 
     const stockLines = this.lines().filter((l) => !l.isPreorder);
     const preorderLines = this.lines().filter((l) => l.isPreorder);
+    const isMixedCart = stockLines.length > 0 && preorderLines.length > 0;
+    // Mismo cálculo que decide, más abajo, si el pedido cae al pago en línea o al flujo de
+    // WhatsApp — calculado ACÁ (síncrono, con lo que ya hay en el carrito) para saber, en el
+    // instante mismo del clic, si hace falta reservar la pestaña en blanco. Un carrito mixto
+    // siempre cae a WhatsApp; uno homogéneo cae a WhatsApp salvo que sea 100% stock y el
+    // método elegido esté en ONLINE_PAYMENT_METHODS.
+    const willUseWhatsApp = isMixedCart || !(stockLines.length === this.lines().length && this.paysOnline());
+    if (willUseWhatsApp) {
+      this.pendingWaWindow = window.open('', '_blank');
+    }
 
     this.saving.set(true);
-    if (stockLines.length > 0 && preorderLines.length > 0) {
+    if (isMixedCart) {
       // Carrito mixto: el backend nunca acepta un pedido con ambos tipos — se envían
       // como 2 pedidos web separados. Sin pago en línea acá (solo aplica a un pedido
       // 100% en stock): ambos quedan pendientes y se coordina todo por WhatsApp.
@@ -283,7 +307,10 @@ export class CheckoutPage implements OnInit {
           this.cartService.clear();
           this.buildWhatsAppLink([stockRes.data, preorderRes.data]);
         },
-        error: () => this.saving.set(false),
+        error: () => {
+          this.saving.set(false);
+          this.closePendingWaWindow();
+        },
       });
     } else {
       this.orderRequestService.submit(buildRequest(this.lines())).subscribe({
@@ -293,14 +320,27 @@ export class CheckoutPage implements OnInit {
           this.cartService.clear();
           if (ONLINE_PAYMENT_METHODS.includes(res.data.preferredPaymentMethod) && res.data.requestType === 'STOCK') {
             this.submittedOrder.set(res.data);
+            this.closePendingWaWindow(); // este camino no usa WhatsApp — se abre el widget de pago en línea
             this.startOnlinePayment(res.data);
           } else {
             this.buildWhatsAppLink([res.data]);
           }
         },
-        error: () => this.saving.set(false),
+        error: () => {
+          this.saving.set(false);
+          this.closePendingWaWindow();
+        },
       });
     }
+  }
+
+  /** Cierra y limpia la pestaña reservada en `submit()` si al final no hizo falta (pedido
+   * fallido, o resultó yendo por el pago en línea en vez de WhatsApp). */
+  private closePendingWaWindow(): void {
+    if (this.pendingWaWindow && !this.pendingWaWindow.closed) {
+      this.pendingWaWindow.close();
+    }
+    this.pendingWaWindow = null;
   }
 
   /** El cliente eligió pagar por otro medio en vez de esperar/reintentar el pago en línea. */
@@ -443,6 +483,7 @@ export class CheckoutPage implements OnInit {
         this.yapeHolderName.set(res.data.yapeHolderName);
         if (!res.data.whatsapp) {
           this.storeHasWhatsapp.set(false);
+          this.closePendingWaWindow(); // no hay a dónde navegarla
           return;
         }
         const first = orders[0];
@@ -471,9 +512,21 @@ export class CheckoutPage implements OnInit {
             `Celular: ${first.recipientPhone ?? '-'}\n` +
             `Departamento - Provincia - Distrito: ${first.guestDepartment ?? '-'} - ${first.guestProvince ?? '-'} - ${first.guestDistrict ?? '-'}`;
         }
-        this.whatsAppUrl.set(whatsAppLink(res.data.whatsapp, message));
+        const url = whatsAppLink(res.data.whatsapp, message);
+        this.whatsAppUrl.set(url);
+        // Ya hay URL real: navegar la pestaña reservada en el clic de "Confirmar y enviar
+        // pedido" — si el cliente la cerró mientras tanto, o el navegador bloqueó igual el
+        // truco (pasa en algunos casos, ej. Safari con configuraciones estrictas), queda el
+        // botón "Enviar por WhatsApp" de la plantilla como respaldo manual.
+        if (this.pendingWaWindow && !this.pendingWaWindow.closed) {
+          this.pendingWaWindow.location.href = url;
+        }
+        this.pendingWaWindow = null;
       },
-      error: () => this.storeHasWhatsapp.set(false),
+      error: () => {
+        this.storeHasWhatsapp.set(false);
+        this.closePendingWaWindow();
+      },
     });
   }
 }
