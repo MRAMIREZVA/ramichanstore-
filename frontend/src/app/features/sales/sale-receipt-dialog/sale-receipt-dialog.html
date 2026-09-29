@@ -1,0 +1,125 @@
+<h2 mat-dialog-title>Nota de {{ data.sale.type === 'VENTA' ? 'venta' : 'separación' }}</h2>
+
+<mat-dialog-content>
+  <div class="print-receipt-area">
+    <header class="receipt-header">
+      <img src="/logo.png" alt="" class="receipt-logo" />
+      <div class="receipt-store-info">
+        <span class="receipt-store-name">{{ storeName() }}</span>
+        @if (storeWhatsapp()) {
+          <span class="receipt-store-contact">WhatsApp: {{ storeWhatsapp() }}</span>
+        }
+      </div>
+    </header>
+
+    <div class="receipt-title-row">
+      <h1 class="receipt-title">{{ data.sale.type === 'VENTA' ? 'Nota de venta' : 'Nota de separación' }}</h1>
+      <div class="receipt-meta">
+        <span>{{ data.sale.orderCode }}</span>
+        <span>{{ data.sale.saleDate }}</span>
+      </div>
+    </div>
+
+    <section class="receipt-section">
+      <h2 class="receipt-section-title">Cliente</h2>
+      <p>{{ data.sale.customerName ?? 'Cliente genérico' }}</p>
+      @if (data.sale.customerPhone) {
+        <p>Tel: {{ data.sale.customerPhone }}</p>
+      }
+    </section>
+
+    <table class="receipt-items-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cant.</th>
+          <th>P. unitario</th>
+          <th>Desc.</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (it of data.sale.items; track it.id) {
+          <tr>
+            <td>{{ it.productSku }} — {{ it.productName }}</td>
+            <td>{{ it.quantity }}</td>
+            <td>S/ {{ it.unitPrice.toFixed(2) }}</td>
+            <td>S/ {{ it.discount.toFixed(2) }}</td>
+            <td>S/ {{ it.subtotal.toFixed(2) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="receipt-totals">
+      <span>Subtotal: S/ {{ data.sale.subtotal.toFixed(2) }}</span>
+      <span class="receipt-total-amount">Total: S/ {{ data.sale.total.toFixed(2) }}</span>
+    </div>
+
+    <section class="receipt-section">
+      <h2 class="receipt-section-title">Pago</h2>
+      <p>Estado: {{ paymentStatusLabels[data.sale.paymentStatus] }}</p>
+      @if (data.sale.type === 'VENTA' && data.sale.paymentMethod) {
+        <p>Método: {{ paymentMethodLabels[data.sale.paymentMethod] }}</p>
+      }
+      @if (data.sale.type === 'SEPARACION') {
+        <p>
+          Pagado: S/ {{ data.sale.amountPaid.toFixed(2) }} — Saldo pendiente:
+          <strong>S/ {{ data.sale.balanceDue.toFixed(2) }}</strong>
+          @if (data.sale.limitDate) {
+            (fecha límite: {{ data.sale.limitDate }})
+          }
+        </p>
+        @if (data.payments.length > 0) {
+          <table class="receipt-payments-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Método</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of data.payments; track p.id) {
+                <tr>
+                  <td>{{ p.paymentDate }}</td>
+                  <td>S/ {{ p.amount.toFixed(2) }}</td>
+                  <td>{{ paymentMethodLabels[p.paymentMethod] }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </section>
+
+    @if (data.sale.type === 'VENTA' && data.sale.deliveryMethod) {
+      <section class="receipt-section">
+        <h2 class="receipt-section-title">Entrega</h2>
+        <p>{{ deliveryMethodLabels[data.sale.deliveryMethod] }}</p>
+      </section>
+    }
+
+    @if (data.sale.notes) {
+      <section class="receipt-section">
+        <h2 class="receipt-section-title">Observaciones</h2>
+        <p>{{ data.sale.notes }}</p>
+      </section>
+    }
+
+    <footer class="receipt-footer">
+      <p>¡Gracias por tu compra! Cualquier consulta, escríbenos por WhatsApp.</p>
+      <p class="receipt-disclaimer">
+        Este documento es un comprobante informativo de tu pedido — no reemplaza una boleta o factura electrónica.
+      </p>
+    </footer>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+  <button mat-flat-button color="primary" (click)="print()">
+    <mat-icon>print</mat-icon>
+    Imprimir / Guardar como PDF
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,147 @@
+.print-receipt-area {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  font-family: 'Roboto', sans-serif;
+  color: #1a1a1a;
+}
+
+.receipt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.receipt-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.receipt-store-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.receipt-store-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.receipt-store-contact {
+  font-size: 12px;
+  color: #555;
+}
+
+.receipt-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.receipt-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.receipt-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 13px;
+  color: #555;
+}
+
+.receipt-section {
+  margin-bottom: 14px;
+
+  p {
+    margin: 2px 0;
+    font-size: 13px;
+  }
+}
+
+.receipt-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #777;
+  margin: 0 0 4px;
+}
+
+.receipt-items-table,
+.receipt-payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #777;
+    border-bottom: 1px solid #ccc;
+    padding: 6px 4px;
+  }
+
+  td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #eee;
+  }
+
+  th:not(:first-child),
+  td:not(:first-child) {
+    text-align: right;
+  }
+}
+
+.receipt-totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.receipt-total-amount {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.receipt-footer {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid #ccc;
+  text-align: center;
+
+  p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: #555;
+  }
+}
+
+.receipt-disclaimer {
+  font-style: italic;
+  font-size: 11px !important;
+  color: #888 !important;
+}
+
+// El diálogo en sí (título/botones) se oculta al imprimir vía la regla global de
+// styles.scss (mismo mecanismo ya usado por print-label-dialog, Fase 42) — acá solo
+// va lo que ese caso no necesitaba: reventar el ancho máximo del recibo en pantalla
+// para que se vea como hoja completa apenas se abre "Imprimir / Guardar como PDF".
+@media print {
+  .print-receipt-area {
+    max-width: 100%;
+  }
+}

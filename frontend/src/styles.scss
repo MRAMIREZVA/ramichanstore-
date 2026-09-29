@@ -298,8 +298,26 @@ body.catalog-scope a[mat-flat-button][color='primary'] {
     display: none !important;
   }
   .print-label-area,
-  .print-label-area * {
+  .print-label-area *,
+  .print-receipt-area,
+  .print-receipt-area * {
     visibility: visible;
+  }
+  // La nota de venta (Fase 61) se abre desde `sale-detail` SIN cerrarlo -- quedan 2
+  // diálogos apilados en el mismo `cdk-overlay-container` (Angular Material los
+  // apila así). El bloque de abajo vuelve `position:static` a TODOS los paneles de
+  // diálogo para escapar del `transform` que atrapaba `.print-label-area` (Fase 42)
+  // -- pero eso también libera al panel del diálogo de ABAJO (sale-detail, con su
+  // propio contenido largo: tarjeta de comprador, tabla de items, formulario de
+  // abonos...), que body*{visibility:hidden} deja invisible pero NUNCA colapsa
+  // (mismo mecanismo ya documentado: visibility:hidden no reduce la caja a cero).
+  // Ese contenido invisible-pero-con-alto-real, al pasar a estar en flujo normal,
+  // empujaba la nota de venta hacia abajo y la partía en 2 hojas con un hueco en
+  // blanco enorme -- encontrado generando el PDF real con Playwright, no visible
+  // en una captura de pantalla normal. Se colapsa por completo cualquier panel de
+  // diálogo que NO contenga el área que sí se va a imprimir.
+  .cdk-overlay-pane:not(:has(.print-label-area, .print-receipt-area)) {
+    display: none !important;
   }
   .cdk-overlay-container,
   .cdk-global-overlay-wrapper,
@@ -324,7 +342,8 @@ body.catalog-scope a[mat-flat-button][color='primary'] {
   // regla de pantalla seguía ganando incluso bajo `@media print`, dejando el área
   // recortada a 380px con scroll interno (el origen real del bug reportado desde el
   // principio) sin importar qué tanto se ajustara `position`/`width` alrededor.
-  .print-label-area {
+  .print-label-area,
+  .print-receipt-area {
     position: static !important;
     width: 190mm !important;
     max-width: 190mm !important;

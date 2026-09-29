@@ -29,6 +29,7 @@ import { parseIsoDate } from '../../../core/utils/date';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { BuyerCardComponent } from '../../../shared/components/buyer-card/buyer-card';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { SaleReceiptDialogComponent } from '../sale-receipt-dialog/sale-receipt-dialog';
 
 interface ItemDraft {
   detailId: number;
@@ -146,6 +147,14 @@ export class SaleDetailComponent {
 
   close(): void {
     this.dialogRef.close(this.changed);
+  }
+
+  openReceipt(): void {
+    this.dialog.open(SaleReceiptDialogComponent, {
+      data: { sale: this.data.sale, payments: this.data.sale.type === 'SEPARACION' ? this.payments() : [] },
+      width: '720px',
+      maxWidth: '95vw',
+    });
   }
 
   /**
