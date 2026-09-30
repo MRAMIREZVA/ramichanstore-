@@ -7,23 +7,34 @@
 </h2>
 
 <mat-dialog-content>
-  @if (data.sale.type === 'VENTA' && data.sale.paymentStatus !== 'CANCELLED') {
+  @if (data.sale.paymentStatus !== 'CANCELLED') {
     <div class="status-editor">
+      @if (data.sale.type === 'VENTA') {
+        <mat-form-field appearance="outline" class="status-field">
+          <mat-label>Estado de pago</mat-label>
+          <mat-select [formControl]="statusControl">
+            @for (opt of statusOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button
+          mat-stroked-button
+          color="primary"
+          [disabled]="statusControl.value === data.sale.paymentStatus || savingStatus()"
+          (click)="saveStatus()"
+        >
+          Guardar estado
+        </button>
+      }
       <mat-form-field appearance="outline" class="status-field">
-        <mat-label>Estado de pago</mat-label>
-        <mat-select [formControl]="statusControl">
-          @for (opt of statusOptions; track opt[0]) {
-            <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
-          }
-        </mat-select>
+        <mat-label>Fecha de la compra</mat-label>
+        <input matInput [matDatepicker]="saleDatePicker" [formControl]="saleDateControl" />
+        <mat-datepicker-toggle matSuffix [for]="saleDatePicker" />
+        <mat-datepicker #saleDatePicker />
       </mat-form-field>
-      <button
-        mat-stroked-button
-        color="primary"
-        [disabled]="statusControl.value === data.sale.paymentStatus || savingStatus()"
-        (click)="saveStatus()"
-      >
-        Guardar estado
+      <button mat-stroked-button color="primary" [disabled]="savingSaleDate()" (click)="saveSaleDate()">
+        Guardar fecha
       </button>
     </div>
   }

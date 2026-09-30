@@ -66,6 +66,11 @@ export class SaleService {
     return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/payment-status`, { status });
   }
 
+  /** Corrige la fecha en la que se realizó la compra — aplica a ambos tipos por igual. */
+  updateSaleDate(id: number, saleDate: string): Observable<ApiResponse<Sale>> {
+    return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/sale-date`, { saleDate });
+  }
+
   /** Corrige precio unitario/descuento de líneas ya creadas — recalcula total/ganancia/puntos. */
   updateItems(id: number, request: UpdateSaleItemsRequest): Observable<ApiResponse<Sale>> {
     return this.http.put<ApiResponse<Sale>>(`${this.baseUrl}/${id}/items`, request);

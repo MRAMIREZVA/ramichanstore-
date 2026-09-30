@@ -408,6 +408,28 @@ public class SaleService {
         return SaleResponse.from(saved);
     }
 
+    /**
+     * Corrige la fecha en la que se realizó la compra (venta o separación) — puede haber
+     * quedado mal tipeada, o el registro se hizo días después del hecho real. Aplica a
+     * ambos tipos por igual (a diferencia de {@link #updatePaymentStatus}, que es solo VENTA):
+     * la fecha no participa en ningún cálculo de negocio, solo en filtros/orden.
+     */
+    @Transactional
+    public SaleResponse updateSaleDate(Long id, LocalDate newDate) {
+        Sale sale = findById(id);
+        if (sale.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            throw new BusinessRuleException("No se puede editar la fecha de una compra cancelada");
+        }
+
+        LocalDate before = sale.getSaleDate();
+        sale.setSaleDate(newDate);
+        Sale saved = saleRepository.save(sale);
+
+        auditService.log(AuditAction.UPDATE, moduleFor(saved), entityNameFor(saved), id.toString(),
+                String.valueOf(before), String.valueOf(newDate));
+        return SaleResponse.from(saved);
+    }
+
     // ---- Ledger de abonos (solo aplica a type=SEPARACION) ----
 
     @Transactional(readOnly = true)

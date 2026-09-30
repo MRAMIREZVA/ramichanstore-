@@ -25,7 +25,7 @@ import {
 } from '../../../core/models/sale.model';
 import { ProductService } from '../../../core/services/product.service';
 import { SaleService } from '../../../core/services/sale.service';
-import { parseIsoDate } from '../../../core/utils/date';
+import { parseIsoDate, toIsoDate } from '../../../core/utils/date';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { BuyerCardComponent } from '../../../shared/components/buyer-card/buyer-card';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -85,6 +85,10 @@ export class SaleDetailComponent {
   readonly savingStatus = signal(false);
   private changed = false;
 
+  /** Corrige la fecha en la que se realizó la compra — aplica a ambos tipos (Venta/Separación). */
+  readonly saleDateControl = new FormControl<Date | null>(parseIsoDate(this.data.sale.saleDate));
+  readonly savingSaleDate = signal(false);
+
   /** Permite corregir precio/descuento de una línea (ej. error de tipeo) — producto y cantidad quedan fijos. */
   readonly itemDrafts = signal<ItemDraft[]>(this.buildDrafts());
   readonly savingItems = signal(false);
@@ -126,6 +130,22 @@ export class SaleDetailComponent {
         this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
       },
       error: () => this.savingStatus.set(false),
+    });
+  }
+
+  saveSaleDate(): void {
+    const date = this.saleDateControl.value;
+    const iso = toIsoDate(date);
+    if (!iso || iso === this.data.sale.saleDate) return;
+    this.savingSaleDate.set(true);
+    this.saleService.updateSaleDate(this.data.sale.id, iso).subscribe({
+      next: (res) => {
+        this.data.sale.saleDate = iso;
+        this.changed = true;
+        this.savingSaleDate.set(false);
+        this.snackBar.open(res.message, 'Cerrar', { duration: 3000 });
+      },
+      error: () => this.savingSaleDate.set(false),
     });
   }
 
