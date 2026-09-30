@@ -17,6 +17,7 @@ import com.ramichanstore.backend.modules.deliveries.repository.DeliveryRepositor
 import com.ramichanstore.backend.modules.deliveries.repository.DeliverySpecifications;
 import com.ramichanstore.backend.modules.deliveryagencies.entity.DeliveryAgency;
 import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
+import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
 import java.util.ArrayList;
@@ -77,6 +78,7 @@ public class DeliveryService {
      * Compras del cliente (ventas y separaciones, ambas {@link Sale}) que aún no están en
      * ninguna entrega — o que ya están en {@code excludeDeliveryId} (para poder editar esa
      * entrega sin que sus propias compras actuales desaparezcan de la lista de candidatas).
+     * Una compra {@code CANCELLED} nunca es candidata: no hay nada físico que entregar.
      */
     @Transactional(readOnly = true)
     public List<PendingPurchaseResponse> findPendingPurchases(Long customerId, Long excludeDeliveryId) {
@@ -84,7 +86,7 @@ public class DeliveryService {
 
         List<PendingPurchaseResponse> result = new ArrayList<>();
         for (Sale sale : saleRepository.findByCustomerIdOrderBySaleDateDesc(customerId)) {
-            if (!bundledSaleIds.contains(sale.getId())) {
+            if (sale.getPaymentStatus() != PaymentStatus.CANCELLED && !bundledSaleIds.contains(sale.getId())) {
                 result.add(PendingPurchaseResponse.fromSale(sale));
             }
         }
