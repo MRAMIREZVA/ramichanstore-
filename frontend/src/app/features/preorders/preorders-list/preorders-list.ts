@@ -2,6 +2,7 @@ import { KeyValuePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PREORDER_STATUS_LABELS, Preorder, PreorderStatus } from '../../../core/models/preorder.model';
 import { resolveImageUrl } from '../../../core/utils/image-url';
+import { toIsoDate } from '../../../core/utils/date';
 import { PreorderFilters, PreorderService } from '../../../core/services/preorder.service';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { PreorderFormComponent, PreorderFormData } from '../preorder-form/preorder-form';
@@ -28,6 +30,7 @@ import { PreorderReservationsComponent, PreorderReservationsData } from '../preo
     KeyValuePipe,
     MatTableModule,
     MatButtonModule,
+    MatDatepickerModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
@@ -55,6 +58,8 @@ export class PreordersList implements OnInit {
 
   readonly searchControl = new FormControl('');
   readonly statusControl = new FormControl<PreorderStatus | null>(null);
+  readonly fromControl = new FormControl<Date | null>(null);
+  readonly toControl = new FormControl<Date | null>(null);
 
   page = 0;
   pageSize = 20;
@@ -68,6 +73,14 @@ export class PreordersList implements OnInit {
       this.page = 0;
       this.load();
     });
+    this.fromControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
+    this.toControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
 
     this.load();
   }
@@ -77,6 +90,8 @@ export class PreordersList implements OnInit {
     const filters: PreorderFilters = {
       search: this.searchControl.value ?? undefined,
       status: this.statusControl.value,
+      from: toIsoDate(this.fromControl.value),
+      to: toIsoDate(this.toControl.value),
       page: this.page,
       size: this.pageSize,
     };

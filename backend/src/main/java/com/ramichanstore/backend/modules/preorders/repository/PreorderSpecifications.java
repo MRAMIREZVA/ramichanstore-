@@ -2,10 +2,11 @@ package com.ramichanstore.backend.modules.preorders.repository;
 
 import com.ramichanstore.backend.modules.preorders.entity.Preorder;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
+import java.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
-/** Filtros dinámicos del listado de preventas: búsqueda por producto + estado. */
+/** Filtros dinámicos del listado de campañas de preventa: búsqueda por producto + estado + rango de fecha de inicio. */
 public final class PreorderSpecifications {
 
     private PreorderSpecifications() {
@@ -27,5 +28,19 @@ public final class PreorderSpecifications {
             return null;
         }
         return (root, query, cb) -> cb.equal(root.get("status"), status);
+    }
+
+    public static Specification<Preorder> startDateFrom(LocalDate from) {
+        if (from == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("startDate"), from);
+    }
+
+    public static Specification<Preorder> startDateTo(LocalDate to) {
+        if (to == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("startDate"), to);
     }
 }

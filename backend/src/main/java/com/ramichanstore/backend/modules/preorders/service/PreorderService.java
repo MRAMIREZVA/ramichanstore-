@@ -56,10 +56,12 @@ public class PreorderService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public Page<PreorderResponse> search(String term, PreorderStatus status, Pageable pageable) {
+    public Page<PreorderResponse> search(String term, PreorderStatus status, LocalDate from, LocalDate to, Pageable pageable) {
         List<Specification<Preorder>> specs = Stream.of(
                         PreorderSpecifications.search(term),
-                        PreorderSpecifications.hasStatus(status))
+                        PreorderSpecifications.hasStatus(status),
+                        PreorderSpecifications.startDateFrom(from),
+                        PreorderSpecifications.startDateTo(to))
                 .filter(Objects::nonNull)
                 .toList();
         Specification<Preorder> spec = specs.isEmpty() ? null : Specification.allOf(specs);

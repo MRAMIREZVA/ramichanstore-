@@ -45,8 +45,10 @@ public class PreorderController {
     public ApiResponse<PageResponse<PreorderResponse>> search(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) PreorderStatus status,
-            @PageableDefault(size = 20, sort = "startDate") Pageable pageable) {
-        return ApiResponse.ok(PageResponse.from(preorderService.search(search, status, pageable)));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ApiResponse.ok(PageResponse.from(preorderService.search(search, status, from, to, pageable)));
     }
 
     @GetMapping("/{id}")

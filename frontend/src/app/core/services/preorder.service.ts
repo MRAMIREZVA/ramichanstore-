@@ -19,6 +19,8 @@ import {
 export interface PreorderFilters {
   search?: string;
   status?: PreorderStatus | null;
+  from?: string | null;
+  to?: string | null;
   page?: number;
   size?: number;
 }
@@ -43,6 +45,8 @@ export class PreorderService {
       .set('size', filters.size ?? 20);
     if (filters.search) params = params.set('search', filters.search);
     if (filters.status) params = params.set('status', filters.status);
+    if (filters.from) params = params.set('from', filters.from);
+    if (filters.to) params = params.set('to', filters.to);
 
     return this.http.get<ApiResponse<PageResponse<Preorder>>>(this.baseUrl, { params });
   }
