@@ -105,6 +105,25 @@
     color: #a23e7c;
     background: #f7dcec;
   }
+
+  &.preorder {
+    color: #8a5a00;
+    background: #f6e8c8;
+  }
+}
+
+.section-title {
+  margin: 28px 0 2px;
+  padding-top: 20px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.section-hint {
+  margin: 0 0 16px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 13px;
 }
 
 .stat-body {

@@ -83,6 +83,16 @@ export class ReportsPage implements OnInit {
   readonly topViewedProductsBars = computed<BarItem[]>(
     () => this.charts()?.topViewedProducts.map((p) => ({ label: p.productName, value: p.views })) ?? [],
   );
+
+  /** Preventas (Fase 67) — deliberadamente separado de las cifras de Ventas de arriba. */
+  readonly preorderReservationsTotal = computed(() => this.charts()?.preorderReservations.totalReservations ?? 0);
+  readonly preorderDepositsTotal = computed(() => this.charts()?.preorderReservations.totalDeposits ?? 0);
+  readonly dailyReservationsBars = computed<BarItem[]>(
+    () => this.charts()?.dailyReservations.map((d) => ({ label: this.shortDate(d.date), value: d.reservationsCount })) ?? [],
+  );
+  readonly topReservedProductsBars = computed<BarItem[]>(
+    () => this.charts()?.topReservedProducts.map((p) => ({ label: p.productName, value: p.quantityReserved })) ?? [],
+  );
   readonly topCategoriesBars = computed<BarItem[]>(
     () => this.charts()?.topCategories.map((c) => ({ label: c.categoryName, value: c.revenue })) ?? [],
   );

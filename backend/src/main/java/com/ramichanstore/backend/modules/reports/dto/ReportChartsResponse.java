@@ -8,5 +8,8 @@ public record ReportChartsResponse(
         List<TopCategoryPoint> topCategories,
         List<CustomerGrowthPoint> customerGrowth,
         CatalogVisitsSummary catalogVisits,
-        List<TopViewedProductPoint> topViewedProducts) {
+        List<TopViewedProductPoint> topViewedProducts,
+        PreorderReservationsSummary preorderReservations,
+        List<DailyReservationsPoint> dailyReservations,
+        List<TopReservedProductPoint> topReservedProducts) {
 }

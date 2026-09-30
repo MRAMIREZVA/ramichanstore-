@@ -1,6 +1,7 @@
 package com.ramichanstore.backend.modules.preorders.repository;
 
 import com.ramichanstore.backend.modules.preorders.entity.PreorderCustomer;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,4 +18,7 @@ public interface PreorderCustomerRepository extends JpaRepository<PreorderCustom
 
     @Query("SELECT COALESCE(SUM(pc.quantity), 0) FROM PreorderCustomer pc WHERE pc.preorder.id = :preorderId")
     int sumReservedQuantity(@Param("preorderId") Long preorderId);
+
+    /** Para Reportes (gráficas de preventa, separadas de Ventas) — ver ReportService.getCharts. */
+    List<PreorderCustomer> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 }

@@ -17,14 +17,17 @@ import com.ramichanstore.backend.modules.reports.dto.CatalogVisitsSummary;
 import com.ramichanstore.backend.modules.reports.dto.CustomerActivePreorderResponse;
 import com.ramichanstore.backend.modules.reports.dto.CustomerDebtResponse;
 import com.ramichanstore.backend.modules.reports.dto.CustomerGrowthPoint;
+import com.ramichanstore.backend.modules.reports.dto.DailyReservationsPoint;
 import com.ramichanstore.backend.modules.reports.dto.DailySalesPoint;
 import com.ramichanstore.backend.modules.reports.dto.DashboardSummaryResponse;
+import com.ramichanstore.backend.modules.reports.dto.PreorderReservationsSummary;
 import com.ramichanstore.backend.modules.reports.dto.ReceivablesReportResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportChartsResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportExportData;
 import com.ramichanstore.backend.modules.reports.dto.SaleExportRow;
 import com.ramichanstore.backend.modules.reports.dto.TopCategoryPoint;
 import com.ramichanstore.backend.modules.reports.dto.TopProductPoint;
+import com.ramichanstore.backend.modules.reports.dto.TopReservedProductPoint;
 import com.ramichanstore.backend.modules.reports.dto.TopViewedProductPoint;
 import com.ramichanstore.backend.modules.sales.entity.PaymentStatus;
 import com.ramichanstore.backend.modules.sales.entity.Sale;
@@ -122,7 +125,14 @@ public class ReportService {
                 .map(row -> new TopViewedProductPoint((Long) row[0], (String) row[1], (Long) row[2]))
                 .toList();
 
-        return new ReportChartsResponse(dailySales, topProducts, topCategories, customerGrowth, catalogVisits, topViewedProducts);
+        List<PreorderCustomer> reservations = preorderCustomerRepository.findByCreatedAtBetween(fromDateTime, toDateTime);
+        PreorderReservationsSummary preorderReservations = new PreorderReservationsSummary(
+                reservations.size(), preorderCustomerPaymentRepository.sumAmountBetween(fromDateTime, toDateTime));
+        List<DailyReservationsPoint> dailyReservations = groupReservationsByDay(reservations);
+        List<TopReservedProductPoint> topReservedProducts = topReservedProducts(reservations);
+
+        return new ReportChartsResponse(dailySales, topProducts, topCategories, customerGrowth, catalogVisits, topViewedProducts,
+                preorderReservations, dailyReservations, topReservedProducts);
     }
 
     /** Todo lo necesario para el reporte exportable (Excel/PDF/CSV) — mismos totales/tops que {@link #getCharts}, más el detalle de ventas. */
@@ -233,6 +243,42 @@ public class ReportService {
         return counts.entrySet().stream()
                 .map(e -> new CustomerGrowthPoint(e.getKey(), e.getValue()))
                 .sorted(Comparator.comparing(CustomerGrowthPoint::date))
+                .toList();
+    }
+
+    /** Gráficas de preventa (Fase 67) — deliberadamente separadas de Ventas, ver PreorderReservationsSummary. */
+    private List<DailyReservationsPoint> groupReservationsByDay(List<PreorderCustomer> reservations) {
+        Map<LocalDate, Long> counts = reservations.stream()
+                .collect(Collectors.groupingBy(pc -> pc.getCreatedAt().toLocalDate(), Collectors.counting()));
+        return counts.entrySet().stream()
+                .map(e -> new DailyReservationsPoint(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(DailyReservationsPoint::date))
+                .toList();
+    }
+
+    /**
+     * Agrupado en Java a partir de la misma lista ya cargada por groupReservationsByDay (sin una
+     * segunda consulta) — un record local como clave de agrupación evita depender de la identidad
+     * de la entidad Product como clave de Map. Una reserva huérfana (campaña ya borrada, ver
+     * lección de Fase 37) se omite en silencio en vez de romper el reporte completo — mismo
+     * patrón defensivo ya usado en getReceivables().
+     */
+    private List<TopReservedProductPoint> topReservedProducts(List<PreorderCustomer> reservations) {
+        record Key(Long productId, String productName) {
+        }
+        Map<Key, Long> byProduct = new LinkedHashMap<>();
+        for (PreorderCustomer pc : reservations) {
+            try {
+                Product product = pc.getPreorder().getProduct();
+                byProduct.merge(new Key(product.getId(), product.getName()), (long) pc.getQuantity(), Long::sum);
+            } catch (EntityNotFoundException ex) {
+                // Reserva huérfana (campaña ya borrada) — se omite, no rompe el reporte.
+            }
+        }
+        return byProduct.entrySet().stream()
+                .sorted(Map.Entry.<Key, Long>comparingByValue().reversed())
+                .limit(8)
+                .map(e -> new TopReservedProductPoint(e.getKey().productId(), e.getKey().productName(), e.getValue()))
                 .toList();
     }
 }

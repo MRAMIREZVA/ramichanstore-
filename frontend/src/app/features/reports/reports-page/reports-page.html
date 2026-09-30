@@ -129,6 +129,48 @@
               />
             </mat-card>
           </div>
+
+          <h2 class="section-title">Preventas</h2>
+          <p class="section-hint">Reservas y depósitos de campañas de preventa — independiente de Ventas.</p>
+
+          <div class="kpi-grid">
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon preorder">event_available</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Reservas del período</span>
+                <span class="stat-value">{{ preorderReservationsTotal() }}</span>
+              </div>
+            </mat-card>
+            <mat-card class="stat-card">
+              <mat-icon class="stat-icon preorder">savings</mat-icon>
+              <div class="stat-body">
+                <span class="stat-label">Depósitos de preventa</span>
+                <span class="stat-value">S/ {{ preorderDepositsTotal().toFixed(2) }}</span>
+              </div>
+            </mat-card>
+          </div>
+
+          <div class="charts-grid">
+            <mat-card class="chart-card">
+              <h3><mat-icon>event_available</mat-icon> Reservas de preventa por día</h3>
+              <app-simple-bar-chart
+                [items]="dailyReservationsBars()"
+                color="#b8860b"
+                [integer]="true"
+                emptyMessage="Sin reservas de preventa en el período."
+              />
+            </mat-card>
+
+            <mat-card class="chart-card">
+              <h3><mat-icon>inventory_2</mat-icon> Productos más reservados en preventa</h3>
+              <app-simple-bar-chart
+                [items]="topReservedProductsBars()"
+                color="#a15c00"
+                [integer]="true"
+                emptyMessage="Sin reservas de preventa en el período."
+              />
+            </mat-card>
+          </div>
         }
       </div>
     </mat-tab>

@@ -51,6 +51,25 @@ export interface TopViewedProductPoint {
   views: number;
 }
 
+/** Reservas de preventa en el rango — deliberadamente separadas de Ventas, nunca sumadas a sus totales. */
+export interface PreorderReservationsSummary {
+  totalReservations: number;
+  totalDeposits: number;
+}
+
+/** Calcado de DailySalesPoint pero para reservas de preventa. */
+export interface DailyReservationsPoint {
+  date: string;
+  reservationsCount: number;
+}
+
+/** Calcado de TopProductPoint pero por cantidad reservada en preventa, no por ingresos de Ventas. */
+export interface TopReservedProductPoint {
+  productId: number;
+  productName: string;
+  quantityReserved: number;
+}
+
 export interface ReportCharts {
   dailySales: DailySalesPoint[];
   topProducts: TopProductPoint[];
@@ -58,6 +77,9 @@ export interface ReportCharts {
   customerGrowth: CustomerGrowthPoint[];
   catalogVisits: CatalogVisitsSummary;
   topViewedProducts: TopViewedProductPoint[];
+  preorderReservations: PreorderReservationsSummary;
+  dailyReservations: DailyReservationsPoint[];
+  topReservedProducts: TopReservedProductPoint[];
 }
 
 /** Saldo pendiente de un cliente, desglosado por origen (Ventas/Separaciones/Preventas) — snapshot en vivo, no por rango de fechas. */
