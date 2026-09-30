@@ -109,7 +109,12 @@ export interface UpdateReservationPriceRequest {
   unitPrice: number;
 }
 
-/** Abono individual contra una reserva. Ledger inmutable, mismo patrón que SalePayment (Ventas → separaciones). */
+/** Corrige el día en que se hizo la reserva — ver PreorderService.updateReservationDate. */
+export interface UpdateReservationDateRequest {
+  reservedAt: string;
+}
+
+/** Abono individual contra una reserva. Editable/eliminable — mismo criterio que SalePayment (Ventas → separaciones, Fase 26). */
 export interface PreorderReservationPayment {
   id: number;
   reservationId: number;

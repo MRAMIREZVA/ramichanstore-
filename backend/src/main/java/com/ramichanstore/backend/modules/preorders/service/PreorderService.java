@@ -29,6 +29,7 @@ import com.ramichanstore.backend.security.SecurityUser;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -301,6 +302,82 @@ public class PreorderService {
     private PreorderCustomer findReservationById(Long reservationId) {
         return preorderCustomerRepository.findById(reservationId)
                 .orElseThrow(() -> ResourceNotFoundException.of("Reserva", reservationId));
+    }
+
+    /**
+     * Corrige el día en que se hizo la reserva — pensado para registrar preventas que la
+     * tienda ya tenía antes de que existiera el sistema. Nunca participa en ningún cálculo
+     * de negocio, solo en filtros/orden y en el gráfico de Reportes (Fase 67) — por eso no
+     * hay ninguna restricción de estado, a diferencia de SaleService.updateSaleDate.
+     */
+    @Transactional
+    public PreorderCustomerResponse updateReservationDate(Long reservationId, LocalDate newDate) {
+        PreorderCustomer reservation = findReservationById(reservationId);
+        LocalDateTime before = reservation.getCreatedAt();
+        LocalDateTime newDateTime = newDate.atStartOfDay();
+        preorderCustomerRepository.updateCreatedAt(reservationId, newDateTime);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "PreorderCustomer", reservationId.toString(),
+                "reservadoEl=" + before, "reservadoEl=" + newDateTime);
+
+        PreorderCustomer refreshed = findReservationById(reservationId);
+        BigDecimal amountPaid = preorderCustomerPaymentRepository.sumPaidAmount(reservationId);
+        return PreorderCustomerResponse.from(refreshed, amountPaid);
+    }
+
+    /**
+     * Corrige un abono ya registrado (monto/método/fecha/notas) — excepción deliberada al
+     * ledger inmutable, mismo criterio ya aplicado a Payment de Separaciones (Fase 26): el
+     * admin puede necesitar corregir un dato real que tipeó, y amountPaid/balanceDue siempre
+     * se calculan sumando payments, nunca como un contador aparte, así que la corrección se
+     * refleja de inmediato sin ningún estado extra que recalcular (a diferencia de Sale, una
+     * reserva no tiene un "estado de pago" propio que dependa de sus abonos).
+     */
+    @Transactional
+    public PreorderCustomerPaymentResponse updateReservationPayment(
+            Long reservationId, Long paymentId, PreorderCustomerPaymentRequest request) {
+        PreorderCustomer reservation = findReservationById(reservationId);
+        PreorderCustomerPayment payment = findReservationPayment(reservationId, paymentId);
+
+        BigDecimal totalPrice = reservation.getUnitPrice().multiply(BigDecimal.valueOf(reservation.getQuantity()));
+        BigDecimal othersTotal = preorderCustomerPaymentRepository.sumPaidAmount(reservationId).subtract(payment.getAmount());
+        BigDecimal newTotal = othersTotal.add(request.amount());
+        if (newTotal.compareTo(totalPrice) > 0) {
+            throw new BusinessRuleException(
+                    "El abono (%s) supera el saldo pendiente (%s)".formatted(request.amount(), totalPrice.subtract(othersTotal)));
+        }
+
+        String before = summarizeReservationPayment(payment);
+        payment.setAmount(request.amount());
+        payment.setPaymentMethod(request.paymentMethod());
+        payment.setPaymentDate(request.paymentDate());
+        payment.setNotes(request.notes());
+        PreorderCustomerPayment saved = preorderCustomerPaymentRepository.save(payment);
+
+        auditService.log(AuditAction.UPDATE, MODULE, "PreorderCustomerPayment", paymentId.toString(), before, summarizeReservationPayment(saved));
+        return PreorderCustomerPaymentResponse.from(saved);
+    }
+
+    @Transactional
+    public void deleteReservationPayment(Long reservationId, Long paymentId) {
+        findReservationById(reservationId);
+        PreorderCustomerPayment payment = findReservationPayment(reservationId, paymentId);
+        String before = summarizeReservationPayment(payment);
+        preorderCustomerPaymentRepository.delete(payment);
+        auditService.log(AuditAction.DELETE, MODULE, "PreorderCustomerPayment", paymentId.toString(), before, null);
+    }
+
+    private PreorderCustomerPayment findReservationPayment(Long reservationId, Long paymentId) {
+        PreorderCustomerPayment payment = preorderCustomerPaymentRepository.findById(paymentId)
+                .orElseThrow(() -> ResourceNotFoundException.of("Abono", paymentId));
+        if (!payment.getPreorderCustomer().getId().equals(reservationId)) {
+            throw new ResourceNotFoundException("Abono no encontrado en esta reserva");
+        }
+        return payment;
+    }
+
+    private String summarizeReservationPayment(PreorderCustomerPayment payment) {
+        return "monto=%s, metodo=%s, fecha=%s".formatted(payment.getAmount(), payment.getPaymentMethod(), payment.getPaymentDate());
     }
 
     @Transactional

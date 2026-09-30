@@ -13,6 +13,7 @@ import {
   PreorderReservationPaymentRequest,
   PreorderReservationRequest,
   PreorderStatus,
+  UpdateReservationDateRequest,
   UpdateReservationPriceRequest,
 } from '../models/preorder.model';
 
@@ -109,6 +110,27 @@ export class PreorderService {
     request: PreorderReservationPaymentRequest,
   ): Observable<ApiResponse<PreorderReservationPayment>> {
     return this.http.post<ApiResponse<PreorderReservationPayment>>(`${this.baseUrl}/reservations/${reservationId}/payments`, request);
+  }
+
+  updatePayment(
+    reservationId: number,
+    paymentId: number,
+    request: PreorderReservationPaymentRequest,
+  ): Observable<ApiResponse<PreorderReservationPayment>> {
+    return this.http.put<ApiResponse<PreorderReservationPayment>>(
+      `${this.baseUrl}/reservations/${reservationId}/payments/${paymentId}`,
+      request,
+    );
+  }
+
+  deletePayment(reservationId: number, paymentId: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/reservations/${reservationId}/payments/${paymentId}`);
+  }
+
+  /** Corrige el día en que se hizo la reserva — pensado para backfill de preventas anteriores al sistema. */
+  updateReservationDate(reservationId: number, reservedAt: string): Observable<ApiResponse<PreorderReservation>> {
+    const request: UpdateReservationDateRequest = { reservedAt };
+    return this.http.put<ApiResponse<PreorderReservation>>(`${this.baseUrl}/reservations/${reservationId}/reserved-at`, request);
   }
 
   updateReservationPrice(

@@ -9,6 +9,7 @@ import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderCustomerResponse;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderRequest;
 import com.ramichanstore.backend.modules.preorders.dto.PreorderResponse;
+import com.ramichanstore.backend.modules.preorders.dto.UpdateReservationDateRequest;
 import com.ramichanstore.backend.modules.preorders.dto.UpdateReservationPriceRequest;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
 import com.ramichanstore.backend.modules.preorders.service.PreorderService;
@@ -129,10 +130,31 @@ public class PreorderController {
         return ApiResponse.ok("Abono registrado", preorderService.registerPayment(reservationId, request, currentUser));
     }
 
+    @PutMapping("/reservations/{reservationId}/payments/{paymentId}")
+    @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
+    public ApiResponse<PreorderCustomerPaymentResponse> updatePayment(
+            @PathVariable Long reservationId, @PathVariable Long paymentId, @Valid @RequestBody PreorderCustomerPaymentRequest request) {
+        return ApiResponse.ok("Abono actualizado", preorderService.updateReservationPayment(reservationId, paymentId, request));
+    }
+
+    @DeleteMapping("/reservations/{reservationId}/payments/{paymentId}")
+    @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
+    public ApiResponse<Void> deletePayment(@PathVariable Long reservationId, @PathVariable Long paymentId) {
+        preorderService.deleteReservationPayment(reservationId, paymentId);
+        return ApiResponse.ok("Abono eliminado", null);
+    }
+
     @PutMapping("/reservations/{reservationId}/price")
     @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
     public ApiResponse<PreorderCustomerResponse> updateReservationPrice(
             @PathVariable Long reservationId, @Valid @RequestBody UpdateReservationPriceRequest request) {
         return ApiResponse.ok("Precio actualizado", preorderService.updateUnitPrice(reservationId, request.unitPrice()));
+    }
+
+    @PutMapping("/reservations/{reservationId}/reserved-at")
+    @PreAuthorize("hasAuthority('PERM_PREORDER_CREATE')")
+    public ApiResponse<PreorderCustomerResponse> updateReservationDate(
+            @PathVariable Long reservationId, @Valid @RequestBody UpdateReservationDateRequest request) {
+        return ApiResponse.ok("Fecha de reserva actualizada", preorderService.updateReservationDate(reservationId, request.reservedAt()));
     }
 }
