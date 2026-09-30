@@ -127,9 +127,20 @@ public class ShipmentService {
         return ShipmentResponse.from(saved, additionalCostPercent());
     }
 
+    /**
+     * Libera los artículos de vuelta al pool ANTES de eliminar el embarque — sin
+     * esto quedaban huérfanos apuntando a un shipment_id que @SQLRestriction ya
+     * filtra, y leer cualquiera de sus propiedades tiraba EntityNotFoundException
+     * (encontrado en Fase 69, ver ShipmentItemResponse.from). Mismo criterio que
+     * reconcileItems: "sacar" un artículo de un embarque lo libera, nunca lo borra.
+     */
     @Transactional
     public void delete(Long id) {
         Shipment shipment = findById(id);
+        for (ShipmentItem item : shipment.getItems()) {
+            item.setShipment(null);
+        }
+        shipment.getItems().clear();
         shipment.softDelete();
         shipmentRepository.save(shipment);
         auditService.log(AuditAction.DELETE, MODULE, "Shipment", id.toString(), summarize(shipment), null);
@@ -224,15 +235,21 @@ public class ShipmentService {
     }
 
     /**
-     * Pool de artículos pre-registrados que todavía no pertenecen a ningún
-     * embarque (Fase 40) — el admin los registra apenas le llegan al almacén de
-     * consolidación, y en el formulario de embarque los busca por código en vez
-     * de volver a tipear todo.
+     * Artículos pre-registrados (Fase 40) — el admin los registra apenas le
+     * llegan al almacén de consolidación, antes de saber a qué embarque van.
+     *
+     * {@code onlyPending=true} filtra solo el pool sin asignar (shipment ==
+     * null) — lo usa el autocomplete de "buscar por código" al armar un
+     * embarque (ShipmentFormComponent), que solo debe sugerir artículos
+     * disponibles para reclamar. {@code onlyPending=false} (la pantalla
+     * "Artículos comprados", Fase 69) devuelve TODOS los artículos —
+     * pendientes y ya asignados — para que el admin pueda buscar cualquier
+     * código y ver en qué embarque quedó y con qué estado.
      */
     @Transactional(readOnly = true)
-    public Page<ShipmentItemResponse> searchPendingItems(String term, Pageable pageable) {
+    public Page<ShipmentItemResponse> searchItems(String term, boolean onlyPending, Pageable pageable) {
         List<Specification<ShipmentItem>> specs = Stream.of(
-                        ShipmentItemSpecifications.isPending(),
+                        onlyPending ? ShipmentItemSpecifications.isPending() : null,
                         ShipmentItemSpecifications.search(term))
                 .filter(Objects::nonNull)
                 .toList();

@@ -26,6 +26,8 @@ export interface ShipmentFilters {
 
 export interface PendingShipmentItemFilters {
   search?: string;
+  /** true (default del backend) = solo el pool sin asignar; false = todos los artículos, con o sin embarque (Fase 69). */
+  onlyPending?: boolean;
   page?: number;
   size?: number;
 }
@@ -65,12 +67,18 @@ export class ShipmentService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
   }
 
-  /** Pool de artículos pre-registrados sin asignar a ningún embarque (Fase 40). */
+  /**
+   * Artículos de embarque pre-registrados (Fase 40). Por defecto (onlyPending
+   * sin especificar) el backend devuelve solo el pool sin asignar — pásalo en
+   * `false` para buscar TODOS los artículos, con o sin embarque (Fase 69,
+   * usado por "Artículos comprados").
+   */
   searchPendingItems(filters: PendingShipmentItemFilters): Observable<ApiResponse<PageResponse<ShipmentItem>>> {
     let params = new HttpParams()
       .set('page', filters.page ?? 0)
       .set('size', filters.size ?? 20);
     if (filters.search) params = params.set('search', filters.search);
+    if (filters.onlyPending !== undefined) params = params.set('onlyPending', filters.onlyPending);
     return this.http.get<ApiResponse<PageResponse<ShipmentItem>>>(`${environment.apiBaseUrl}/shipment-items/pending`, { params });
   }
 

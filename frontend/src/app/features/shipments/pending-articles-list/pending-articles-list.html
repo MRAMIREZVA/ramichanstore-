@@ -1,6 +1,9 @@
 <div class="articles-page">
   <div class="tab-actions">
-    <p class="tab-hint">Registra cada artículo apenas te llegue al almacén — en el embarque solo lo buscas por código.</p>
+    <p class="tab-hint">
+      Registra cada artículo apenas te llegue al almacén — en el embarque solo lo buscas por código. Acá ves el estado
+      de todos, estén o no ya asignados a un embarque.
+    </p>
     <button mat-flat-button color="primary" (click)="openCreate()">
       <mat-icon>add</mat-icon>
       Nuevo artículo
@@ -19,46 +22,78 @@
     } @else if (items().length === 0) {
       <div class="empty-state">
         <mat-icon>inventory_2</mat-icon>
-        <p>No hay artículos pendientes con estos filtros.</p>
+        <p>No hay artículos con estos filtros.</p>
       </div>
     } @else {
-      <table mat-table [dataSource]="items()" class="articles-table">
-        <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef>Código</th>
-          <td mat-cell *matCellDef="let it">{{ it.articleCode || '—' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef>Descripción</th>
-          <td mat-cell *matCellDef="let it">{{ it.description }}</td>
-        </ng-container>
-        <ng-container matColumnDef="quantity">
-          <th mat-header-cell *matHeaderCellDef>Cant.</th>
-          <td mat-cell *matCellDef="let it">{{ it.quantity }}</td>
-        </ng-container>
-        <ng-container matColumnDef="weight">
-          <th mat-header-cell *matHeaderCellDef>Peso</th>
-          <td mat-cell *matCellDef="let it">{{ it.weight }} g</td>
-        </ng-container>
-        <ng-container matColumnDef="cost">
-          <th mat-header-cell *matHeaderCellDef>Costo</th>
-          <td mat-cell *matCellDef="let it">
-            @if (it.cost !== null) {
-              S/ {{ it.cost.toFixed(2) }}
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let it">
-            <button mat-icon-button (click)="openEdit(it)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button (click)="confirmDelete(it)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
+      <div class="table-scroll">
+        <table mat-table [dataSource]="items()" class="articles-table">
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>Código</th>
+            <td mat-cell *matCellDef="let it">{{ it.articleCode || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+            <td mat-cell *matCellDef="let it">{{ it.description }}</td>
+          </ng-container>
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef>Cant.</th>
+            <td mat-cell *matCellDef="let it">{{ it.quantity }}</td>
+          </ng-container>
+          <ng-container matColumnDef="weight">
+            <th mat-header-cell *matHeaderCellDef>Peso</th>
+            <td mat-cell *matCellDef="let it">{{ it.weight }} g</td>
+          </ng-container>
+          <ng-container matColumnDef="costs">
+            <th mat-header-cell *matHeaderCellDef>Costos</th>
+            <td mat-cell *matCellDef="let it">
+              @if (it.cost !== null) {
+                Costo: S/ {{ it.cost.toFixed(2) }}
+              } @else {
+                —
+              }
+              @if (it.commission !== null) {
+                <span class="sub">Comisión: S/ {{ it.commission.toFixed(2) }}</span>
+              }
+              @if (it.transactionSurcharge !== null) {
+                <span class="sub">Recargo: S/ {{ it.transactionSurcharge.toFixed(2) }}</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let it">
+              @if (it.shipmentStatus) {
+                <span class="status-chip" [attr.data-status]="it.shipmentStatus">{{ statusLabel(it.shipmentStatus) }}</span>
+                <span class="sub">Embarque: {{ it.shipmentCode }}</span>
+              } @else {
+                <span class="status-chip">Pendiente</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let it">
+              @if (it.imageUrl) {
+                <button mat-icon-button (click)="viewImage(it)" [disabled]="loadingImageId() === it.id" matTooltip="Ver imagen">
+                  @if (loadingImageId() === it.id) {
+                    <mat-spinner diameter="18" />
+                  } @else {
+                    <mat-icon>image</mat-icon>
+                  }
+                </button>
+              }
+              @if (it.pending) {
+                <button mat-icon-button (click)="openEdit(it)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button (click)="confirmDelete(it)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+              } @else {
+                <mat-icon class="locked-hint" matTooltip="Ya está asignado a un embarque — edítalo desde ahí">lock</mat-icon>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
 
       <mat-paginator
         [length]="totalElements()"

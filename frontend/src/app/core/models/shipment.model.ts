@@ -68,6 +68,10 @@ export interface ShipmentItem {
   imageUrl: string | null;
   /** true si todavía no está asignado a ningún embarque (pool de artículos pre-registrados, Fase 40). */
   pending: boolean;
+  /** Solo llenos cuando pending=false — a qué embarque quedó asignado y en qué estado (Fase 69). */
+  shipmentId: number | null;
+  shipmentCode: string | null;
+  shipmentStatus: ShipmentStatus | null;
 }
 
 export interface ShipmentItemRequest {

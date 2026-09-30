@@ -22,9 +22,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Pool de artículos de embarque pre-registrados (Fase 40) — se pueden crear
- * ANTES de saber a qué embarque van; el formulario de embarque los busca por
- * código en vez de tipear todo de nuevo (ver ShipmentService.reconcileItems).
+ * Artículos de embarque pre-registrados (Fase 40) — se pueden crear ANTES de
+ * saber a qué embarque van; el formulario de embarque los busca por código en
+ * vez de tipear todo de nuevo (ver ShipmentService.reconcileItems). El
+ * endpoint de búsqueda (todavía en /pending por compatibilidad con el
+ * frontend) devuelve solo el pool sin asignar por defecto, o TODOS los
+ * artículos con {@code onlyPending=false} — ver ShipmentService.searchItems
+ * (Fase 69).
  */
 @RestController
 @RequestMapping("/api/shipment-items")
@@ -35,10 +39,11 @@ public class ShipmentItemController {
 
     @GetMapping("/pending")
     @PreAuthorize("hasAuthority('PERM_SHIPMENT_VIEW')")
-    public ApiResponse<PageResponse<ShipmentItemResponse>> searchPending(
+    public ApiResponse<PageResponse<ShipmentItemResponse>> search(
             @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "true") boolean onlyPending,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.ok(PageResponse.from(shipmentService.searchPendingItems(search, pageable)));
+        return ApiResponse.ok(PageResponse.from(shipmentService.searchItems(search, onlyPending, pageable)));
     }
 
     @PostMapping

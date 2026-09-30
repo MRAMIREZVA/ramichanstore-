@@ -11,16 +11,22 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import { ShipmentItem } from '../../../core/models/shipment.model';
+import { SHIPMENT_STATUS_LABELS, ShipmentItem, ShipmentStatus } from '../../../core/models/shipment.model';
 import { ShipmentService } from '../../../core/services/shipment.service';
+import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { PendingArticleFormComponent, PendingArticleFormData } from '../pending-article-form/pending-article-form';
 
 /**
- * Pool de artículos pre-registrados que todavía no pertenecen a ningún
- * embarque (Fase 40) — se registran acá apenas llegan al almacén de
- * consolidación, y en el formulario de embarque se buscan por código en vez
- * de volver a tipear todo.
+ * Artículos de embarque pre-registrados (Fase 40) — se registran acá apenas
+ * llegan al almacén de consolidación, y en el formulario de embarque se
+ * buscan por código en vez de volver a tipear todo. Desde Fase 69 esta
+ * pantalla ("Artículos comprados") es un buscador GENERAL: muestra tanto los
+ * que siguen sin asignar (pool pendiente) como los que ya quedaron dentro de
+ * un embarque, con el estado real de ese embarque — editar/eliminar solo
+ * están disponibles para los que siguen pendientes (el backend rechaza
+ * tocar un artículo ya asignado desde acá, hay que hacerlo desde el propio
+ * embarque).
  */
 @Component({
   selector: 'app-pending-articles-list',
@@ -45,12 +51,15 @@ export class PendingArticlesList implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly displayedColumns = ['code', 'description', 'quantity', 'weight', 'cost', 'actions'];
+  readonly displayedColumns = ['code', 'description', 'quantity', 'weight', 'costs', 'status', 'actions'];
   readonly searchControl = new FormControl('');
+  readonly statusLabels = SHIPMENT_STATUS_LABELS;
 
   readonly loading = signal(true);
   readonly items = signal<ShipmentItem[]>([]);
   readonly totalElements = signal(0);
+  /** id del artículo cuya imagen se está trayendo — muestra un spinner solo en ese botón. */
+  readonly loadingImageId = signal<number | null>(null);
 
   page = 0;
   pageSize = 20;
@@ -66,7 +75,12 @@ export class PendingArticlesList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.shipmentService
-      .searchPendingItems({ search: this.searchControl.value || undefined, page: this.page, size: this.pageSize })
+      .searchPendingItems({
+        search: this.searchControl.value || undefined,
+        onlyPending: false,
+        page: this.page,
+        size: this.pageSize,
+      })
       .subscribe({
         next: (res) => {
           this.items.set(res.data.content);
@@ -75,6 +89,29 @@ export class PendingArticlesList implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  statusLabel(status: ShipmentStatus): string {
+    return this.statusLabels[status] ?? status;
+  }
+
+  viewImage(item: ShipmentItem): void {
+    if (!item.imageUrl || this.loadingImageId() !== null) return;
+    this.loadingImageId.set(item.id);
+    this.shipmentService.getItemImageBlob(item.id).subscribe({
+      next: (blob) => {
+        this.loadingImageId.set(null);
+        const objectUrl = URL.createObjectURL(blob);
+        const ref = this.dialog.open(ImagePreviewDialogComponent, {
+          data: { imageUrl: objectUrl, title: item.description || 'Foto del artículo' },
+          width: '500px',
+          maxWidth: '90vw',
+          autoFocus: false,
+        });
+        ref.afterClosed().subscribe(() => URL.revokeObjectURL(objectUrl));
+      },
+      error: () => this.loadingImageId.set(null),
+    });
   }
 
   onPage(event: PageEvent): void {
