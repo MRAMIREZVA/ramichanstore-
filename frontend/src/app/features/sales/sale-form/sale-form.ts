@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -44,6 +44,11 @@ function emptyLine(): SaleLineDraft {
   return { product: null, productSearchTerm: '', productOptions: [], searching: false, quantity: 1, unitPrice: 0, discount: 0 };
 }
 
+/** initialProduct: Product | null — ej. llega precargado al "Generar pedido" desde /escanear (Fase 74). */
+export interface SaleFormData {
+  initialProduct: Product | null;
+}
+
 /**
  * Un solo formulario para ambos tipos de compra (antes eran dos formularios/módulos
  * separados, Sale y Separation) — el toggle "Tipo" condiciona qué campos son obligatorios:
@@ -78,6 +83,9 @@ export class SaleFormComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<SaleFormComponent>);
+  // Debe quedar ANTES de `lines` — los campos de una clase se inicializan en el orden en
+  // que aparecen escritos (misma lección ya documentada en Fase 60), y `lines` lo necesita.
+  readonly data = inject<SaleFormData>(MAT_DIALOG_DATA);
 
   readonly typeOptions = Object.entries(SALE_TYPE_LABELS) as [SaleType, string][];
   readonly paymentMethodOptions = Object.entries(PAYMENT_METHOD_LABELS) as [PaymentMethod, string][];
@@ -88,7 +96,7 @@ export class SaleFormComponent {
   readonly searchingCustomer = signal(false);
   readonly customerOptions = signal<Customer[]>([]);
   readonly selectedCustomer = signal<Customer | null>(null);
-  readonly lines = signal<SaleLineDraft[]>([emptyLine()]);
+  readonly lines = signal<SaleLineDraft[]>([this.buildInitialLine()]);
   readonly type = signal<SaleType>('VENTA');
   readonly isSeparacion = computed(() => this.type() === 'SEPARACION');
 
@@ -155,6 +163,21 @@ export class SaleFormComponent {
     this.selectedCustomer.set(customer);
     this.header.controls.customerSearch.setValue(this.customerLabel(customer), { emitEvent: false });
     this.customerOptions.set([]);
+  }
+
+  /** Si llega precargado (ej. desde "Generar pedido" en /escanear, Fase 74), arranca con esa línea ya llena en vez de vacía. */
+  private buildInitialLine(): SaleLineDraft {
+    const product = this.data.initialProduct;
+    if (!product) return emptyLine();
+    return {
+      product,
+      productSearchTerm: this.productLabel(product),
+      productOptions: [],
+      searching: false,
+      quantity: 1,
+      unitPrice: product.salePrice,
+      discount: 0,
+    };
   }
 
   productLabel(product: Product | null): string {

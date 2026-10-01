@@ -31,7 +31,7 @@ import { SaleFilters, SaleService } from '../../../core/services/sale.service';
 import { toIsoDate } from '../../../core/utils/date';
 import { CancelSaleDialogComponent, CancelSaleDialogData } from '../cancel-sale-dialog/cancel-sale-dialog';
 import { SaleDetailComponent, SaleDetailData } from '../sale-detail/sale-detail';
-import { SaleFormComponent } from '../sale-form/sale-form';
+import { SaleFormComponent, SaleFormData } from '../sale-form/sale-form';
 
 @Component({
   selector: 'app-sales-list',
@@ -192,7 +192,8 @@ export class SalesList implements OnInit {
   }
 
   openCreate(): void {
-    const ref = this.dialog.open<SaleFormComponent, void, boolean>(SaleFormComponent, {
+    const ref = this.dialog.open<SaleFormComponent, SaleFormData, boolean>(SaleFormComponent, {
+      data: { initialProduct: null },
       width: '900px',
       maxWidth: '95vw',
       autoFocus: false,

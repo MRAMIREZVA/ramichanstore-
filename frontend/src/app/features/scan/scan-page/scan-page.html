@@ -64,7 +64,11 @@
       <span class="status-chip" [attr.data-status]="p.status">{{ statusLabels[p.status] }}</span>
 
       <div class="actions">
-        <button mat-flat-button color="primary" (click)="editProduct()">
+        <button mat-flat-button color="primary" (click)="createOrder()">
+          <mat-icon>receipt_long</mat-icon>
+          Generar pedido
+        </button>
+        <button mat-stroked-button (click)="editProduct()">
           <mat-icon>edit</mat-icon>
           Editar producto
         </button>

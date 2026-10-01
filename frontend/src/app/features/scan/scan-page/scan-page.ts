@@ -13,6 +13,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { resolveImageUrl } from '../../../core/utils/image-url';
 import { MovementFormComponent, MovementFormData } from '../../inventory/movement-form/movement-form';
 import { ProductFormComponent, ProductFormData } from '../../products/product-form/product-form';
+import { SaleFormComponent, SaleFormData } from '../../sales/sale-form/sale-form';
 
 /**
  * Pantalla de escaneo standalone (Fase 44), pensada para abrirse desde el celular —
@@ -115,6 +116,23 @@ export class ScanPage implements OnInit, OnDestroy {
       if (updated) {
         this.product.set(updated);
         this.snackBar.open('Producto actualizado', 'Cerrar', { duration: 2500 });
+      }
+    });
+  }
+
+  /** Arranca un pedido (Venta/Separación) con este producto ya cargado como primera línea (Fase 74). */
+  createOrder(): void {
+    const product = this.product();
+    if (!product) return;
+    const ref = this.dialog.open<SaleFormComponent, SaleFormData, boolean>(SaleFormComponent, {
+      data: { initialProduct: product },
+      width: '900px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
+    ref.afterClosed().subscribe((saved) => {
+      if (saved) {
+        this.snackBar.open('Pedido generado', 'Cerrar', { duration: 2500 });
       }
     });
   }
