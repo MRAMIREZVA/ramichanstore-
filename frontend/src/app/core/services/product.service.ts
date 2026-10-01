@@ -13,6 +13,8 @@ export interface ProductFilters {
   lineId?: number | null;
   franchise?: string | null;
   status?: ProductStatus | null;
+  /** Solo productos con costo total en S/0 — ver InventoryValuationResponse en Reportes. */
+  withoutCost?: boolean | null;
   page?: number;
   size?: number;
 }
@@ -32,6 +34,7 @@ export class ProductService {
     if (filters.lineId) params = params.set('lineId', filters.lineId);
     if (filters.franchise) params = params.set('franchise', filters.franchise);
     if (filters.status) params = params.set('status', filters.status);
+    if (filters.withoutCost) params = params.set('withoutCost', filters.withoutCost);
 
     return this.http.get<ApiResponse<PageResponse<Product>>>(this.baseUrl, { params });
   }

@@ -162,6 +162,10 @@
     font-size: 16px;
     color: #b5560d;
     cursor: default;
+
+    &.cost-hint {
+      color: #b32424;
+    }
   }
 }
 
@@ -187,6 +191,12 @@
   font-weight: 700;
   border-radius: 999px;
   padding: 1px 8px;
+
+  &.unreal {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface-variant);
+    cursor: help;
+  }
 }
 
 .price {

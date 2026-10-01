@@ -1,6 +1,7 @@
 package com.ramichanstore.backend.modules.products.repository;
 
 import com.ramichanstore.backend.modules.products.entity.Product;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +33,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     /** Para el filtro "Franquicia" del catálogo público. */
     @Query("SELECT DISTINCT p.franchise FROM Product p WHERE p.franchise IS NOT NULL ORDER BY p.franchise")
     List<String> findDistinctFranchises();
+
+    /** Valorización de inventario (Reportes → Inventario): stock actual valorizado a su costo real. */
+    @Query("SELECT COALESCE(SUM(p.currentStock * p.totalCost), 0) FROM Product p")
+    BigDecimal sumStockValueAtCost();
+
+    /** Mismo stock, pero valorizado al precio de venta — para comparar contra el costo de arriba. */
+    @Query("SELECT COALESCE(SUM(p.currentStock * p.salePrice), 0) FROM Product p")
+    BigDecimal sumStockValueAtSalePrice();
+
+    /** Cuántos productos activos tienen costo total en S/0 — la "ganancia" que muestran es ficticia. */
+    long countByTotalCost(BigDecimal totalCost);
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -13,7 +14,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LineSeries, SimpleLineChartComponent } from '../../../shared/components/charts/simple-line-chart/simple-line-chart';
 import { BarItem, SimpleBarChartComponent } from '../../../shared/components/charts/simple-bar-chart/simple-bar-chart';
-import { CustomerDebt, ReceivablesReport, ReportCharts } from '../../../core/models/report.model';
+import { CustomerDebt, InventoryValuation, ReceivablesReport, ReportCharts } from '../../../core/models/report.model';
 import { PREORDER_STATUS_LABELS, PreorderStatus } from '../../../core/models/preorder.model';
 import { ReportExportFormat, ReportService } from '../../../core/services/report.service';
 import { whatsAppLink } from '../../../core/utils/whatsapp';
@@ -42,6 +43,7 @@ import { whatsAppLink } from '../../../core/utils/whatsapp';
 export class ReportsPage implements OnInit {
   private readonly reportService = inject(ReportService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly exporting = signal(false);
@@ -72,6 +74,11 @@ export class ReportsPage implements OnInit {
   readonly debtColumns = ['customer', 'sales', 'separations', 'preorders', 'total', 'actions'];
   readonly preorderColumns = ['customer', 'product', 'status', 'balance', 'eta'];
   readonly preorderStatusLabels = PREORDER_STATUS_LABELS;
+
+  /** "Inventario" — mismo criterio que Cuentas por cobrar: snapshot sin rango de fechas, carga perezosa. */
+  readonly inventoryValuation = signal<InventoryValuation | null>(null);
+  readonly loadingInventoryValuation = signal(false);
+  private inventoryValuationLoaded = false;
 
   /** Tráfico del catálogo público (Fase 63) — 0/0 mientras carga, nunca undefined. */
   readonly catalogViews = computed(() => this.charts()?.catalogVisits.totalViews ?? 0);
@@ -124,6 +131,10 @@ export class ReportsPage implements OnInit {
       this.receivablesLoaded = true;
       this.loadReceivables();
     }
+    if (index === 2 && !this.inventoryValuationLoaded) {
+      this.inventoryValuationLoaded = true;
+      this.loadInventoryValuation();
+    }
   }
 
   loadReceivables(): void {
@@ -135,6 +146,22 @@ export class ReportsPage implements OnInit {
       },
       error: () => this.loadingReceivables.set(false),
     });
+  }
+
+  loadInventoryValuation(): void {
+    this.loadingInventoryValuation.set(true);
+    this.reportService.getInventoryValuation().subscribe({
+      next: (res) => {
+        this.inventoryValuation.set(res.data);
+        this.loadingInventoryValuation.set(false);
+      },
+      error: () => this.loadingInventoryValuation.set(false),
+    });
+  }
+
+  /** Cierra el loop: del número "N sin costo" a la lista real filtrada, lista para corregir uno por uno. */
+  goToProductsWithoutCost(): void {
+    this.router.navigate(['/productos'], { queryParams: { withoutCost: 'true' } });
   }
 
   /** null si el cliente no dejó ni WhatsApp ni teléfono — el botón de cobro no se muestra en ese caso. */

@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.products.repository;
 
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
+import java.math.BigDecimal;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
@@ -63,5 +64,13 @@ public final class ProductSpecifications {
             return null;
         }
         return (root, query, cb) -> cb.equal(root.get("franchise"), franchise);
+    }
+
+    /** "Sin costo registrado" (purchasePrice=additionalCosts=0) — ver ReportService.getInventoryValuation. */
+    public static Specification<Product> withoutCost(Boolean withoutCost) {
+        if (withoutCost == null || !withoutCost) {
+            return null;
+        }
+        return (root, query, cb) -> cb.equal(root.get("totalCost"), BigDecimal.ZERO);
     }
 }

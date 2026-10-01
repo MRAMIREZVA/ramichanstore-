@@ -73,6 +73,8 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-checkbox [formControl]="withoutCostControl" class="without-cost-filter">Solo sin costo registrado</mat-checkbox>
+
     <button mat-stroked-button class="clear-filters-btn" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
       <mat-icon>filter_alt_off</mat-icon>
       Limpiar filtros
@@ -136,6 +138,9 @@
               @if (!p.barcode) {
                 <mat-icon class="hint-icon" matTooltip="Sin código de barras">qr_code_2</mat-icon>
               }
+              @if (!hasCost(p)) {
+                <mat-icon class="hint-icon cost-hint" matTooltip="Sin costo registrado — el margen que se muestra no es real">money_off</mat-icon>
+              }
             </div>
           </td>
         </ng-container>
@@ -154,7 +159,11 @@
           <th mat-header-cell *matHeaderCellDef>Precio</th>
           <td mat-cell *matCellDef="let p">
             <div class="price">S/ {{ p.salePrice.toFixed(2) }}</div>
-            <span class="margin-pill">{{ p.marginPercent.toFixed(1) }}% margen</span>
+            @if (hasCost(p)) {
+              <span class="margin-pill">{{ p.marginPercent.toFixed(1) }}% margen</span>
+            } @else {
+              <span class="margin-pill unreal" matTooltip="Sin costo registrado — este margen no es real">margen no real</span>
+            }
           </td>
         </ng-container>
 

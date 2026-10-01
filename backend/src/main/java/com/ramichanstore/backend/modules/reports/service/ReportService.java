@@ -20,6 +20,7 @@ import com.ramichanstore.backend.modules.reports.dto.CustomerGrowthPoint;
 import com.ramichanstore.backend.modules.reports.dto.DailyReservationsPoint;
 import com.ramichanstore.backend.modules.reports.dto.DailySalesPoint;
 import com.ramichanstore.backend.modules.reports.dto.DashboardSummaryResponse;
+import com.ramichanstore.backend.modules.reports.dto.InventoryValuationResponse;
 import com.ramichanstore.backend.modules.reports.dto.PreorderReservationsSummary;
 import com.ramichanstore.backend.modules.reports.dto.ReceivablesReportResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportChartsResponse;
@@ -221,6 +222,22 @@ public class ReportService {
                 .toList();
 
         return new ReceivablesReportResponse(customersWithDebt, sortedActivePreorders);
+    }
+
+    /**
+     * Snapshot de "cuánto vale mi stock" — igual que {@link #getReceivables()}, sin rango de
+     * fechas, siempre "ahora mismo". {@code stockValueAtCost} queda subestimado por cada producto
+     * con costo en S/0 (import masivo sin precio de compra real cargado) — por eso el DTO expone
+     * {@code productsWithoutCost} junto al total, para que el admin sepa que el número no es 100%
+     * confiable hasta que corrija esos productos (ver filtro "withoutCost" en ProductController).
+     */
+    @Transactional(readOnly = true)
+    public InventoryValuationResponse getInventoryValuation() {
+        BigDecimal valueAtCost = productRepository.sumStockValueAtCost();
+        BigDecimal valueAtSalePrice = productRepository.sumStockValueAtSalePrice();
+        return new InventoryValuationResponse(
+                valueAtCost, valueAtSalePrice, valueAtSalePrice.subtract(valueAtCost),
+                productRepository.count(), productRepository.countByTotalCost(BigDecimal.ZERO));
     }
 
     private void accumulateDebt(

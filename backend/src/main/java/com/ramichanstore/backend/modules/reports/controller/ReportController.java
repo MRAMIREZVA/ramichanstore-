@@ -3,6 +3,7 @@ package com.ramichanstore.backend.modules.reports.controller;
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.modules.reports.dto.DashboardSummaryResponse;
+import com.ramichanstore.backend.modules.reports.dto.InventoryValuationResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReceivablesReportResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportChartsResponse;
 import com.ramichanstore.backend.modules.reports.dto.ReportExportData;
@@ -50,6 +51,12 @@ public class ReportController {
     @PreAuthorize("hasAuthority('PERM_REPORTS_VIEW')")
     public ApiResponse<ReceivablesReportResponse> receivables() {
         return ApiResponse.ok(reportService.getReceivables());
+    }
+
+    @GetMapping("/inventory-valuation")
+    @PreAuthorize("hasAuthority('PERM_REPORTS_VIEW')")
+    public ApiResponse<InventoryValuationResponse> inventoryValuation() {
+        return ApiResponse.ok(reportService.getInventoryValuation());
     }
 
     @GetMapping("/export")

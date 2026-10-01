@@ -39,6 +39,7 @@ public class ProductController {
             @RequestParam(required = false) Long lineId,
             @RequestParam(required = false) String franchise,
             @RequestParam(required = false) ProductStatus status,
+            @RequestParam(required = false) Boolean withoutCost,
             // Orden por defecto por última actualización (pedido explícito del dueño): un producto
             // recién creado o recién editado debe aparecer primero, sin que el admin tenga que
             // ordenar manualmente. "sort = campo,desc" como string NO funciona en @PageableDefault
@@ -46,7 +47,7 @@ public class ProductController {
             // direction aparte (lección ya documentada en CLAUDE.md, repetida varias veces en el
             // proyecto: InventoryController, ShipmentController).
             @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        var page = productService.search(search, categoryId, brandId, lineId, franchise, status, pageable);
+        var page = productService.search(search, categoryId, brandId, lineId, franchise, status, withoutCost, pageable);
         return ApiResponse.ok(PageResponse.from(page));
     }
 

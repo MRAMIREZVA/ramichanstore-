@@ -264,5 +264,55 @@
         </div>
       </ng-template>
     </mat-tab>
+
+    <mat-tab label="Inventario">
+      <ng-template matTabContent>
+        <div class="tab-panel">
+          @if (loadingInventoryValuation()) {
+            <div class="loading"><mat-spinner diameter="36" /></div>
+          } @else if (inventoryValuation(); as inv) {
+            <mat-card class="chart-card">
+              <h3><mat-icon>inventory</mat-icon> Valorización del stock actual</h3>
+              <p class="section-hint">Snapshot en vivo — cuánto vale ahora mismo todo tu inventario, a costo y a precio de venta.</p>
+
+              @if (inv.productsWithoutCost > 0) {
+                <div class="valuation-warning">
+                  <mat-icon>warning</mat-icon>
+                  <span>
+                    {{ inv.productsWithoutCost }} de {{ inv.totalProducts }} productos no tienen costo registrado (S/0) —
+                    el "valor a costo" de abajo está subestimado hasta que los corrijas.
+                  </span>
+                  <button mat-stroked-button color="primary" (click)="goToProductsWithoutCost()">Ver productos</button>
+                </div>
+              }
+
+              <div class="kpi-grid">
+                <mat-card class="stat-card">
+                  <mat-icon class="stat-icon">payments</mat-icon>
+                  <div class="stat-body">
+                    <span class="stat-label">Valor del stock (a costo)</span>
+                    <span class="stat-value">S/ {{ inv.stockValueAtCost.toFixed(2) }}</span>
+                  </div>
+                </mat-card>
+                <mat-card class="stat-card">
+                  <mat-icon class="stat-icon profit">sell</mat-icon>
+                  <div class="stat-body">
+                    <span class="stat-label">Valor del stock (a precio de venta)</span>
+                    <span class="stat-value">S/ {{ inv.stockValueAtSalePrice.toFixed(2) }}</span>
+                  </div>
+                </mat-card>
+                <mat-card class="stat-card">
+                  <mat-icon class="stat-icon margin">trending_up</mat-icon>
+                  <div class="stat-body">
+                    <span class="stat-label">Ganancia potencial si se vende todo</span>
+                    <span class="stat-value">S/ {{ inv.potentialProfit.toFixed(2) }}</span>
+                  </div>
+                </mat-card>
+              </div>
+            </mat-card>
+          }
+        </div>
+      </ng-template>
+    </mat-tab>
   </mat-tab-group>
 </div>

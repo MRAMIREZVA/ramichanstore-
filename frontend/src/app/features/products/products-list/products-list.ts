@@ -1,6 +1,7 @@
 import { KeyValuePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -50,6 +51,7 @@ export class ProductsList implements OnInit {
   private readonly catalogService = inject(CatalogService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly route = inject(ActivatedRoute);
 
   readonly statusLabels = PRODUCT_STATUS_LABELS;
   readonly resolveImageUrl = resolveImageUrl;
@@ -77,6 +79,8 @@ export class ProductsList implements OnInit {
   readonly lineControl = new FormControl<number | null>(null);
   readonly franchiseControl = new FormControl<string | null>(null);
   readonly statusControl = new FormControl<ProductStatus | null>(null);
+  /** Deep-link desde Reportes → Inventario ("N productos sin costo registrado"). */
+  readonly withoutCostControl = new FormControl<boolean>(false, { nonNullable: true });
 
   page = 0;
   pageSize = 20;
@@ -86,6 +90,10 @@ export class ProductsList implements OnInit {
     this.catalogService.getBrands().subscribe((res) => this.brands.set(res.data));
     this.catalogService.getProductLines().subscribe((res) => this.lines.set(res.data));
     this.productService.findFranchises().subscribe((res) => this.franchises.set(res.data));
+
+    if (this.route.snapshot.queryParamMap.get('withoutCost') === 'true') {
+      this.withoutCostControl.setValue(true, { emitEvent: false });
+    }
 
     this.searchControl.valueChanges.pipe(debounceTime(350), distinctUntilChanged()).subscribe(() => {
       this.page = 0;
@@ -111,6 +119,10 @@ export class ProductsList implements OnInit {
       this.page = 0;
       this.load();
     });
+    this.withoutCostControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
 
     this.load();
   }
@@ -124,6 +136,7 @@ export class ProductsList implements OnInit {
       lineId: this.lineControl.value,
       franchise: this.franchiseControl.value,
       status: this.statusControl.value,
+      withoutCost: this.withoutCostControl.value || undefined,
       page: this.page,
       size: this.pageSize,
     };
@@ -154,6 +167,11 @@ export class ProductsList implements OnInit {
     );
   }
 
+  /** Sin esto, "margen" es Precio de venta − S/0 = 100% ficticio (ver Reportes → Inventario). */
+  hasCost(p: Product): boolean {
+    return p.totalCost > 0;
+  }
+
   /** Punto de color por categoría, para escanear la columna de un vistazo — hash determinista, no depende del orden en que llegue la lista. */
   private readonly categoryPalette = ['#6D4AFF', '#2CA9C9', '#D64BA0', '#4C6EF5', '#A67C52', '#5B6472'];
 
@@ -172,7 +190,8 @@ export class ProductsList implements OnInit {
       this.brandControl.value ||
       this.lineControl.value ||
       this.franchiseControl.value ||
-      this.statusControl.value
+      this.statusControl.value ||
+      this.withoutCostControl.value
     );
   }
 
@@ -183,6 +202,7 @@ export class ProductsList implements OnInit {
     this.lineControl.setValue(null, { emitEvent: false });
     this.franchiseControl.setValue(null, { emitEvent: false });
     this.statusControl.setValue(null, { emitEvent: false });
+    this.withoutCostControl.setValue(false, { emitEvent: false });
     this.page = 0;
     this.load();
   }

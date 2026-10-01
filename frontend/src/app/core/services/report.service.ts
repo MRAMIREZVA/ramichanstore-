@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { DashboardSummary, ReceivablesReport, ReportCharts } from '../models/report.model';
+import { DashboardSummary, InventoryValuation, ReceivablesReport, ReportCharts } from '../models/report.model';
 
 export type ReportExportFormat = 'xlsx' | 'csv' | 'pdf';
 
@@ -26,6 +26,11 @@ export class ReportService {
   /** Snapshot en vivo — sin rango de fechas, muestra el saldo pendiente y las preventas activas AHORA. */
   getReceivables(): Observable<ApiResponse<ReceivablesReport>> {
     return this.http.get<ApiResponse<ReceivablesReport>>(`${this.baseUrl}/receivables`);
+  }
+
+  /** Snapshot en vivo — cuánto vale el stock actual, a costo y a precio de venta. */
+  getInventoryValuation(): Observable<ApiResponse<InventoryValuation>> {
+    return this.http.get<ApiResponse<InventoryValuation>>(`${this.baseUrl}/inventory-valuation`);
   }
 
   /** El nombre real del archivo viene en Content-Disposition (lo arma el backend con el rango efectivo). */

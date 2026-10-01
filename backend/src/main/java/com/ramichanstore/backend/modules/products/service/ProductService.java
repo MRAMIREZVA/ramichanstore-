@@ -60,14 +60,16 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> search(
-            String term, Long categoryId, Long brandId, Long lineId, String franchise, ProductStatus status, Pageable pageable) {
+            String term, Long categoryId, Long brandId, Long lineId, String franchise, ProductStatus status,
+            Boolean withoutCost, Pageable pageable) {
         List<Specification<Product>> specs = Stream.of(
                         ProductSpecifications.search(term),
                         ProductSpecifications.hasCategory(categoryId),
                         ProductSpecifications.hasBrand(brandId),
                         ProductSpecifications.hasLine(lineId),
                         ProductSpecifications.hasFranchise(franchise),
-                        ProductSpecifications.hasStatus(status))
+                        ProductSpecifications.hasStatus(status),
+                        ProductSpecifications.withoutCost(withoutCost))
                 .filter(Objects::nonNull)
                 .toList();
         Specification<Product> spec = specs.isEmpty() ? null : Specification.allOf(specs);

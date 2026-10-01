@@ -115,3 +115,16 @@ export interface ReceivablesReport {
   customersWithDebt: CustomerDebt[];
   activePreorders: CustomerActivePreorder[];
 }
+
+/**
+ * Snapshot (sin rango de fechas) de cuánto vale el stock actual. `stockValueAtCost` queda
+ * subestimado mientras `productsWithoutCost` sea alto — un producto con costo en S/0 aporta
+ * S/0 a esa suma aunque sí tenga stock real.
+ */
+export interface InventoryValuation {
+  stockValueAtCost: number;
+  stockValueAtSalePrice: number;
+  potentialProfit: number;
+  totalProducts: number;
+  productsWithoutCost: number;
+}
