@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +35,10 @@ public class DeliveryController {
     public ApiResponse<PageResponse<DeliveryResponse>> search(
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) DeliveryStatus status,
-            @PageableDefault(size = 20, sort = "scheduledDate") Pageable pageable) {
+            // "sort = campo,desc" como string NO funciona en @PageableDefault (solo es válido en el
+            // query param ?sort= de la request) — hay que usar el atributo direction aparte (lección
+            // ya documentada varias veces: ProductController, PreorderController, SaleController...).
+            @PageableDefault(size = 20, sort = "scheduledDate", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.ok(PageResponse.from(deliveryService.search(customerId, status, pageable)));
     }
 
