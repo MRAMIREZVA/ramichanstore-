@@ -107,7 +107,7 @@ export class ScanPage implements OnInit, OnDestroy {
     if (!product) return;
     const ref = this.dialog.open<ProductFormComponent, ProductFormData, Product | null>(ProductFormComponent, {
       data: { product, duplicateFrom: null },
-      width: '760px',
+      width: '960px',
       maxWidth: '95vw',
       autoFocus: false,
     });

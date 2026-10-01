@@ -274,7 +274,7 @@ export class ProductsList implements OnInit {
   private openForm(product: Product | null, duplicateFrom: Product | null = null): void {
     const ref = this.dialog.open<ProductFormComponent, ProductFormData, Product | null>(ProductFormComponent, {
       data: { product, duplicateFrom },
-      width: '760px',
+      width: '960px',
       maxWidth: '95vw',
       autoFocus: false,
     });
