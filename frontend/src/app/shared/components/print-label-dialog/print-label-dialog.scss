@@ -71,6 +71,17 @@
   width: 220px;
   // Evita que una etiqueta quede partida entre dos hojas al imprimir varias.
   break-inside: avoid;
+
+  // JsBarcode fija width/height en el propio <svg> según cuántos caracteres tenga que
+  // codificar — un SKU largo (ej. "PROD-000576", autogenerado desde Fase 14) arma un
+  // SVG bastante más ancho que uno corto (ej. "RR0067", de la carga masiva) y sin esto
+  // se salía del recuadro de 220px, invadiendo la etiqueta vecina. Al ser SVG (vector),
+  // escalarlo por CSS no pierde nitidez ni rompe la proporción barra/espacio que el
+  // escáner necesita — solo lo encoge para que quepa.
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 .label-name {
