@@ -14,6 +14,47 @@
   }
 }
 
+.alerts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fde8d8;
+  color: #b5560d;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+
+  mat-icon:not(.chevron) {
+    flex-shrink: 0;
+  }
+
+  .chevron {
+    margin-left: auto;
+    opacity: 0.6;
+  }
+
+  &:hover {
+    background: #fbdcc4;
+  }
+
+  &.ok {
+    background: #e3f3e6;
+    color: #2c7a3d;
+    font-weight: 500;
+    cursor: default;
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

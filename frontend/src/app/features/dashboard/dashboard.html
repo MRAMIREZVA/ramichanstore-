@@ -13,6 +13,25 @@
       </div>
     </mat-card>
   } @else {
+    @if (!loading()) {
+      <div class="alerts-section">
+        @if (visibleAlerts().length > 0) {
+          @for (alert of visibleAlerts(); track alert.routerLink + (alert.queryParams?.['tab'] ?? '')) {
+            <a class="alert-row" [routerLink]="alert.routerLink" [queryParams]="alert.queryParams">
+              <mat-icon>{{ alert.icon }}</mat-icon>
+              <span>{{ alert.message() }}</span>
+              <mat-icon class="chevron">chevron_right</mat-icon>
+            </a>
+          }
+        } @else {
+          <div class="alert-row ok">
+            <mat-icon>check_circle</mat-icon>
+            <span>Sin alertas pendientes — todo en orden.</span>
+          </div>
+        }
+      </div>
+    }
+
     <div class="stats-grid">
       @for (stat of stats; track stat.label) {
         <mat-card class="stat-card" [class.warn]="stat.warn?.()">

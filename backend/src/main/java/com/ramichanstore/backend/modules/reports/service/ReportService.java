@@ -4,7 +4,11 @@ import com.ramichanstore.backend.modules.analytics.entity.CatalogEventType;
 import com.ramichanstore.backend.modules.analytics.repository.CatalogPageViewRepository;
 import com.ramichanstore.backend.modules.customers.entity.Customer;
 import com.ramichanstore.backend.modules.customers.repository.CustomerRepository;
+import com.ramichanstore.backend.modules.deliveries.entity.DeliveryStatus;
+import com.ramichanstore.backend.modules.deliveries.repository.DeliveryRepository;
 import com.ramichanstore.backend.modules.loyalty.repository.LoyaltyPointMovementRepository;
+import com.ramichanstore.backend.modules.orderrequests.entity.OrderRequestStatus;
+import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRepository;
 import com.ramichanstore.backend.modules.preorders.entity.Preorder;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderCustomer;
 import com.ramichanstore.backend.modules.preorders.entity.PreorderStatus;
@@ -38,6 +42,8 @@ import com.ramichanstore.backend.modules.sales.repository.SaleDetailRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleRepository;
 import com.ramichanstore.backend.modules.sales.repository.SaleSpecifications;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
+import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -56,6 +62,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,6 +86,9 @@ public class ReportService {
     private final LoyaltyPointMovementRepository loyaltyPointMovementRepository;
     private final SettingService settingService;
     private final CatalogPageViewRepository catalogPageViewRepository;
+    private final DeliveryRepository deliveryRepository;
+    private final OrderRequestRepository orderRequestRepository;
+    private final ShipmentRepository shipmentRepository;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboardSummary() {
@@ -97,7 +108,47 @@ public class ReportService {
                 preorderRepository.countByStatus(PreorderStatus.ACTIVE), preorderRepository.countByStatus(PreorderStatus.COMING_SOON),
                 customerRepository.count(),
                 loyaltyPointMovementRepository.sumPositivePointsBetween(monthStart.atStartOfDay(), LocalDateTime.of(today, LocalTime.MAX)),
-                pendingSeparations.size(), pendingBalance);
+                pendingSeparations.size(), pendingBalance,
+                lateDeliveriesCount(today), overduePreordersCount(today), pendingWebOrdersCount(), customsFlaggedShipmentsCount());
+    }
+
+    /**
+     * Entregas que ya debieron salir/llegar (fecha programada pasada) pero siguen sin un estado
+     * final — mismo criterio de "atrasada" sin importar cuánto tiempo pasó, ya que Delivery no
+     * distingue "un día tarde" de "un mes tarde" en ningún otro lugar del sistema.
+     */
+    private long lateDeliveriesCount(LocalDate today) {
+        if (!hasAuthority("PERM_DELIVERY_VIEW")) return 0;
+        return deliveryRepository.countByStatusInAndScheduledDateBefore(
+                List.of(DeliveryStatus.PENDING, DeliveryStatus.PREPARING, DeliveryStatus.READY, DeliveryStatus.SHIPPED), today);
+    }
+
+    /** Campañas de preventa cuya fecha límite ya pasó pero que no se entregaron ni cancelaron — mismo criterio exacto de "abierta" que getReceivables(). */
+    private long overduePreordersCount(LocalDate today) {
+        if (!hasAuthority("PERM_PREORDER_VIEW")) return 0;
+        return preorderRepository.countByStatusNotInAndLimitDateBefore(
+                List.of(PreorderStatus.DELIVERED, PreorderStatus.CANCELLED), today);
+    }
+
+    private long pendingWebOrdersCount() {
+        if (!hasAuthority("PERM_ORDER_REQUEST_VIEW")) return 0;
+        return orderRequestRepository.countByStatus(OrderRequestStatus.PENDING);
+    }
+
+    private long customsFlaggedShipmentsCount() {
+        if (!hasAuthority("PERM_SHIPMENT_VIEW")) return 0;
+        return shipmentRepository.countByStatus(ShipmentStatus.OBSERVADO_ADUANAS);
+    }
+
+    /**
+     * El Dashboard es accesible con un solo permiso (PERM_DASHBOARD_VIEW, ej. VENDEDOR desde Fase
+     * 75) pero cada alerta expone datos de un módulo distinto — sin este chequeo, un rol sin acceso
+     * a Embarques/Preventas/etc. vería de todos modos un conteo de ese módulo en su propio
+     * dashboard, aunque el resto del sistema ya le oculte esa pantalla (sidebar Y rutas, Fase 75).
+     */
+    private boolean hasAuthority(String code) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(code));
     }
 
     @Transactional(readOnly = true)

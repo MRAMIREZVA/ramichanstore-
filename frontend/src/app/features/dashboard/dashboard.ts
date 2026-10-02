@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardSummary } from '../../core/models/report.model';
 import { ReportService } from '../../core/services/report.service';
@@ -13,10 +14,25 @@ interface StatCard {
   warn?: () => boolean;
 }
 
+/**
+ * Alertas operativas (Fase 82): a diferencia de los StatCard de arriba (números del día/mes),
+ * estas son acciones pendientes — cada una navega a la pantalla real donde se resuelve. `count`
+ * queda en 0 tanto si no hay nada pendiente como si tu rol no tiene permiso para ver ese módulo
+ * (ver ReportService.hasAuthority en el backend) — el frontend no distingue ambos casos a
+ * propósito, nunca muestra la fila en ninguno de los dos.
+ */
+interface OperationalAlert {
+  icon: string;
+  message: () => string;
+  count: () => number;
+  routerLink: string;
+  queryParams?: Record<string, number>;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [MatCardModule, MatIconModule],
+  imports: [MatCardModule, MatIconModule, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -52,6 +68,37 @@ export class Dashboard {
       warn: () => (this.summary()?.pendingPaymentsCount ?? 0) > 0,
     },
   ];
+
+  readonly alerts: OperationalAlert[] = [
+    {
+      icon: 'local_shipping',
+      message: () => `${this.summary()?.lateDeliveries ?? 0} entrega${(this.summary()?.lateDeliveries ?? 0) === 1 ? '' : 's'} atrasada${(this.summary()?.lateDeliveries ?? 0) === 1 ? '' : 's'}`,
+      count: () => this.summary()?.lateDeliveries ?? 0,
+      routerLink: '/entregas',
+    },
+    {
+      icon: 'event_busy',
+      message: () => `${this.summary()?.overduePreorders ?? 0} campaña${(this.summary()?.overduePreorders ?? 0) === 1 ? '' : 's'} de preventa con fecha límite vencida`,
+      count: () => this.summary()?.overduePreorders ?? 0,
+      routerLink: '/pedidos',
+      queryParams: { tab: 2 },
+    },
+    {
+      icon: 'shopping_cart',
+      message: () => `${this.summary()?.pendingWebOrders ?? 0} pedido${(this.summary()?.pendingWebOrders ?? 0) === 1 ? '' : 's'} web sin atender`,
+      count: () => this.summary()?.pendingWebOrders ?? 0,
+      routerLink: '/pedidos',
+      queryParams: { tab: 3 },
+    },
+    {
+      icon: 'fact_check',
+      message: () => `${this.summary()?.customsFlaggedShipments ?? 0} embarque${(this.summary()?.customsFlaggedShipments ?? 0) === 1 ? '' : 's'} observado${(this.summary()?.customsFlaggedShipments ?? 0) === 1 ? '' : 's'} por aduanas`,
+      count: () => this.summary()?.customsFlaggedShipments ?? 0,
+      routerLink: '/embarques',
+    },
+  ];
+
+  readonly visibleAlerts = computed(() => this.alerts.filter((a) => a.count() > 0));
 
   constructor() {
     this.reportService.getDashboard().subscribe({

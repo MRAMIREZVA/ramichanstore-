@@ -12,6 +12,11 @@ export interface DashboardSummary {
   pointsIssuedMonth: number;
   pendingPaymentsCount: number;
   pendingPaymentsBalance: number;
+  /** Alertas operativas (Fase 82) — en 0 si tu rol no tiene permiso para ver ese módulo, no solo si no hay nada pendiente. */
+  lateDeliveries: number;
+  overduePreorders: number;
+  pendingWebOrders: number;
+  customsFlaggedShipments: number;
 }
 
 export interface DailySalesPoint {

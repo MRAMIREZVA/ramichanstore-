@@ -10,6 +10,9 @@ public interface OrderRequestRepository extends JpaRepository<OrderRequest, Long
 
     Page<OrderRequest> findByStatus(OrderRequestStatus status, Pageable pageable);
 
+    /** Alerta del Dashboard (Fase 82): pedidos web sin aprobar ni rechazar todavía. */
+    long countByStatus(OrderRequestStatus status);
+
     boolean existsByDeliveryAgencyId(Long deliveryAgencyId);
 
     boolean existsByItems_ProductId(Long productId);
