@@ -1,5 +1,6 @@
 package com.ramichanstore.backend.modules.products.repository;
 
+import com.ramichanstore.backend.modules.products.dto.ProductSitemapEntry;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import java.math.BigDecimal;
 import java.util.List;
@@ -64,4 +65,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     /** Cuántos productos activos tienen costo total en S/0 — la "ganancia" que muestran es ficticia. */
     long countByTotalCost(BigDecimal totalCost);
+
+    /**
+     * Para el sitemap público (Fase 81) — mismos excluidos que {@code ProductService.searchPublic}/
+     * {@code findPublicById} (DISCONTINUED/OUT_OF_STOCK dan 404 al público), para no listarle a
+     * Google una URL que en realidad no carga nada.
+     */
+    @Query("SELECT p.id AS id, p.updatedAt AS updatedAt FROM Product p "
+            + "WHERE p.status <> com.ramichanstore.backend.modules.products.entity.ProductStatus.DISCONTINUED "
+            + "AND p.status <> com.ramichanstore.backend.modules.products.entity.ProductStatus.OUT_OF_STOCK "
+            + "ORDER BY p.id")
+    List<ProductSitemapEntry> findSitemapEntries();
 }

@@ -18,6 +18,7 @@ import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgency
 import com.ramichanstore.backend.modules.preorders.service.PreorderService;
 import com.ramichanstore.backend.modules.productlines.service.ProductLineService;
 import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
+import com.ramichanstore.backend.modules.products.dto.ProductSitemapEntry;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
@@ -130,6 +131,12 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public List<String> findFranchises() {
         return productService.findDistinctFranchises();
+    }
+
+    /** Para el sitemap público (Fase 81) — ver {@code ProductService.findPublicSitemapEntries}. */
+    @Transactional(readOnly = true)
+    public List<ProductSitemapEntry> findSitemapEntries() {
+        return productService.findPublicSitemapEntries();
     }
 
     /** Agencias de envío (Shalom, Olva, etc.) para el checkout cuando el método de entrega es "Agencia". */

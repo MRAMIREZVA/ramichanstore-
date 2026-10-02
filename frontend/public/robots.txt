@@ -1,0 +1,24 @@
+User-agent: *
+Disallow: /api/
+Disallow: /login
+Disallow: /dashboard
+Disallow: /productos
+Disallow: /inventario
+Disallow: /clientes
+Disallow: /embarques
+Disallow: /pedidos
+Disallow: /puntos
+Disallow: /entregas
+Disallow: /reportes
+Disallow: /usuarios
+Disallow: /auditoria
+Disallow: /configuracion
+Disallow: /libro-reclamaciones
+Disallow: /escanear
+Disallow: /portal
+Disallow: /catalogo/carrito
+Disallow: /catalogo/checkout
+Disallow: /catalogo/favoritos
+Disallow: /catalogo/mi-pedido
+
+Sitemap: https://ramichanstore.com/sitemap.xml

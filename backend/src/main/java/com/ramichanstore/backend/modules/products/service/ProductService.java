@@ -16,6 +16,7 @@ import com.ramichanstore.backend.modules.productlines.repository.ProductLineRepo
 import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
 import com.ramichanstore.backend.modules.products.dto.ProductRequest;
 import com.ramichanstore.backend.modules.products.dto.ProductResponse;
+import com.ramichanstore.backend.modules.products.dto.ProductSitemapEntry;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.repository.ProductImageRepository;
@@ -146,6 +147,12 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<String> findDistinctFranchises() {
         return productRepository.findDistinctFranchises();
+    }
+
+    /** Para el sitemap público (Fase 81) — ver {@code ProductRepository.findSitemapEntries}. */
+    @Transactional(readOnly = true)
+    public List<ProductSitemapEntry> findPublicSitemapEntries() {
+        return productRepository.findSitemapEntries();
     }
 
     /**

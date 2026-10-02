@@ -12,14 +12,18 @@ import com.ramichanstore.backend.modules.catalog.entity.CatalogAnnouncement;
 import com.ramichanstore.backend.modules.catalog.entity.CatalogBanner;
 import com.ramichanstore.backend.modules.catalog.service.CatalogService;
 import com.ramichanstore.backend.modules.deliveryagencies.dto.DeliveryAgencyResponse;
+import com.ramichanstore.backend.modules.products.dto.ProductSitemapEntry;
 import com.ramichanstore.backend.security.SecurityUser;
 import jakarta.validation.Valid;
 import java.math.RoundingMode;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -104,24 +108,134 @@ public class CatalogController {
         String description = escapeHtml(
                 priceLabel + (product.franchise() != null ? " — " + product.franchise() : "")
                         + ". Figuras y coleccionables originales en RamichanStore.");
+        // Fase 81: datos estructurados Product (schema.org) — Google los usa para enriquecer el
+        // resultado de búsqueda (precio/disponibilidad visibles directo en el buscador). `inStock`
+        // ya viene calculado por PublicProductResponse (stock real Y status, nunca solo uno de los
+        // dos) — nunca se asume disponible solo porque el producto no esté descontinuado/agotado.
+        String availability = product.inStock() ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+        String jsonLd = """
+                {
+                  "@context": "https://schema.org/",
+                  "@type": "Product",
+                  "name": "%s",
+                  "image": ["%s"],
+                  "description": "%s",
+                  "sku": "%s",
+                  "brand": { "@type": "Brand", "name": "%s" },
+                  "offers": {
+                    "@type": "Offer",
+                    "url": "%s",
+                    "priceCurrency": "PEN",
+                    "price": "%s",
+                    "availability": "%s",
+                    "itemCondition": "https://schema.org/NewCondition"
+                  }
+                }
+                """.formatted(
+                jsonEscape(product.name()), imageUrl, jsonEscape(description), jsonEscape(product.sku()),
+                jsonEscape(product.brandName()), pageUrl, product.salePrice().setScale(2, RoundingMode.HALF_UP), availability);
         String html = """
                 <!DOCTYPE html>
                 <html lang="es">
                 <head>
                 <meta charset="utf-8">
                 <title>%s</title>
+                <link rel="canonical" href="%s">
+                <meta name="description" content="%s">
                 <meta property="og:type" content="product">
                 <meta property="og:title" content="%s">
                 <meta property="og:description" content="%s">
                 <meta property="og:image" content="%s">
                 <meta property="og:url" content="%s">
                 <meta name="twitter:card" content="summary_large_image">
+                <script type="application/ld+json">%s</script>
                 <meta http-equiv="refresh" content="0; url=%s">
                 </head>
                 <body>Redirigiendo a RamichanStore…</body>
                 </html>
-                """.formatted(title, title, description, imageUrl, pageUrl, pageUrl);
+                """.formatted(title, pageUrl, description, title, description, imageUrl, pageUrl, jsonLd, pageUrl);
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
+    }
+
+    /**
+     * Fase 81 — mismo mecanismo que {@link #productSharePreview}, pero para la raíz del catálogo
+     * (`/catalogo`), que hasta ahora le mostraba a cualquier buscador el shell genérico de la SPA
+     * (mismo `<title>`/meta para TODO el sitio). Un visitante humano nunca pasa por acá — nginx
+     * solo proxea esta ruta a los bots detectados (ver `nginx.conf`, `$is_social_bot`).
+     * Incluye un puñado de enlaces reales a productos (no toda la lista — eso lo cubre el
+     * {@link #sitemap()} de forma completa y estructurada) para reforzar el descubrimiento de
+     * páginas en buscadores que siguen enlaces de forma más confiable que el propio sitemap.
+     */
+    @GetMapping(value = "/home-preview", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> catalogHomePreview() {
+        String catalogUrl = publicUrl + "/catalogo";
+        String title = "Catálogo de Figuras de Anime — RamichanStore";
+        String description = "Figuras y coleccionables originales de tus animes favoritos. Preventas y envíos a todo el Perú.";
+        var sample = catalogService.searchProducts(null, null, null, null, null, false, PageRequest.of(0, 60, Sort.by("name")));
+        StringBuilder links = new StringBuilder();
+        for (var p : sample.getContent()) {
+            links.append("<li><a href=\"").append(catalogUrl).append('/').append(p.id()).append("\">")
+                    .append(escapeHtml(p.name())).append("</a></li>\n");
+        }
+        String html = """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                <meta charset="utf-8">
+                <title>%s</title>
+                <link rel="canonical" href="%s">
+                <meta name="description" content="%s">
+                <meta property="og:type" content="website">
+                <meta property="og:title" content="%s">
+                <meta property="og:description" content="%s">
+                <meta property="og:image" content="%s/logo.png">
+                <meta property="og:url" content="%s">
+                <meta http-equiv="refresh" content="0; url=%s">
+                </head>
+                <body>
+                <h1>%s</h1>
+                <p>%s</p>
+                <ul>
+                %s
+                </ul>
+                </body>
+                </html>
+                """.formatted(title, catalogUrl, description, title, description, publicUrl, catalogUrl, catalogUrl,
+                escapeHtml(title), escapeHtml(description), links);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
+    }
+
+    /**
+     * Fase 81 — sin sitemap, Google/Bing no tenían forma de descubrir los 582 productos del
+     * catálogo salvo siguiendo enlaces uno por uno; `/sitemap.xml` (la URL que un buscador espera
+     * por convención) lo proxea nginx directo acá. Excluye DISCONTINUED/OUT_OF_STOCK (ver
+     * {@code ProductRepository.findSitemapEntries}) para no listar una URL que en realidad da 404.
+     */
+    @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<String> sitemap() {
+        List<ProductSitemapEntry> entries = catalogService.findSitemapEntries();
+        DateTimeFormatter dateFmt = DateTimeFormatter.ISO_LOCAL_DATE;
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        xml.append(urlEntry(publicUrl + "/catalogo", null, "1.0"));
+        xml.append(urlEntry(publicUrl + "/privacidad", null, "0.3"));
+        xml.append(urlEntry(publicUrl + "/libro-de-reclamaciones", null, "0.3"));
+        for (ProductSitemapEntry entry : entries) {
+            String lastmod = entry.getUpdatedAt() != null ? entry.getUpdatedAt().toLocalDate().format(dateFmt) : null;
+            xml.append(urlEntry(publicUrl + "/catalogo/" + entry.getId(), lastmod, "0.8"));
+        }
+        xml.append("</urlset>\n");
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(xml.toString());
+    }
+
+    private static String urlEntry(String loc, String lastmod, String priority) {
+        StringBuilder sb = new StringBuilder("  <url>\n    <loc>").append(loc).append("</loc>\n");
+        if (lastmod != null) {
+            sb.append("    <lastmod>").append(lastmod).append("</lastmod>\n");
+        }
+        sb.append("    <priority>").append(priority).append("</priority>\n  </url>\n");
+        return sb.toString();
     }
 
     private static String redirectHtml(String url) {
@@ -130,6 +244,10 @@ public class CatalogController {
 
     private static String escapeHtml(String s) {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
+    private static String jsonEscape(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ").replace("\r", "");
     }
 
     @GetMapping("/categories")
