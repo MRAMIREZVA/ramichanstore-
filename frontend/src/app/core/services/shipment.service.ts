@@ -67,9 +67,14 @@ export class ShipmentService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
   }
 
-  /** Consulta en vivo el seguimiento de Serpost — si falla o no hay info nueva, el backend rechaza sin tocar el último estado guardado. */
-  refreshSerpostStatus(id: number): Observable<ApiResponse<Shipment>> {
-    return this.http.post<ApiResponse<Shipment>>(`${this.baseUrl}/${id}/serpost-refresh`, {});
+  /**
+   * Consulta en vivo el seguimiento de Serpost — si falla o no hay info nueva, el backend rechaza
+   * sin tocar el último estado guardado. `trackingCode` es lo que esté tipeado en el formulario EN
+   * ESE MOMENTO (no necesariamente lo ya guardado) — si difiere, el backend lo persiste antes de
+   * consultar, para no obligar a un "Guardar" completo solo para poder probar un código recién tipeado.
+   */
+  refreshSerpostStatus(id: number, trackingCode: string | null): Observable<ApiResponse<Shipment>> {
+    return this.http.post<ApiResponse<Shipment>>(`${this.baseUrl}/${id}/serpost-refresh`, { trackingCode });
   }
 
   /**

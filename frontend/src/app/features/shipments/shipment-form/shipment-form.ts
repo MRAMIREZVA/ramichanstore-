@@ -456,13 +456,23 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     if (slot.objectUrl) window.open(slot.objectUrl, '_blank');
   }
 
-  /** El error (red caída, sin info todavía) ya lo muestra el snackbar global del errorInterceptor — acá solo se refleja el éxito. */
+  /**
+   * Usa lo que esté tipeado AHORA en el campo (no `this.s.serpostTrackingCode`, que es el valor con
+   * el que se abrió el diálogo) — si el admin recién escribió un código sin darle "Guardar" primero,
+   * igual debe poder consultarlo de una (bug real reportado: tipear el código y que "Consultar
+   * estado" responda "no configurado" porque miraba el valor viejo guardado). El error (red caída,
+   * sin info todavía) ya lo muestra el snackbar global del errorInterceptor — acá solo se refleja el éxito.
+   */
   refreshSerpostStatus(): void {
     if (!this.s) return;
+    const typedCode = this.form.controls.serpostTrackingCode.value?.trim() || null;
     this.refreshingSerpost.set(true);
-    this.shipmentService.refreshSerpostStatus(this.s.id).subscribe({
+    this.shipmentService.refreshSerpostStatus(this.s.id, typedCode).subscribe({
       next: (res) => {
         this.refreshingSerpost.set(false);
+        // El backend pudo haber persistido el código recién tipeado (trim incluido) — reflejarlo
+        // en el campo evita que luego "Guardar" parezca mandar un valor distinto al ya guardado.
+        this.form.controls.serpostTrackingCode.setValue(res.data.serpostTrackingCode ?? '', { emitEvent: false });
         this.serpostStatus.set({
           status: res.data.serpostStatus,
           statusAt: res.data.serpostStatusAt,

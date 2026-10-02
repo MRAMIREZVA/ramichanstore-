@@ -60,10 +60,10 @@ public class SerpostTrackingService {
      * esto explícitamente: "en caso que la página se caiga no actualizar el estado".
      */
     @Transactional
-    public String refreshStatus(Long shipmentId) {
+    public String refreshStatus(Long shipmentId, String trackingCodeOverride) {
         Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow(() -> ResourceNotFoundException.of("Embarque", shipmentId));
-        String code = shipment.getSerpostTrackingCode();
+        String code = resolveTrackingCode(shipment, trackingCodeOverride);
         if (code == null || code.isBlank()) {
             throw new BusinessRuleException("Este embarque no tiene un código de rastreo de Serpost configurado");
         }
@@ -89,6 +89,28 @@ public class SerpostTrackingService {
         shipmentRepository.save(shipment);
         auditService.log(AuditAction.UPDATE, MODULE, "Shipment", shipmentId.toString(), null, "estado Serpost: " + status);
         return "Estado actualizado: " + status;
+    }
+
+    /**
+     * Si el admin tipeó un código en el formulario sin pasar primero por "Guardar" (el caso real
+     * reportado: tipear el código por primera vez y darle directo a "Consultar estado"), se persiste
+     * ACÁ MISMO antes de consultar — evita el paso extra de guardar → reabrir → recién consultar.
+     * Un código nuevo invalida cualquier estado ya guardado (pertenecía al código anterior), mismo
+     * criterio que {@code ShipmentService.applySerpostTrackingCode} para la edición normal del form.
+     */
+    private String resolveTrackingCode(Shipment shipment, String override) {
+        String trimmedOverride = override != null ? override.trim() : null;
+        if (trimmedOverride == null || trimmedOverride.isBlank()) {
+            return shipment.getSerpostTrackingCode();
+        }
+        if (!trimmedOverride.equals(shipment.getSerpostTrackingCode())) {
+            shipment.setSerpostTrackingCode(trimmedOverride);
+            shipment.setSerpostStatus(null);
+            shipment.setSerpostStatusAt(null);
+            shipment.setSerpostCheckedAt(null);
+            shipmentRepository.save(shipment);
+        }
+        return trimmedOverride;
     }
 
     /** {@code null} ante CUALQUIER fallo (red, HTTP de error, formato inesperado) — nunca propaga la excepción. */

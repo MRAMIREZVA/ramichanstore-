@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.shipments.controller;
 
 import com.ramichanstore.backend.common.dto.ApiResponse;
 import com.ramichanstore.backend.common.dto.PageResponse;
+import com.ramichanstore.backend.modules.shipments.dto.SerpostRefreshRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentResponse;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
@@ -74,8 +75,8 @@ public class ShipmentController {
     /** Consulta en vivo el seguimiento de Serpost (Fase 80) — ver SerpostTrackingService para el porqué del diseño. */
     @PostMapping("/{id}/serpost-refresh")
     @PreAuthorize("hasAuthority('PERM_SHIPMENT_MANAGE')")
-    public ApiResponse<ShipmentResponse> refreshSerpostStatus(@PathVariable Long id) {
-        String message = serpostTrackingService.refreshStatus(id);
+    public ApiResponse<ShipmentResponse> refreshSerpostStatus(@PathVariable Long id, @RequestBody(required = false) SerpostRefreshRequest request) {
+        String message = serpostTrackingService.refreshStatus(id, request != null ? request.trackingCode() : null);
         return ApiResponse.ok(message, shipmentService.findResponseById(id));
     }
 }
