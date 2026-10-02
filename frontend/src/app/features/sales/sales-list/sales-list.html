@@ -68,6 +68,8 @@
       <mat-datepicker-toggle matSuffix [for]="toPicker" />
       <mat-datepicker #toPicker />
     </mat-form-field>
+
+    <mat-checkbox [formControl]="pendingBalanceControl" class="pending-balance-filter">Solo con saldo pendiente</mat-checkbox>
   </div>
 
   <div class="table-card">
@@ -110,6 +112,11 @@
         <ng-container matColumnDef="total">
           <th mat-header-cell *matHeaderCellDef>Total</th>
           <td mat-cell *matCellDef="let s">S/ {{ s.total.toFixed(2) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="balance">
+          <th mat-header-cell *matHeaderCellDef>Saldo</th>
+          <td mat-cell *matCellDef="let s" [class.negative]="s.balanceDue > 0">S/ {{ s.balanceDue.toFixed(2) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="profit">

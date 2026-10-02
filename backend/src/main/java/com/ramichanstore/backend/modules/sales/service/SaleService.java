@@ -72,14 +72,15 @@ public class SaleService {
 
     @Transactional(readOnly = true)
     public Page<SaleResponse> search(SaleType type, Long customerId, PaymentStatus status, PaymentMethod method,
-            LocalDate from, LocalDate to, Pageable pageable) {
+            LocalDate from, LocalDate to, Boolean pendingBalance, Pageable pageable) {
         List<Specification<Sale>> specs = Stream.of(
                         SaleSpecifications.hasType(type),
                         SaleSpecifications.hasCustomer(customerId),
                         SaleSpecifications.hasPaymentStatus(status),
                         SaleSpecifications.hasPaymentMethod(method),
                         SaleSpecifications.saleDateFrom(from),
-                        SaleSpecifications.saleDateTo(to))
+                        SaleSpecifications.saleDateTo(to),
+                        SaleSpecifications.withPendingBalance(pendingBalance))
                 .filter(Objects::nonNull)
                 .toList();
         Specification<Sale> spec = specs.isEmpty() ? null : Specification.allOf(specs);

@@ -23,6 +23,8 @@ export interface SaleFilters {
   method?: PaymentMethod | null;
   from?: string | null;
   to?: string | null;
+  /** "Clientes que me deben" — solo PENDING/PARTIAL (nunca CANCELLED, que no es una cuenta por cobrar real). */
+  pendingBalance?: boolean | null;
   page?: number;
   size?: number;
   /** ej. "saleDate,desc" — el backend acepta el formato estándar de Spring Data sin necesidad de un endpoint aparte. */
@@ -44,6 +46,7 @@ export class SaleService {
     if (filters.method) params = params.set('method', filters.method);
     if (filters.from) params = params.set('from', filters.from);
     if (filters.to) params = params.set('to', filters.to);
+    if (filters.pendingBalance) params = params.set('pendingBalance', true);
     if (filters.sort) params = params.set('sort', filters.sort);
 
     return this.http.get<ApiResponse<PageResponse<Sale>>>(this.baseUrl, { params });

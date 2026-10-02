@@ -54,4 +54,17 @@ public final class SaleSpecifications {
         }
         return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("saleDate"), to);
     }
+
+    /**
+     * "Clientes que me deben": PENDING/PARTIAL implican saldo &gt; 0 por invariante del propio
+     * paymentStatus (nunca se recalcula acá un balanceDue aparte, que es un valor derivado del
+     * ledger de abonos, no una columna — ver SaleResponse.from). CANCELLED se excluye a propósito:
+     * una venta cancelada no es una cuenta por cobrar real, sin importar qué muestre su total.
+     */
+    public static Specification<Sale> withPendingBalance(Boolean onlyPending) {
+        if (onlyPending == null || !onlyPending) {
+            return null;
+        }
+        return (root, query, cb) -> root.get("paymentStatus").in(PaymentStatus.PENDING, PaymentStatus.PARTIAL);
+    }
 }

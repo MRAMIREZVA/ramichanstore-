@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -41,6 +42,7 @@ import { SaleFormComponent, SaleFormData } from '../sale-form/sale-form';
     KeyValuePipe,
     MatTableModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
@@ -65,7 +67,7 @@ export class SalesList implements OnInit {
   readonly typeLabels = SALE_TYPE_LABELS;
   readonly statusLabels = PAYMENT_STATUS_LABELS;
   readonly methodLabels = PAYMENT_METHOD_LABELS;
-  readonly displayedColumns = ['code', 'type', 'date', 'customer', 'items', 'total', 'profit', 'status', 'actions'];
+  readonly displayedColumns = ['code', 'type', 'date', 'customer', 'items', 'total', 'balance', 'profit', 'status', 'actions'];
 
   readonly loading = signal(true);
   readonly sales = signal<Sale[]>([]);
@@ -76,6 +78,7 @@ export class SalesList implements OnInit {
   readonly methodControl = new FormControl<PaymentMethod | null>(null);
   readonly fromControl = new FormControl<Date | null>(null);
   readonly toControl = new FormControl<Date | null>(null);
+  readonly pendingBalanceControl = new FormControl<boolean>(false, { nonNullable: true });
   readonly customerFilterControl = new FormControl('');
 
   readonly customerOptions = signal<Customer[]>([]);
@@ -102,6 +105,10 @@ export class SalesList implements OnInit {
       this.load();
     });
     this.toControl.valueChanges.subscribe(() => {
+      this.page = 0;
+      this.load();
+    });
+    this.pendingBalanceControl.valueChanges.subscribe(() => {
       this.page = 0;
       this.load();
     });
@@ -139,6 +146,7 @@ export class SalesList implements OnInit {
       method: this.methodControl.value,
       from: toIsoDate(this.fromControl.value),
       to: toIsoDate(this.toControl.value),
+      pendingBalance: this.pendingBalanceControl.value || null,
       page: this.page,
       size: this.pageSize,
     };

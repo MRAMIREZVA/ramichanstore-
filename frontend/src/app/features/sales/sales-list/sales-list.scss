@@ -43,6 +43,11 @@
   width: 100%;
 }
 
+.sales-table .negative {
+  color: #b32424;
+  font-weight: 600;
+}
+
 .loading,
 .empty-state {
   display: flex;

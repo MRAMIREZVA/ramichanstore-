@@ -39,7 +39,7 @@ public class PortalService {
     /** Ventas Y separaciones (ambas {@code Sale}, distinguidas por {@code type}) — una sola lista, ya mezclada. */
     @Transactional(readOnly = true)
     public Page<SaleResponse> mySales(Long customerId, Pageable pageable) {
-        return saleService.search(null, customerId, null, null, null, null, pageable);
+        return saleService.search(null, customerId, null, null, null, null, null, pageable);
     }
 
     @Transactional(readOnly = true)

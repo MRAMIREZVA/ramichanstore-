@@ -52,8 +52,9 @@ public class SaleController {
             @RequestParam(required = false) PaymentMethod method,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) Boolean pendingBalance,
             @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.ok(PageResponse.from(saleService.search(type, customerId, status, method, from, to, pageable)));
+        return ApiResponse.ok(PageResponse.from(saleService.search(type, customerId, status, method, from, to, pendingBalance, pageable)));
     }
 
     @GetMapping("/{id}")
