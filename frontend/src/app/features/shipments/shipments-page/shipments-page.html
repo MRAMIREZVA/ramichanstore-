@@ -2,7 +2,7 @@
   <h1 class="page-title">Embarques desde Japón</h1>
   <p class="page-subtitle">Compras consolidadas vía cuentas proxy (Zenmarket) y su seguimiento hasta llegar a la tienda.</p>
 
-  <mat-tab-group animationDuration="150ms" [preserveContent]="true">
+  <mat-tab-group animationDuration="150ms" [preserveContent]="true" (selectedTabChange)="onTabChange($event)">
     <mat-tab label="Embarques">
       <ng-template matTabContent>
         <div class="tab-content"><app-shipments-list /></div>
