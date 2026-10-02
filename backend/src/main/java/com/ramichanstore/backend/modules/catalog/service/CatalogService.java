@@ -158,12 +158,23 @@ public class CatalogService {
         // ofrece esa opción y Yape se sigue coordinando por WhatsApp.
         String yapeNumber = settingService.getValue("YAPE_NUMBER");
         String yapeHolderName = settingService.getValue("YAPE_HOLDER_NAME");
+        // "Quiénes somos" + redes sociales en la parte superior del catálogo (Fase 76).
+        String aboutUs = settingService.getValue("STORE_ABOUT_US");
+        String facebookUrl = settingService.getValue("STORE_FACEBOOK_URL");
+        String instagramUrl = settingService.getValue("STORE_INSTAGRAM_URL");
+        String tiktokUrl = settingService.getValue("STORE_TIKTOK_URL");
+        String youtubeUrl = settingService.getValue("STORE_YOUTUBE_URL");
         return new StoreInfoResponse(
                 storeName, StringUtils.hasText(whatsapp) ? whatsapp : null, bannerUrl, announcementImageUrl, freeShippingThreshold,
                 StringUtils.hasText(googleAnalyticsId) ? googleAnalyticsId : null,
                 StringUtils.hasText(metaPixelId) ? metaPixelId : null,
                 StringUtils.hasText(yapeNumber) ? yapeNumber : null,
-                StringUtils.hasText(yapeHolderName) ? yapeHolderName : null);
+                StringUtils.hasText(yapeHolderName) ? yapeHolderName : null,
+                StringUtils.hasText(aboutUs) ? aboutUs : null,
+                StringUtils.hasText(facebookUrl) ? facebookUrl : null,
+                StringUtils.hasText(instagramUrl) ? instagramUrl : null,
+                StringUtils.hasText(tiktokUrl) ? tiktokUrl : null,
+                StringUtils.hasText(youtubeUrl) ? youtubeUrl : null);
     }
 
     /**

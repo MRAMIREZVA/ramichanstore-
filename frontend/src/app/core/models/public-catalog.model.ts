@@ -69,4 +69,11 @@ export interface StoreInfo {
   yapeNumber: string | null;
   /** Titular que le aparece al cliente al yapear, para que confirme antes de pagar. */
   yapeHolderName: string | null;
+  /** Texto de "Quiénes somos" (Fase 76); null oculta el link en el header del catálogo. */
+  aboutUs: string | null;
+  /** Links de redes sociales (Fase 76); cada uno null oculta su ícono — nunca un ícono sin destino. */
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  tiktokUrl: string | null;
+  youtubeUrl: string | null;
 }

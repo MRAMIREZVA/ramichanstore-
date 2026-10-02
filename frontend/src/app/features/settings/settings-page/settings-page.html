@@ -19,13 +19,19 @@
                   <div class="setting-key">{{ s.key }}</div>
                   <div class="setting-desc">{{ s.description || s.category }}</div>
                 </div>
-                <mat-form-field appearance="outline" class="setting-value-field">
-                  <input
-                    matInput
-                    [ngModel]="draftFor(s)"
-                    (ngModelChange)="onDraftChange(s, $event)"
-                    [type]="s.dataType === 'NUMBER' ? 'number' : 'text'"
-                  />
+                <mat-form-field appearance="outline" class="setting-value-field" [class.wide-field]="s.key === 'STORE_ABOUT_US'">
+                  @if (s.key === 'STORE_ABOUT_US') {
+                    <!-- Único setting con texto largo (el "Quiénes somos" del catálogo, Fase 76) —
+                         un <input> de una sola línea sería incómodo para 2-3 frases reales. -->
+                    <textarea matInput rows="3" [ngModel]="draftFor(s)" (ngModelChange)="onDraftChange(s, $event)"></textarea>
+                  } @else {
+                    <input
+                      matInput
+                      [ngModel]="draftFor(s)"
+                      (ngModelChange)="onDraftChange(s, $event)"
+                      [type]="s.dataType === 'NUMBER' ? 'number' : 'text'"
+                    />
+                  }
                 </mat-form-field>
                 <button mat-flat-button color="primary" [disabled]="!isDirty(s)" (click)="saveSetting(s)">Guardar</button>
               </div>
