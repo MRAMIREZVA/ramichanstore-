@@ -31,6 +31,19 @@ export interface FranchiseGroup {
   products: PublicProduct[];
 }
 
+/**
+ * Vista agrupada por franquicia (Fase 77, bug reportado por el dueño): antes, cada
+ * sección mostraba "lo que de esa franquicia haya caído en la página actual de 24"
+ * — un accidente de la paginación alfabética por nombre de producto, no un reflejo real
+ * del catálogo (una franquicia con 12 productos podía aparecer con 2 en una página y 6
+ * en otra, según dónde cayeran sus nombres alfabéticamente). Ahora, sin ningún filtro
+ * activo, se trae TODO el catálogo de una sola vez (tope generoso, bien por encima del
+ * ~560 actual) y cada sección se recorta a un preview fijo — la cuenta que se ve ya
+ * refleja el total real de esa franquicia (hasta el tope), no un resto de paginación.
+ */
+const GROUPED_VIEW_SIZE = 1000;
+const FRANCHISE_PREVIEW_COUNT = 4;
+
 @Component({
   selector: 'app-catalog-home',
   standalone: true,
@@ -143,7 +156,7 @@ export class CatalogHome implements OnInit {
         if (b === 'Otros') return -1;
         return a.localeCompare(b, 'es');
       })
-      .map(([franchise, products]) => ({ franchise, products }));
+      .map(([franchise, products]) => ({ franchise, products: products.slice(0, FRANCHISE_PREVIEW_COUNT) }));
   });
 
   ngOnInit(): void {
@@ -188,6 +201,10 @@ export class CatalogHome implements OnInit {
 
   load(): void {
     this.loading.set(true);
+    // Sin filtro: vista agrupada por franquicia, trae el catálogo completo de una sola vez
+    // (ver GROUPED_VIEW_SIZE) para que cada sección refleje el total real — no "lo que
+    // cayó" en una página de 24. Con cualquier filtro activo, sigue paginando normal.
+    const grouped = !this.hasActiveFilter();
     this.catalogService
       .searchProducts({
         search: this.searchControl.value || undefined,
@@ -197,8 +214,8 @@ export class CatalogHome implements OnInit {
         franchise: this.franchiseControl.value,
         onlyPreorder: !!this.onlyPreorderControl.value,
         sort: this.sortControl.value,
-        page: this.page,
-        size: this.pageSize,
+        page: grouped ? 0 : this.page,
+        size: grouped ? GROUPED_VIEW_SIZE : this.pageSize,
       })
       .subscribe({
         next: (res) => {

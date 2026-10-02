@@ -240,14 +240,9 @@
           </div>
         </div>
       }
-
-      <mat-paginator
-        [length]="totalElements()"
-        [pageSize]="pageSize"
-        [pageIndex]="page"
-        [pageSizeOptions]="[12, 24, 48]"
-        (page)="onPage($event)"
-      />
+      <!-- Sin paginador acá a propósito (Fase 77): la vista agrupada ya trae TODO el
+           catálogo de una sola vez (ver GROUPED_VIEW_SIZE en catalog-home.ts) — paginar
+           "de nuevo" encima de eso no tendría ningún "siguiente" real que mostrar. -->
     }
   </mat-sidenav-content>
 </mat-sidenav-container>
