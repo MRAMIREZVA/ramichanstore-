@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +27,10 @@ export class Dashboard {
   readonly currentUser = this.authService.currentUser;
   readonly loading = signal(true);
   readonly summary = signal<DashboardSummary | null>(null);
+  // Antes, un 403 por falta de PERM_DASHBOARD_VIEW (ej. un rol como VENDEDOR, Fase 70)
+  // caía en el `?? 0` de cada tarjeta y mostraba "S/ 0.00" en todo — indistinguible de un
+  // día real sin ventas. Ahora se avisa explícitamente en vez de mentir con un cero (Fase 75).
+  readonly accessDenied = signal(false);
 
   readonly stats: StatCard[] = [
     { label: 'Ventas del día', icon: 'today', value: () => `S/ ${(this.summary()?.salesTodayTotal ?? 0).toFixed(2)}` },
@@ -54,7 +59,12 @@ export class Dashboard {
         this.summary.set(res.data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err: unknown) => {
+        this.loading.set(false);
+        if (err instanceof HttpErrorResponse && err.status === 403) {
+          this.accessDenied.set(true);
+        }
+      },
     });
   }
 }

@@ -4,15 +4,25 @@
     <p>Este es el panel de RamichanStore.</p>
   </header>
 
-  <div class="stats-grid">
-    @for (stat of stats; track stat.label) {
-      <mat-card class="stat-card" [class.warn]="stat.warn?.()">
-        <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
-        <div class="stat-body">
-          <span class="stat-label">{{ stat.label }}</span>
-          <span class="stat-value">{{ loading() ? '…' : stat.value() }}</span>
-        </div>
-      </mat-card>
-    }
-  </div>
+  @if (accessDenied()) {
+    <mat-card class="access-denied-card">
+      <mat-icon>lock</mat-icon>
+      <div>
+        <strong>Tu rol no tiene permiso para ver el dashboard.</strong>
+        <p>Pídele al administrador que te asigne el permiso "Ver dashboard" desde Usuarios y Permisos.</p>
+      </div>
+    </mat-card>
+  } @else {
+    <div class="stats-grid">
+      @for (stat of stats; track stat.label) {
+        <mat-card class="stat-card" [class.warn]="stat.warn?.()">
+          <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
+          <div class="stat-body">
+            <span class="stat-label">{{ stat.label }}</span>
+            <span class="stat-value">{{ loading() ? '…' : stat.value() }}</span>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
 </div>

@@ -59,3 +59,25 @@
   color: #b5560d;
   background: #fde8d8;
 }
+
+.access-denied-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  max-width: 560px;
+
+  mat-icon {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

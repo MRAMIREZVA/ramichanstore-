@@ -35,6 +35,13 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  /** Releer el usuario desde el storage tras un refresh silencioso (Fase 75) — si el rol
+   *  ganó/perdió permisos mientras la sesión estaba abierta, el sidebar/guards lo reflejan
+   *  sin esperar a un logout/login manual. */
+  syncFromStorage(): void {
+    this.currentUserSignal.set(this.tokenStorage.getUser());
+  }
+
   hasPermission(code: string): boolean {
     return this.currentUserSignal()?.permissions.includes(code) ?? false;
   }

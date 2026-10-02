@@ -33,4 +33,9 @@ export class PortalAuthService {
     this.currentCustomerSignal.set(null);
     this.router.navigate(['/portal/login']);
   }
+
+  /** Releer el cliente desde el storage tras un refresh silencioso (Fase 75) — mismo criterio que AuthService. */
+  syncFromStorage(): void {
+    this.currentCustomerSignal.set(this.tokenStorage.getCustomer());
+  }
 }
