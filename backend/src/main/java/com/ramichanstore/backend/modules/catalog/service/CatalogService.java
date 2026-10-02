@@ -17,6 +17,8 @@ import com.ramichanstore.backend.modules.deliveryagencies.dto.DeliveryAgencyResp
 import com.ramichanstore.backend.modules.deliveryagencies.service.DeliveryAgencyService;
 import com.ramichanstore.backend.modules.preorders.service.PreorderService;
 import com.ramichanstore.backend.modules.productlines.service.ProductLineService;
+import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
+import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
 import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -69,9 +72,17 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public Page<PublicProductResponse> searchProducts(
             String term, Long categoryId, Long brandId, Long lineId, String franchise, boolean onlyPreorder, Pageable pageable) {
-        Page<PublicProductResponse> page = productService
-                .searchPublic(term, categoryId, brandId, lineId, franchise, onlyPreorder, pageable)
-                .map(PublicProductResponse::from);
+        Page<Product> productsPage =
+                productService.searchPublic(term, categoryId, brandId, lineId, franchise, onlyPreorder, pageable);
+        // Fase 78: metadatos de imagen resueltos en UNA sola query para toda la página (nunca
+        // navegando `images` producto por producto) — crítico acá porque la vista agrupada por
+        // franquicia del catálogo (Fase 77) pide hasta 1000 productos de una sola vez; sin esto,
+        // el endpoint tardaba 5+ segundos por el peso del binario de cada imagen (ver ProductService.resolveImages).
+        Map<Long, List<ProductImageResponse>> imagesByProduct = productService.resolveImages(productsPage.getContent());
+        // Fase 78: fromForList (no `from`) — el listado nunca necesita description/galería completa,
+        // solo mainImageUrl ya resuelto (ver PublicProductResponse.fromForList para el detalle).
+        Page<PublicProductResponse> page = productsPage.map(
+                p -> PublicProductResponse.fromForList(p, imagesByProduct.getOrDefault(p.getId(), List.of())));
         // Pedido explícito del dueño: los agotados no deben aparecer mezclados con los
         // disponibles. Reordenamiento POR PÁGINA (no una ordenación global en SQL) con un
         // comparador ESTABLE — `Stream.sorted` preserva el orden relativo dentro de cada grupo,

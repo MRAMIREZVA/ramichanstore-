@@ -11,4 +11,14 @@ public record ProductImageResponse(Long id, String fileName, boolean isMain, int
                 image.getSortOrder(),
                 "/api/products/images/" + image.getId() + "/file");
     }
+
+    /** Fase 78 — misma forma que {@link #from}, a partir de la proyección liviana sin {@code imageData}. */
+    public static ProductImageResponse fromSummary(ProductImageSummary summary) {
+        return new ProductImageResponse(
+                summary.getId(),
+                summary.getFileName(),
+                summary.isMain(),
+                summary.getSortOrder(),
+                "/api/products/images/" + summary.getId() + "/file");
+    }
 }

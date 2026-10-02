@@ -13,10 +13,12 @@ import com.ramichanstore.backend.modules.orderrequests.repository.OrderRequestRe
 import com.ramichanstore.backend.modules.preorders.repository.PreorderRepository;
 import com.ramichanstore.backend.modules.productlines.entity.ProductLine;
 import com.ramichanstore.backend.modules.productlines.repository.ProductLineRepository;
+import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
 import com.ramichanstore.backend.modules.products.dto.ProductRequest;
 import com.ramichanstore.backend.modules.products.dto.ProductResponse;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.entity.ProductStatus;
+import com.ramichanstore.backend.modules.products.repository.ProductImageRepository;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.products.repository.ProductSpecifications;
 import com.ramichanstore.backend.modules.sales.repository.SaleDetailRepository;
@@ -26,7 +28,9 @@ import com.ramichanstore.backend.modules.suppliers.repository.SupplierRepository
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,6 +51,7 @@ public class ProductService {
     private static final String MODULE = "PRODUCTS";
 
     private final ProductRepository productRepository;
+    private final ProductImageRepository productImageRepository;
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final ProductLineRepository productLineRepository;
@@ -73,7 +78,29 @@ public class ProductService {
                 .filter(Objects::nonNull)
                 .toList();
         Specification<Product> spec = specs.isEmpty() ? null : Specification.allOf(specs);
-        return productRepository.findAll(spec, pageable).map(ProductResponse::from);
+        Page<Product> page = productRepository.findAll(spec, pageable);
+        Map<Long, List<ProductImageResponse>> imagesByProduct = resolveImages(page.getContent());
+        return page.map(p -> ProductResponse.from(p, imagesByProduct.getOrDefault(p.getId(), List.of())));
+    }
+
+    /**
+     * Fase 78: metadatos de imagen de VARIOS productos a la vez (proyección liviana, SIN
+     * `imageData`) en una sola query con `IN (...)` — para que un listado en bloque arme
+     * sus DTOs sin navegar `product.getImages()` producto por producto, que trae el binario
+     * completo de cada imagen aunque nunca se use (ver {@code ProductImageSummary}). Un
+     * producto sin imágenes simplemente no tiene entrada en el mapa devuelto — usar
+     * {@code .getOrDefault(id, List.of())} al consumirlo.
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, List<ProductImageResponse>> resolveImages(List<Product> products) {
+        if (products.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> ids = products.stream().map(Product::getId).toList();
+        return productImageRepository.findSummariesByProductIdIn(ids).stream()
+                .collect(Collectors.groupingBy(
+                        s -> s.getProductId(),
+                        Collectors.mapping(ProductImageResponse::fromSummary, Collectors.toList())));
     }
 
     @Transactional(readOnly = true)

@@ -41,7 +41,31 @@ public record PublicProductResponse(
      */
     public static PublicProductResponse from(Product p, PreorderPublicInfo preorderInfo) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
-        String mainImageUrl = images.stream()
+        return build(p, images, images, p.getDescription(), preorderInfo);
+    }
+
+    /**
+     * Fase 78: variante LIVIANA para listados en bloque del catálogo público (grilla/vista
+     * agrupada por franquicia) — nunca para el detalle de un producto. La propia tarjeta de
+     * producto (#productCard en catalog-home.html) jamás lee {@code description} ni el arreglo
+     * completo de {@code images}, solo {@code mainImageUrl} (un string ya resuelto) — confirmado
+     * leyendo el template antes de este cambio. Sobre 560 productos reales, {@code description}
+     * pesaba ~487KB y el arreglo {@code images} otros ~156KB de una respuesta que la grilla nunca
+     * llega a usar, dominando el tiempo de transferencia/parseo en una conexión móvil real (el
+     * motivo original de esta fase: "demora 5 segundos en poder deslizar el catálogo"). Por eso
+     * acá {@code description} viaja {@code null} y {@code images} vacío — {@code mainImageUrl} SÍ
+     * se resuelve correctamente contra la imagen marcada como principal, usando el parámetro
+     * {@code images} ya resuelto vía proyección liviana sin {@code imageData}
+     * (ver {@code ProductService.resolveImages}), nunca navegando {@code p.getImages()} por producto.
+     */
+    public static PublicProductResponse fromForList(Product p, List<ProductImageResponse> images) {
+        return build(p, images, List.of(), null, null);
+    }
+
+    private static PublicProductResponse build(
+            Product p, List<ProductImageResponse> imagesToResolveMain, List<ProductImageResponse> imagesToExpose,
+            String description, PreorderPublicInfo preorderInfo) {
+        String mainImageUrl = imagesToResolveMain.stream()
                 .filter(ProductImageResponse::isMain)
                 .map(ProductImageResponse::url)
                 .findFirst()
@@ -55,7 +79,7 @@ public record PublicProductResponse(
                 p.getId(), p.getSku(), p.getName(), p.getCharacterName(), p.getFranchise(),
                 p.getBrand().getName(), p.getCategory().getName(),
                 p.getLine() != null ? p.getLine().getName() : null,
-                p.getDescription(), mainImageUrl, images,
+                description, mainImageUrl, imagesToExpose,
                 p.getSize(), p.getSalePrice(),
                 inStock, lowStock, p.getCurrentStock(),
                 p.getStatus(),

@@ -10,12 +10,15 @@ import com.ramichanstore.backend.modules.inventory.entity.InventoryMovement;
 import com.ramichanstore.backend.modules.inventory.entity.MovementType;
 import com.ramichanstore.backend.modules.inventory.repository.InventoryMovementRepository;
 import com.ramichanstore.backend.modules.inventory.repository.InventoryMovementSpecifications;
+import com.ramichanstore.backend.modules.products.dto.ProductImageResponse;
 import com.ramichanstore.backend.modules.products.dto.ProductResponse;
 import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
+import com.ramichanstore.backend.modules.products.service.ProductService;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,7 @@ public class InventoryService {
 
     private final InventoryMovementRepository movementRepository;
     private final ProductRepository productRepository;
+    private final ProductService productService;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -54,9 +58,19 @@ public class InventoryService {
         return movementRepository.findAll(spec, pageable).map(InventoryMovementResponse::from);
     }
 
+    /**
+     * Fase 78: mismo fix de N+1/binario de imagen que el catálogo (ver
+     * {@code ProductService.resolveImages}) — esta lista llegó a tener 247 productos reales
+     * en producción (Fase 34), suficiente para notar el mismo problema si se navegara
+     * `product.getImages()` por cada uno.
+     */
     @Transactional(readOnly = true)
     public List<ProductResponse> lowStockProducts() {
-        return productRepository.findLowStock().stream().map(ProductResponse::from).toList();
+        List<Product> products = productRepository.findLowStock();
+        Map<Long, List<ProductImageResponse>> imagesByProduct = productService.resolveImages(products);
+        return products.stream()
+                .map(p -> ProductResponse.from(p, imagesByProduct.getOrDefault(p.getId(), List.of())))
+                .toList();
     }
 
     @Transactional

@@ -23,6 +23,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
@@ -132,8 +133,14 @@ public class Product extends BaseEntity {
     @Column(name = "packaged_weight_grams", precision = 10, scale = 2)
     private BigDecimal packagedWeightGrams;
 
+    // @BatchSize (Fase 78): en vez de una query de imágenes POR producto (N+1, ver
+    // ProductRepository.findAll para el detalle completo), Hibernate las trae agrupadas de a
+    // 50 productos a la vez cuando algo accede a `images` de varios productos en la misma
+    // sesión — compatible con paginación (a diferencia de un JOIN FETCH acá) porque no toca
+    // la query principal, solo agrupa las cargas perezosas posteriores.
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("sortOrder ASC")
+    @BatchSize(size = 50)
     private List<ProductImage> images = new ArrayList<>();
 
     public boolean isLowStock() {

@@ -24,6 +24,16 @@ public record ProductResponse(
 
     public static ProductResponse from(Product p) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
+        return from(p, images);
+    }
+
+    /**
+     * Fase 78: variante para listados en bloque — `images` ya resuelto vía
+     * {@code ProductImageRepository.findSummariesByProductIdIn} (proyección sin
+     * `imageData`) en vez de navegar `p.getImages()` producto por producto, que trae
+     * el binario completo de cada imagen aunque nunca se use (ver esa clase).
+     */
+    public static ProductResponse from(Product p, List<ProductImageResponse> images) {
         String mainImageUrl = images.stream()
                 .filter(ProductImageResponse::isMain)
                 .map(ProductImageResponse::url)
