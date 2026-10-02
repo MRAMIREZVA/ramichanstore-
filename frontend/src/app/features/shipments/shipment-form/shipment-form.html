@@ -47,6 +47,42 @@
       </mat-form-field>
     </div>
 
+    <h3 class="section-title">Seguimiento Serpost</h3>
+    <div class="customs-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Código de rastreo Serpost</mat-label>
+        <input matInput formControlName="serpostTrackingCode" placeholder="ej. CN130989762JP" />
+      </mat-form-field>
+      @if (data.shipment) {
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="refreshSerpostStatus()"
+          [disabled]="refreshingSerpost() || !form.controls.serpostTrackingCode.value"
+        >
+          @if (refreshingSerpost()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>sync</mat-icon>
+          }
+          Consultar estado
+        </button>
+      } @else {
+        <span class="hint">Guarda el embarque primero para poder consultar el estado</span>
+      }
+    </div>
+    @if (serpostStatus().status) {
+      <p class="hint">
+        Último estado: <strong>{{ serpostStatus().status }}</strong>
+        @if (serpostStatus().statusAt) {
+          ({{ formatSerpostDateTime(serpostStatus().statusAt) }})
+        }
+        @if (serpostStatus().checkedAt) {
+          — consultado el {{ formatSerpostDateTime(serpostStatus().checkedAt) }}
+        }
+      </p>
+    }
+
     <h3 class="section-title">Fechas y tiempos</h3>
     <div class="grid-4">
       <mat-form-field appearance="outline">

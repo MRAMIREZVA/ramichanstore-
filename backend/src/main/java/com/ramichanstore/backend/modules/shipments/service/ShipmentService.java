@@ -169,6 +169,7 @@ public class ShipmentService {
         shipment.setNotes(request.notes());
         shipment.setWentThroughCustoms(request.wentThroughCustoms());
         shipment.setCustomsTaxAmount(request.customsTaxAmount());
+        applySerpostTrackingCode(shipment, request.serpostTrackingCode());
         reconcileItems(shipment, request.items());
     }
 
@@ -222,6 +223,25 @@ public class ShipmentService {
             }
             applyItemRequest(item, itemRequest);
         }
+    }
+
+    /**
+     * Si el código cambia (o se borra), el último estado guardado quedó obsoleto — pertenece
+     * a un envío distinto, mostrarlo seguiría siendo "el último estado conocido" de Serpost
+     * pero ya no de ESTE código. Se limpia acá, no en {@link SerpostTrackingService} (que
+     * solo actualiza, nunca borra, ver su Javadoc) — es la única otra operación que legítimamente
+     * invalida un estado ya guardado.
+     */
+    private void applySerpostTrackingCode(Shipment shipment, String newCode) {
+        String trimmed = newCode != null ? newCode.trim() : null;
+        String normalizedNew = (trimmed == null || trimmed.isBlank()) ? null : trimmed;
+        String current = shipment.getSerpostTrackingCode();
+        if (!Objects.equals(current, normalizedNew)) {
+            shipment.setSerpostStatus(null);
+            shipment.setSerpostStatusAt(null);
+            shipment.setSerpostCheckedAt(null);
+        }
+        shipment.setSerpostTrackingCode(normalizedNew);
     }
 
     private void applyItemRequest(ShipmentItem item, ShipmentItemRequest request) {

@@ -5,6 +5,7 @@ import com.ramichanstore.backend.common.dto.PageResponse;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentRequest;
 import com.ramichanstore.backend.modules.shipments.dto.ShipmentResponse;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
+import com.ramichanstore.backend.modules.shipments.service.SerpostTrackingService;
 import com.ramichanstore.backend.modules.shipments.service.ShipmentService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
+    private final SerpostTrackingService serpostTrackingService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('PERM_SHIPMENT_VIEW')")
@@ -67,5 +69,13 @@ public class ShipmentController {
     public ApiResponse<Void> delete(@PathVariable Long id) {
         shipmentService.delete(id);
         return ApiResponse.ok("Embarque eliminado", null);
+    }
+
+    /** Consulta en vivo el seguimiento de Serpost (Fase 80) — ver SerpostTrackingService para el porqué del diseño. */
+    @PostMapping("/{id}/serpost-refresh")
+    @PreAuthorize("hasAuthority('PERM_SHIPMENT_MANAGE')")
+    public ApiResponse<ShipmentResponse> refreshSerpostStatus(@PathVariable Long id) {
+        String message = serpostTrackingService.refreshStatus(id);
+        return ApiResponse.ok(message, shipmentService.findResponseById(id));
     }
 }

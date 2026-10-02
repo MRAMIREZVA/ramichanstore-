@@ -67,6 +67,11 @@ export class ShipmentService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
   }
 
+  /** Consulta en vivo el seguimiento de Serpost — si falla o no hay info nueva, el backend rechaza sin tocar el último estado guardado. */
+  refreshSerpostStatus(id: number): Observable<ApiResponse<Shipment>> {
+    return this.http.post<ApiResponse<Shipment>>(`${this.baseUrl}/${id}/serpost-refresh`, {});
+  }
+
   /**
    * Artículos de embarque pre-registrados (Fase 40). Por defecto (onlyPending
    * sin especificar) el backend devuelve solo el pool sin asignar — pásalo en

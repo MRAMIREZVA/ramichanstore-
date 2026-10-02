@@ -180,7 +180,16 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     notes: [this.s?.notes ?? ''],
     wentThroughCustoms: [this.s?.wentThroughCustoms ?? false],
     customsTaxAmount: [this.s?.customsTaxAmount ?? null],
+    serpostTrackingCode: [this.s?.serpostTrackingCode ?? ''],
   });
+
+  /** Último estado conocido de Serpost — signal propio (no `data.shipment` directo) para reflejar el resultado de "Consultar estado" sin cerrar el diálogo. */
+  readonly serpostStatus = signal<{ status: string | null; statusAt: string | null; checkedAt: string | null }>({
+    status: this.s?.serpostStatus ?? null,
+    statusAt: this.s?.serpostStatusAt ?? null,
+    checkedAt: this.s?.serpostCheckedAt ?? null,
+  });
+  readonly refreshingSerpost = signal(false);
 
   ngOnInit(): void {
     this.shipmentHolderService.findAll().subscribe((res) => this.holders.set(res.data));
@@ -447,6 +456,29 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     if (slot.objectUrl) window.open(slot.objectUrl, '_blank');
   }
 
+  /** El error (red caída, sin info todavía) ya lo muestra el snackbar global del errorInterceptor — acá solo se refleja el éxito. */
+  refreshSerpostStatus(): void {
+    if (!this.s) return;
+    this.refreshingSerpost.set(true);
+    this.shipmentService.refreshSerpostStatus(this.s.id).subscribe({
+      next: (res) => {
+        this.refreshingSerpost.set(false);
+        this.serpostStatus.set({
+          status: res.data.serpostStatus,
+          statusAt: res.data.serpostStatusAt,
+          checkedAt: res.data.serpostCheckedAt,
+        });
+        this.snackBar.open(res.message, 'Cerrar', { duration: 4000 });
+      },
+      error: () => this.refreshingSerpost.set(false),
+    });
+  }
+
+  formatSerpostDateTime(iso: string | null): string {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
   save(): void {
     const draftItems = this.items().filter((it) => it.description.trim() && it.quantity > 0);
     const validItems = draftItems.filter((it) => it.weight !== null && it.weight !== undefined && it.weight >= 0);
@@ -484,6 +516,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       notes: v.notes || null,
       wentThroughCustoms: v.wentThroughCustoms ?? false,
       customsTaxAmount: v.customsTaxAmount,
+      serpostTrackingCode: v.serpostTrackingCode || null,
       items: validItems.map((it) => ({
         id: it.id,
         articleCode: it.articleCode.trim() || null,

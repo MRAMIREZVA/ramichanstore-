@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -116,6 +117,26 @@ public class Shipment extends BaseEntity {
 
     @Column(name = "customs_tax_amount", precision = 10, scale = 2)
     private BigDecimal customsTaxAmount;
+
+    /**
+     * Seguimiento en línea de Serpost (Fase 80) — código que el admin tipea (el que figura
+     * en la etiqueta/EMS del paquete). {@code serpostStatus}/{@code serpostStatusAt}
+     * ({@code descespa}/{@code fecha} del último evento que devuelve su API) son el ÚLTIMO
+     * ESTADO CONOCIDO, nunca se borran por una consulta fallida — ver SerpostTrackingService,
+     * que es el único punto que los actualiza. {@code serpostCheckedAt} es cuándo se logró
+     * esa última actualización real (para que la UI pueda avisar si está desactualizado).
+     */
+    @Column(name = "serpost_tracking_code", length = 64)
+    private String serpostTrackingCode;
+
+    @Column(name = "serpost_status", length = 500)
+    private String serpostStatus;
+
+    @Column(name = "serpost_status_at")
+    private LocalDateTime serpostStatusAt;
+
+    @Column(name = "serpost_checked_at")
+    private LocalDateTime serpostCheckedAt;
 
     // Sin orphanRemoval a propósito desde Fase 40 (ver Javadoc de ShipmentItem) — "quitar" un
     // artículo de este embarque debe liberarlo al pool pendiente (shipment = null), no borrarlo.

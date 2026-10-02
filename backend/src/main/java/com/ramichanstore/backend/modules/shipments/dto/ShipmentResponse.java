@@ -5,6 +5,7 @@ import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -23,6 +24,7 @@ public record ShipmentResponse(
         BigDecimal figuresWeight, BigDecimal finalWeight, BigDecimal weightDifference,
         ShipmentStatus status, String notes,
         boolean wentThroughCustoms, BigDecimal customsTaxAmount,
+        String serpostTrackingCode, String serpostStatus, LocalDateTime serpostStatusAt, LocalDateTime serpostCheckedAt,
         List<ShipmentItemResponse> items, List<ShipmentDocumentResponse> documents) {
 
     /**
@@ -51,6 +53,7 @@ public record ShipmentResponse(
                 s.getFiguresWeight(), s.getFinalWeight(), weightDifference(s),
                 s.getStatus(), s.getNotes(),
                 s.isWentThroughCustoms(), s.getCustomsTaxAmount(),
+                s.getSerpostTrackingCode(), s.getSerpostStatus(), s.getSerpostStatusAt(), s.getSerpostCheckedAt(),
                 s.getItems().stream().map(ShipmentItemResponse::from).toList(),
                 s.getDocuments().stream().map(d -> ShipmentDocumentResponse.from(s.getId(), d)).toList());
     }

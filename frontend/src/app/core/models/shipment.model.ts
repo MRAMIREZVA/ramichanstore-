@@ -136,6 +136,11 @@ export interface Shipment {
   notes: string | null;
   wentThroughCustoms: boolean;
   customsTaxAmount: number | null;
+  /** Seguimiento en línea de Serpost (Fase 80) — serpostStatus/serpostStatusAt son el ÚLTIMO estado conocido, nunca se borran por una consulta fallida. */
+  serpostTrackingCode: string | null;
+  serpostStatus: string | null;
+  serpostStatusAt: string | null;
+  serpostCheckedAt: string | null;
   items: ShipmentItem[];
   documents: ShipmentDocument[];
 }
@@ -163,5 +168,6 @@ export interface ShipmentRequest {
   notes: string | null;
   wentThroughCustoms: boolean;
   customsTaxAmount: number | null;
+  serpostTrackingCode: string | null;
   items: ShipmentItemRequest[];
 }
