@@ -5,67 +5,6 @@
   background: var(--mat-sys-surface-container-lowest, #131019);
 }
 
-// "Quiénes somos" + redes sociales (Fase 76) — deliberadamente NO sticky y vive ANTES del
-// header en el flujo normal del documento: así se ve "en la parte superior" en todas las
-// páginas sin tocar el z-index/sticky de .catalog-header, que ya se rompió 2 veces antes
-// por acumular demasiados elementos (Fases 21/45/49/56) — ver CLAUDE.md. Al hacer scroll,
-// esta franja se desplaza con el resto de la página y .catalog-header queda pegado arriba
-// solo, como siempre.
-.catalog-topband {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 24px;
-  background: var(--mat-sys-surface-container-low, #1c1825);
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-  flex-wrap: wrap;
-}
-
-.about-link {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
-  min-height: 32px;
-}
-
-.social-icons {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 4px 0;
-
-  a {
-    display: inline-flex;
-    color: var(--mat-sys-on-surface-variant);
-    transition: color 0.15s;
-
-    &:hover {
-      color: var(--mat-sys-primary);
-    }
-  }
-
-  svg {
-    width: 17px;
-    height: 17px;
-    fill: currentColor;
-  }
-}
-
-@media (max-width: 440px) {
-  .catalog-topband {
-    padding: 2px 16px;
-  }
-
-  .about-link {
-    font-size: 11px;
-    padding: 0 8px;
-  }
-
-  .social-icons {
-    gap: 10px;
-  }
-}
-
 .catalog-header {
   display: flex;
   align-items: center;
@@ -103,6 +42,8 @@
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -111,6 +52,37 @@
 // tema claro anterior (quedaba ilegible contra #1c1825).
 .whatsapp-link {
   color: var(--color-rs-wa, #25d366);
+}
+
+// "Quiénes somos" (Fase 76, movido al costado de "Contáctanos" a pedido explícito del
+// dueño — la primera versión lo ponía en una franja aparte arriba de todo). Mismo
+// mat-button + ícono + .label que el resto de .header-actions, así hereda gratis el
+// mismo "ocultar el texto en pantallas angostas" de la regla de abajo.
+.about-link {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.social-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+
+  a {
+    display: inline-flex;
+    color: var(--mat-sys-on-surface-variant);
+    transition: color 0.15s;
+
+    &:hover {
+      color: var(--mat-sys-primary);
+    }
+  }
+
+  svg {
+    width: 19px;
+    height: 19px;
+    fill: currentColor;
+  }
 }
 
 .catalog-content {
