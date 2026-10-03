@@ -53,6 +53,7 @@
           @if (loadingCategories()) {
             <div class="loading"><mat-spinner diameter="36" /></div>
           } @else {
+            <div class="table-scroll">
             <table mat-table [dataSource]="categories()" class="admin-table">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -72,6 +73,7 @@
               <tr mat-header-row *matHeaderRowDef="nameColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: nameColumns"></tr>
             </table>
+            </div>
           }
         </div>
       </div>
@@ -89,6 +91,7 @@
           @if (loadingBrands()) {
             <div class="loading"><mat-spinner diameter="36" /></div>
           } @else {
+            <div class="table-scroll">
             <table mat-table [dataSource]="brands()" class="admin-table">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -108,6 +111,7 @@
               <tr mat-header-row *matHeaderRowDef="nameColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: nameColumns"></tr>
             </table>
+            </div>
           }
         </div>
       </div>
@@ -125,6 +129,7 @@
           @if (loadingLines()) {
             <div class="loading"><mat-spinner diameter="36" /></div>
           } @else {
+            <div class="table-scroll">
             <table mat-table [dataSource]="lines()" class="admin-table">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -148,6 +153,7 @@
               <tr mat-header-row *matHeaderRowDef="lineColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: lineColumns"></tr>
             </table>
+            </div>
           }
         </div>
       </div>
@@ -165,6 +171,7 @@
           @if (loadingSuppliers()) {
             <div class="loading"><mat-spinner diameter="36" /></div>
           } @else {
+            <div class="table-scroll">
             <table mat-table [dataSource]="suppliers()" class="admin-table">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -192,6 +199,7 @@
               <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: supplierColumns"></tr>
             </table>
+            </div>
           }
         </div>
       </div>
@@ -210,6 +218,7 @@
           @if (loadingDeliveryAgencies()) {
             <div class="loading"><mat-spinner diameter="36" /></div>
           } @else {
+            <div class="table-scroll">
             <table mat-table [dataSource]="deliveryAgencies()" class="admin-table">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -225,6 +234,7 @@
               <tr mat-header-row *matHeaderRowDef="agencyColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: agencyColumns"></tr>
             </table>
+            </div>
           }
         </div>
       </div>

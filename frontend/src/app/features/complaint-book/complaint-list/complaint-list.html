@@ -51,6 +51,7 @@
         <p>No hay reclamos ni quejas con estos filtros.</p>
       </div>
     } @else {
+      <div class="table-scroll">
       <table mat-table [dataSource]="complaints()" class="complaints-table">
         <ng-container matColumnDef="folio">
           <th mat-header-cell *matHeaderCellDef>Folio</th>
@@ -101,6 +102,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalElements()"

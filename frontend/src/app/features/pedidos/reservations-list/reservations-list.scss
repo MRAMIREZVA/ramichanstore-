@@ -32,8 +32,14 @@
   overflow: hidden;
 }
 
+/** Scroll horizontal en celular — mismo patrón de Fase 85 (ver products-list). */
+.table-scroll {
+  overflow-x: auto;
+}
+
 .reservations-table {
   width: 100%;
+  min-width: 820px;
 }
 
 .product-cell {

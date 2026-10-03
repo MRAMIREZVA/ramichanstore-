@@ -37,6 +37,7 @@
         <p>No se encontraron clientes con estos filtros.</p>
       </div>
     } @else {
+      <div class="table-scroll">
       <table mat-table [dataSource]="customers()" class="customers-table">
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Cliente</th>
@@ -93,6 +94,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalElements()"

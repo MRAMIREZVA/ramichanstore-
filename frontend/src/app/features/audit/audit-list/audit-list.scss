@@ -31,8 +31,14 @@
   overflow: hidden;
 }
 
+/** Scroll horizontal en celular — mismo patrón de Fase 85 (ver products-list). */
+.table-scroll {
+  overflow-x: auto;
+}
+
 .audit-table {
   width: 100%;
+  min-width: 760px;
 }
 
 .clickable-row {

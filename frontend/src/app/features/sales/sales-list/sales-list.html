@@ -81,6 +81,7 @@
         <p>No se encontraron pedidos con estos filtros.</p>
       </div>
     } @else {
+      <div class="table-scroll">
       <table mat-table [dataSource]="sales()" class="sales-table">
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Código</th>
@@ -148,6 +149,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalElements()"

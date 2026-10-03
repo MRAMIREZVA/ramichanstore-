@@ -48,6 +48,7 @@
         <p>No se encontraron preventas con estos filtros.</p>
       </div>
     } @else {
+      <div class="table-scroll">
       <table mat-table [dataSource]="preorders()" class="preorders-table">
         <ng-container matColumnDef="image">
           <th mat-header-cell *matHeaderCellDef></th>
@@ -113,6 +114,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalElements()"

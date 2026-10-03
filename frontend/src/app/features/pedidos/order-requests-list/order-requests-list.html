@@ -21,6 +21,7 @@
       <p>No hay pedidos web con estos filtros.</p>
     </div>
   } @else {
+    <div class="table-scroll">
     <table mat-table [dataSource]="orderRequests()" class="order-requests-table">
       <ng-container matColumnDef="guest">
         <th mat-header-cell *matHeaderCellDef>Cliente</th>
@@ -110,6 +111,7 @@
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+    </div>
 
     <mat-paginator
       [length]="totalElements()"

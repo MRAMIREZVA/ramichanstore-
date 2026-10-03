@@ -47,6 +47,7 @@
         <p>No hay registros de auditoría con estos filtros.</p>
       </div>
     } @else {
+      <div class="table-scroll">
       <table mat-table [dataSource]="entries()" class="audit-table">
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>
@@ -85,6 +86,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="openDetail(row)" class="clickable-row"></tr>
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalElements()"
