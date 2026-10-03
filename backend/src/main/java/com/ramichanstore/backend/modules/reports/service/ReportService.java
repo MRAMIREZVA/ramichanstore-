@@ -205,8 +205,7 @@ public class ReportService {
                 .findAll(Specification.allOf(specs.stream().filter(Objects::nonNull).toList()), Sort.by("saleDate"))
                 .stream()
                 .map(s -> new SaleExportRow(
-                        "V-%06d".formatted(s.getId()), s.getSaleDate(),
-                        s.getCustomer() != null ? s.getCustomer().getFullName() : "Sin cliente",
+                        "V-%06d".formatted(s.getId()), s.getSaleDate(), resolveCustomerName(s),
                         s.getTotal(), s.getProfit(), s.getPaymentStatus().name()))
                 .toList();
 
@@ -214,6 +213,18 @@ public class ReportService {
                 settingService.getValue("STORE_NAME"), from, to,
                 totalSales, totalProfit, salesCount, averageTicket,
                 sales, charts.dailySales(), charts.topProducts(), charts.topCategories());
+    }
+
+    /** Mismo resguardo que el resto del archivo: un cliente soft-eliminado detrás de una venta viva no debe tumbar la exportación completa. */
+    private String resolveCustomerName(Sale sale) {
+        if (sale.getCustomer() == null) {
+            return "Sin cliente";
+        }
+        try {
+            return sale.getCustomer().getFullName();
+        } catch (EntityNotFoundException ex) {
+            return "Cliente eliminado";
+        }
     }
 
     /**

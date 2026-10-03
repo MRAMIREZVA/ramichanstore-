@@ -2,6 +2,7 @@ package com.ramichanstore.backend.modules.settings.service;
 
 import com.ramichanstore.backend.audit.AuditAction;
 import com.ramichanstore.backend.audit.AuditService;
+import com.ramichanstore.backend.common.exception.BusinessRuleException;
 import com.ramichanstore.backend.common.exception.ResourceNotFoundException;
 import com.ramichanstore.backend.modules.settings.entity.Setting;
 import com.ramichanstore.backend.modules.settings.repository.SettingRepository;
@@ -45,6 +46,17 @@ public class SettingService {
     public Setting updateValue(String key, String newValue) {
         Setting setting = settingRepository.findByKey(key)
                 .orElseThrow(() -> ResourceNotFoundException.of("Setting", key));
+        // El frontend ya restringe el <input> a type="number" cuando dataType=NUMBER (settings-page.html),
+        // pero eso es solo UX — sin esto, un valor no numérico pasaba derecho y recién explotaba (500 genérico)
+        // la próxima vez que algo leyera el setting con getNumber() (ej. SaleService.calculatePoints en
+        // cada venta, ShipmentService.additionalCostPercent en cada lectura de embarque).
+        if ("NUMBER".equals(setting.getDataType())) {
+            try {
+                new BigDecimal(newValue);
+            } catch (NumberFormatException ex) {
+                throw new BusinessRuleException("El valor \"" + newValue + "\" no es un número válido para \"" + key + "\"");
+            }
+        }
         String oldValue = setting.getValue();
         setting.setValue(newValue);
         setting.setUpdatedAt(LocalDateTime.now());
