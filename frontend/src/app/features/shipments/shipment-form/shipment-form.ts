@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { Product } from '../../../core/models/product.model';
 import {
   SHIPMENT_DOCUMENT_TYPE_LABELS,
   SHIPMENT_STATUS_LABELS,
@@ -25,6 +26,7 @@ import {
   ShipmentStatus,
   ShipmentTypeOption,
 } from '../../../core/models/shipment.model';
+import { ProductService } from '../../../core/services/product.service';
 import { SettingService } from '../../../core/services/setting.service';
 import { ShipmentHolderService } from '../../../core/services/shipment-holder.service';
 import { ShipmentRecipientService } from '../../../core/services/shipment-recipient.service';
@@ -55,6 +57,11 @@ interface ShipmentItemDraft {
   /** Object URL local (blob) para mostrar la foto ya subida — la ruta del backend no es pública, no sirve como [src] directo. */
   imageObjectUrl: string | null;
   uploadingImage: boolean;
+  /** Vínculo opcional a un producto real del catálogo (Fase 86) — siembra la base para rentabilidad por embarque. */
+  productId: number | null;
+  productSearchTerm: string;
+  productOptions: Product[];
+  searchingProduct: boolean;
 }
 
 function emptyItem(): ShipmentItemDraft {
@@ -70,7 +77,15 @@ function emptyItem(): ShipmentItemDraft {
     imageUrl: null,
     imageObjectUrl: null,
     uploadingImage: false,
+    productId: null,
+    productSearchTerm: '',
+    productOptions: [],
+    searchingProduct: false,
   };
+}
+
+function productLabel(productId: number | null, sku: string | null, name: string | null): string {
+  return productId && sku && name ? `${sku} — ${name}` : '';
 }
 
 /** Invoice/Factura son documentos generales de la compra; DIF/DIF_VOUCHER solo aplican si el embarque pasó por aduanas. */
@@ -108,6 +123,7 @@ function emptyDocumentSlot(): DocumentSlot {
 })
 export class ShipmentFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly productService = inject(ProductService);
   private readonly shipmentService = inject(ShipmentService);
   private readonly shipmentHolderService = inject(ShipmentHolderService);
   private readonly shipmentRecipientService = inject(ShipmentRecipientService);
@@ -139,6 +155,10 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       imageUrl: i.imageUrl,
       imageObjectUrl: null,
       uploadingImage: false,
+      productId: i.productId,
+      productSearchTerm: productLabel(i.productId, i.productSku, i.productName),
+      productOptions: [],
+      searchingProduct: false,
     })) ?? [emptyItem()],
   );
 
@@ -346,11 +366,46 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       imageUrl: pending.imageUrl,
       imageObjectUrl: null,
       uploadingImage: false,
+      productId: pending.productId,
+      productSearchTerm: productLabel(pending.productId, pending.productSku, pending.productName),
+      productOptions: [],
+      searchingProduct: false,
     };
     this.items.update((items) => [...items, draft]);
     if (pending.imageUrl) this.loadItemImage(this.items().length - 1, pending.id);
     this.claimCodeControl.setValue('', { emitEvent: false });
     this.pendingResults.set([]);
+  }
+
+  /** Vínculo opcional a un producto real del catálogo (Fase 86) — mismo patrón que el buscador de producto de sale-form. */
+  productLabel(product: Product | null): string {
+    return product ? `${product.sku} — ${product.name}` : '';
+  }
+
+  onProductSearchChange(index: number, term: string): void {
+    const item = this.items()[index];
+    this.updateItem(index, { productSearchTerm: term });
+    if (!term || (item?.productId && term === item.productSearchTerm)) {
+      this.updateItem(index, { productOptions: [] });
+      return;
+    }
+    this.updateItem(index, { searchingProduct: true });
+    this.productService.search({ search: term, page: 0, size: 10 }).subscribe({
+      next: (res) => this.updateItem(index, { productOptions: res.data.content, searchingProduct: false }),
+      error: () => this.updateItem(index, { searchingProduct: false }),
+    });
+  }
+
+  onProductLinkSelected(index: number, product: Product): void {
+    this.updateItem(index, {
+      productId: product.id,
+      productSearchTerm: this.productLabel(product),
+      productOptions: [],
+    });
+  }
+
+  clearProductLink(index: number): void {
+    this.updateItem(index, { productId: null, productSearchTerm: '', productOptions: [] });
   }
 
   removeItem(index: number): void {
@@ -542,6 +597,7 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
         commission: it.commission !== null && it.commission !== undefined ? Number(it.commission) : null,
         transactionSurcharge:
           it.transactionSurcharge !== null && it.transactionSurcharge !== undefined ? Number(it.transactionSurcharge) : null,
+        productId: it.productId,
       })),
     };
 

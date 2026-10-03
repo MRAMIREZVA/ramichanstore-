@@ -33,7 +33,12 @@
           </ng-container>
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Descripción</th>
-            <td mat-cell *matCellDef="let it">{{ it.description }}</td>
+            <td mat-cell *matCellDef="let it">
+              {{ it.description }}
+              @if (it.productId) {
+                <span class="sub">Producto: {{ it.productSku }} — {{ it.productName }}</span>
+              }
+            </td>
           </ng-container>
           <ng-container matColumnDef="quantity">
             <th mat-header-cell *matHeaderCellDef>Cant.</th>

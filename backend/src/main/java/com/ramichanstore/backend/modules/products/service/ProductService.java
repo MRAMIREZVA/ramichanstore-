@@ -23,6 +23,7 @@ import com.ramichanstore.backend.modules.products.repository.ProductImageReposit
 import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.products.repository.ProductSpecifications;
 import com.ramichanstore.backend.modules.sales.repository.SaleDetailRepository;
+import com.ramichanstore.backend.modules.shipments.repository.ShipmentItemRepository;
 import com.ramichanstore.backend.modules.stockalerts.repository.StockAlertRequestRepository;
 import com.ramichanstore.backend.modules.suppliers.entity.Supplier;
 import com.ramichanstore.backend.modules.suppliers.repository.SupplierRepository;
@@ -62,6 +63,7 @@ public class ProductService {
     private final PreorderRepository preorderRepository;
     private final OrderRequestRepository orderRequestRepository;
     private final StockAlertRequestRepository stockAlertRequestRepository;
+    private final ShipmentItemRepository shipmentItemRepository;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -225,9 +227,10 @@ public class ProductService {
         if (inventoryMovementRepository.existsByProductId(id) || saleDetailRepository.existsByProductId(id)
                 || preorderRepository.existsByProductId(id)
                 || orderRequestRepository.existsByItems_ProductId(id)
-                || stockAlertRequestRepository.existsByProductId(id)) {
+                || stockAlertRequestRepository.existsByProductId(id)
+                || shipmentItemRepository.existsByProductId(id)) {
             throw new BusinessRuleException(
-                    "No se puede eliminar el producto \"" + product.getName() + "\" porque todavía tiene movimientos, ventas, separaciones, preventas, pedidos web o avisos de stock asociados");
+                    "No se puede eliminar el producto \"" + product.getName() + "\" porque todavía tiene movimientos, ventas, separaciones, preventas, pedidos web, avisos de stock o artículos de embarque asociados");
         }
         product.softDelete();
         productRepository.save(product);

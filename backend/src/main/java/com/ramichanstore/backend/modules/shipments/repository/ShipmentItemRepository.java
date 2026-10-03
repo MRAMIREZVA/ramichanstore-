@@ -7,4 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface ShipmentItemRepository extends JpaRepository<ShipmentItem, Long>, JpaSpecificationExecutor<ShipmentItem> {
 
     boolean existsByArticleCodeIgnoreCase(String articleCode);
+
+    /** Guardia de borrado (Fase 86, mismo patrón de Fase 37): un producto vinculado desde algún artículo no se puede eliminar. */
+    boolean existsByProductId(Long productId);
 }

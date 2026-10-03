@@ -15,5 +15,7 @@ public record ShipmentItemRequest(
         @NotNull(message = "El peso es obligatorio") @DecimalMin(value = "0", inclusive = true) BigDecimal weight,
         @DecimalMin(value = "0", inclusive = true) BigDecimal cost,
         @DecimalMin(value = "0", inclusive = true) BigDecimal commission,
-        @DecimalMin(value = "0", inclusive = true) BigDecimal transactionSurcharge) {
+        @DecimalMin(value = "0", inclusive = true) BigDecimal transactionSurcharge,
+        /** Vínculo opcional hacia un producto real del catálogo (Fase 86) — null si el admin no lo asoció. */
+        Long productId) {
 }

@@ -40,6 +40,30 @@
       </mat-form-field>
     </div>
 
+    <h3 class="section-title">Producto del catálogo (opcional)</h3>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Vincular a un producto real</mat-label>
+      <input
+        matInput
+        [value]="productSearchTerm()"
+        (input)="onProductSearchChange($any($event.target).value)"
+        [matAutocomplete]="productAuto"
+      />
+      @if (searchingProduct()) {
+        <mat-spinner matSuffix diameter="16" />
+      } @else if (linkedProductId()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearProductLink()" matTooltip="Quitar vínculo">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+      <mat-autocomplete #productAuto="matAutocomplete" [displayWith]="productLabel">
+        @for (p of productOptions(); track p.id) {
+          <mat-option [value]="p" (onSelectionChange)="onProductLinkSelected(p)">{{ p.sku }} — {{ p.name }}</mat-option>
+        }
+      </mat-autocomplete>
+      <mat-hint>Siembra la base para calcular rentabilidad por embarque más adelante — nunca es obligatorio.</mat-hint>
+    </mat-form-field>
+
     <h3 class="section-title">Foto</h3>
     @if (!itemId) {
       <p class="hint">Guarda el artículo primero para poder subir la foto.</p>

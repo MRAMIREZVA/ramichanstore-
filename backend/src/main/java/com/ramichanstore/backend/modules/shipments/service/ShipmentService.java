@@ -25,6 +25,8 @@ import com.ramichanstore.backend.modules.shipments.repository.ShipmentRecipientR
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentRepository;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentSpecifications;
 import com.ramichanstore.backend.modules.shipments.repository.ShipmentTypeOptionRepository;
+import com.ramichanstore.backend.modules.products.entity.Product;
+import com.ramichanstore.backend.modules.products.repository.ProductRepository;
 import com.ramichanstore.backend.modules.settings.service.SettingService;
 import com.ramichanstore.backend.security.SecurityUser;
 import java.io.IOException;
@@ -66,6 +68,7 @@ public class ShipmentService {
     private final ShipmentTypeOptionRepository shipmentTypeOptionRepository;
     private final ShipmentItemRepository shipmentItemRepository;
     private final ShipmentDocumentRepository shipmentDocumentRepository;
+    private final ProductRepository productRepository;
     private final SettingService settingService;
     private final AuditService auditService;
 
@@ -251,6 +254,15 @@ public class ShipmentService {
         item.setCost(request.cost());
         item.setCommission(request.commission());
         item.setTransactionSurcharge(request.transactionSurcharge());
+        item.setProduct(resolveProduct(request.productId()));
+    }
+
+    /** Vínculo opcional a un producto real del catálogo (Fase 86) — mismo patrón que resolveSupplier en ProductService. */
+    private Product resolveProduct(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return productRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Producto", id));
     }
 
     /**

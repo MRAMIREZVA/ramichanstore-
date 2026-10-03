@@ -73,6 +73,10 @@ export interface ShipmentItem {
   shipmentId: number | null;
   shipmentCode: string | null;
   shipmentStatus: ShipmentStatus | null;
+  /** Vínculo opcional a un producto real del catálogo (Fase 86) — null si no está vinculado. */
+  productId: number | null;
+  productSku: string | null;
+  productName: string | null;
 }
 
 export interface ShipmentItemRequest {
@@ -84,6 +88,7 @@ export interface ShipmentItemRequest {
   cost: number | null;
   commission: number | null;
   transactionSurcharge: number | null;
+  productId: number | null;
 }
 
 export type ShipmentDocumentType = 'INVOICE' | 'DIF' | 'DIF_VOUCHER' | 'FACTURA';

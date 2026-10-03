@@ -1,5 +1,6 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,7 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Product } from '../../../core/models/product.model';
 import { ShipmentItem, ShipmentItemRequest } from '../../../core/models/shipment.model';
+import { ProductService } from '../../../core/services/product.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
 import { ImagePreviewDialogComponent } from '../../../shared/components/image-preview-dialog/image-preview-dialog';
 
@@ -35,12 +38,14 @@ export interface PendingArticleFormData {
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatAutocompleteModule,
   ],
   templateUrl: './pending-article-form.html',
   styleUrl: './pending-article-form.scss',
 })
 export class PendingArticleFormComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly productService = inject(ProductService);
   private readonly shipmentService = inject(ShipmentService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
@@ -64,6 +69,16 @@ export class PendingArticleFormComponent implements OnDestroy {
     commission: [this.item?.commission ?? null, Validators.min(0)],
     transactionSurcharge: [this.item?.transactionSurcharge ?? null, Validators.min(0)],
   });
+
+  /** Vínculo opcional a un producto real del catálogo (Fase 86) — mismo patrón que sale-form. */
+  readonly linkedProductId = signal<number | null>(this.item?.productId ?? null);
+  readonly productSearchTerm = signal(
+    this.item?.productId && this.item.productSku && this.item.productName
+      ? `${this.item.productSku} — ${this.item.productName}`
+      : '',
+  );
+  readonly productOptions = signal<Product[]>([]);
+  readonly searchingProduct = signal(false);
 
   constructor() {
     if (this.item?.imageUrl) {
@@ -129,6 +144,38 @@ export class PendingArticleFormComponent implements OnDestroy {
     });
   }
 
+  productLabel(product: Product | null): string {
+    return product ? `${product.sku} — ${product.name}` : '';
+  }
+
+  onProductSearchChange(term: string): void {
+    this.productSearchTerm.set(term);
+    if (!term) {
+      this.productOptions.set([]);
+      return;
+    }
+    this.searchingProduct.set(true);
+    this.productService.search({ search: term, page: 0, size: 10 }).subscribe({
+      next: (res) => {
+        this.productOptions.set(res.data.content);
+        this.searchingProduct.set(false);
+      },
+      error: () => this.searchingProduct.set(false),
+    });
+  }
+
+  onProductLinkSelected(product: Product): void {
+    this.linkedProductId.set(product.id);
+    this.productSearchTerm.set(this.productLabel(product));
+    this.productOptions.set([]);
+  }
+
+  clearProductLink(): void {
+    this.linkedProductId.set(null);
+    this.productSearchTerm.set('');
+    this.productOptions.set([]);
+  }
+
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -145,6 +192,7 @@ export class PendingArticleFormComponent implements OnDestroy {
       commission: v.commission !== null && v.commission !== undefined ? Number(v.commission) : null,
       transactionSurcharge:
         v.transactionSurcharge !== null && v.transactionSurcharge !== undefined ? Number(v.transactionSurcharge) : null,
+      productId: this.linkedProductId(),
     };
 
     this.saving.set(true);

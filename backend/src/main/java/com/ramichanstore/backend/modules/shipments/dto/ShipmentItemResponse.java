@@ -1,5 +1,6 @@
 package com.ramichanstore.backend.modules.shipments.dto;
 
+import com.ramichanstore.backend.modules.products.entity.Product;
 import com.ramichanstore.backend.modules.shipments.entity.Shipment;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentItem;
 import com.ramichanstore.backend.modules.shipments.entity.ShipmentStatus;
@@ -10,7 +11,9 @@ public record ShipmentItemResponse(
         Long id, String articleCode, String description, int quantity,
         BigDecimal weight, BigDecimal cost, BigDecimal commission, BigDecimal transactionSurcharge,
         String imageUrl, boolean pending,
-        Long shipmentId, String shipmentCode, ShipmentStatus shipmentStatus) {
+        Long shipmentId, String shipmentCode, ShipmentStatus shipmentStatus,
+        /** Vínculo opcional al producto real del catálogo (Fase 86) — null si no está vinculado. */
+        Long productId, String productSku, String productName) {
 
     /**
      * shipmentId/shipmentCode/shipmentStatus solo van llenos cuando el artículo YA
@@ -57,9 +60,33 @@ public record ShipmentItemResponse(
             shipmentCode = null;
             shipmentStatus = null;
         }
+
+        // Mismo resguardo que arriba: el producto vinculado (Fase 86) también tiene
+        // @SQLRestriction — si alguna vez quedara soft-eliminado, el vínculo se degrada
+        // a "sin producto" en vez de tumbar la fila completa.
+        Long productId = null;
+        String productSku = null;
+        String productName = null;
+        try {
+            Product product = item.getProduct();
+            if (product != null) {
+                Long resolvedId = product.getId();
+                String resolvedSku = product.getSku();
+                String resolvedName = product.getName();
+                productId = resolvedId;
+                productSku = resolvedSku;
+                productName = resolvedName;
+            }
+        } catch (EntityNotFoundException ignored) {
+            productId = null;
+            productSku = null;
+            productName = null;
+        }
+
         return new ShipmentItemResponse(
                 item.getId(), item.getArticleCode(), item.getDescription(), item.getQuantity(),
                 item.getWeight(), item.getCost(), item.getCommission(), item.getTransactionSurcharge(),
-                imageUrl, pending, shipmentId, shipmentCode, shipmentStatus);
+                imageUrl, pending, shipmentId, shipmentCode, shipmentStatus,
+                productId, productSku, productName);
     }
 }

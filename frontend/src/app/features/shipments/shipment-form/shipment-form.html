@@ -332,6 +332,27 @@
               <mat-label>Recargo transacción (S/)</mat-label>
               <input matInput type="number" [value]="item.transactionSurcharge" (input)="updateItem(i, { transactionSurcharge: $any($event.target).value === '' ? null : +$any($event.target).value })" />
             </mat-form-field>
+            <mat-form-field appearance="outline" class="product-link-field">
+              <mat-label>Producto del catálogo (opcional)</mat-label>
+              <input
+                matInput
+                [value]="item.productSearchTerm"
+                (input)="onProductSearchChange(i, $any($event.target).value)"
+                [matAutocomplete]="productLinkAuto"
+              />
+              @if (item.searchingProduct) {
+                <mat-spinner matSuffix diameter="16" />
+              } @else if (item.productId) {
+                <button matSuffix mat-icon-button type="button" (click)="clearProductLink(i)" matTooltip="Quitar vínculo">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+              <mat-autocomplete #productLinkAuto="matAutocomplete" [displayWith]="productLabel">
+                @for (p of item.productOptions; track p.id) {
+                  <mat-option [value]="p" (onSelectionChange)="onProductLinkSelected(i, p)">{{ p.sku }} — {{ p.name }}</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
           </div>
         </div>
       }

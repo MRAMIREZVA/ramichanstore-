@@ -1,5 +1,6 @@
 package com.ramichanstore.backend.modules.shipments.entity;
 
+import com.ramichanstore.backend.modules.products.entity.Product;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,6 +31,11 @@ import lombok.Setter;
  * borrarlo — con orphanRemoval, Hibernate emitiría un DELETE en vez de un
  * simple UPDATE del FK. Borrar de verdad un artículo pendiente es una acción
  * aparte (`ShipmentService.deletePendingItem`).
+ *
+ * Desde Fase 86, {@code product} es OPCIONAL (V49): vínculo informativo hacia
+ * un producto real del catálogo, nunca obligatorio ni con backfill — siembra
+ * la base para una futura rentabilidad real por embarque (hoy imposible,
+ * Fase 70) sin forzar nada sobre los artículos ya registrados.
  */
 @Entity
 @Table(name = "shipment_items")
@@ -45,6 +51,10 @@ public class ShipmentItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipment_id")
     private Shipment shipment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     @Column(name = "article_code", length = 50)
     private String articleCode;
