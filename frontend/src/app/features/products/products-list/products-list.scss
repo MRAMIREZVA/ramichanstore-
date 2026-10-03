@@ -67,8 +67,22 @@
   overflow: hidden;
 }
 
+/**
+ * Bug real (sesión posterior): sin esto, en un celular la tabla (8 columnas: selección, foto,
+ * producto, categoría, precio, stock, estado, acciones) se comprimía dentro de `overflow:hidden`
+ * del .table-card — el texto quedaba truncado y las acciones (editar/duplicar/eliminar) nunca
+ * llegaban a verse, sin ninguna forma de deslizar para alcanzarlas. Mismo patrón ya probado en
+ * pending-articles-list (Fase 69) y en la tabla "Mis compras" del portal (Fase 21): el scroll
+ * horizontal vive en un wrapper APARTE del .table-card (que necesita su overflow:hidden para
+ * recortar las esquinas redondeadas), nunca en el .table-card mismo.
+ */
+.table-scroll {
+  overflow-x: auto;
+}
+
 .products-table {
   width: 100%;
+  min-width: 1040px;
 }
 
 .loading,
