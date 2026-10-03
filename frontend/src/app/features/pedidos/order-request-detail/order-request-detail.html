@@ -80,16 +80,16 @@
       @if (order.deliveryAgencyName) {
         <div class="field"><span class="field-label">Agencia</span><span>{{ order.deliveryAgencyName }}</span></div>
       }
-      @if (order.guestAddress) {
+      @if (order.deliveryMethod === 'DELIVERY' && order.guestAddress) {
         <div class="field"><span class="field-label">Dirección</span><span>{{ order.guestAddress }}</span></div>
       }
-      @if (order.guestDistrict || order.guestProvince || order.guestDepartment) {
+      @if (order.deliveryMethod !== 'PICKUP' && (order.guestDistrict || order.guestProvince || order.guestDepartment)) {
         <div class="field">
           <span class="field-label">Ubicación</span>
           <span>{{ [order.guestDistrict, order.guestProvince, order.guestDepartment].join(' · ') }}</span>
         </div>
       }
-      @if (order.recipientName || order.recipientDni) {
+      @if (order.deliveryMethod === 'AGENCY' && (order.recipientName || order.recipientDni)) {
         <div class="field">
           <span class="field-label">Recoge</span>
           <span>{{ order.recipientName }} @if (order.recipientDni) { (DNI {{ order.recipientDni }}) }</span>

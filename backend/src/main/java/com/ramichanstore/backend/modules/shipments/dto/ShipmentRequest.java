@@ -19,7 +19,7 @@ public record ShipmentRequest(
         BigDecimal domesticJapanShippingCost, BigDecimal handlingCost, BigDecimal customsCharge,
         BigDecimal exchangeRate,
         @NotNull(message = "El tipo de envío es obligatorio") Long shipmentTypeId,
-        LocalDate departureDate, LocalDate arrivalDate, Integer travelDays, LocalDate possibleArrivalDate,
+        LocalDate departureDate, LocalDate arrivalDate, LocalDate possibleArrivalDate,
         BigDecimal figuresWeight, BigDecimal finalWeight,
         @NotNull(message = "El estado es obligatorio") ShipmentStatus status,
         @Size(max = 500) String notes,

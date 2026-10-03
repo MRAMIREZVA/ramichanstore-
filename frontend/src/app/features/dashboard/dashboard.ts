@@ -26,7 +26,7 @@ interface OperationalAlert {
   message: () => string;
   count: () => number;
   routerLink: string;
-  queryParams?: Record<string, number>;
+  queryParams?: Record<string, number | boolean>;
 }
 
 @Component({
@@ -95,6 +95,17 @@ export class Dashboard {
       message: () => `${this.summary()?.customsFlaggedShipments ?? 0} embarque${(this.summary()?.customsFlaggedShipments ?? 0) === 1 ? '' : 's'} observado${(this.summary()?.customsFlaggedShipments ?? 0) === 1 ? '' : 's'} por aduanas`,
       count: () => this.summary()?.customsFlaggedShipments ?? 0,
       routerLink: '/embarques',
+    },
+    {
+      // Fase 84: el dato ya se calculaba (misma tarjeta "Pagos pendientes" de arriba) y el
+      // filtro ya existía (pendingBalance, Fase 79) — solo faltaba conectar los dos, igual
+      // patrón que las otras 4 alertas.
+      icon: 'payments',
+      message: () =>
+        `${this.summary()?.pendingPaymentsCount ?? 0} venta${(this.summary()?.pendingPaymentsCount ?? 0) === 1 ? '' : 's'} con saldo pendiente — S/ ${(this.summary()?.pendingPaymentsBalance ?? 0).toFixed(2)}`,
+      count: () => this.summary()?.pendingPaymentsCount ?? 0,
+      routerLink: '/pedidos',
+      queryParams: { tab: 0, pendingBalance: true },
     },
   ];
 

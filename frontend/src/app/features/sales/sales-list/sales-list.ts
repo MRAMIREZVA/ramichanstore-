@@ -125,6 +125,11 @@ export class SalesList implements OnInit {
       )
       .subscribe((res) => this.customerOptions.set(res.data.content));
 
+    // Deep-link desde la alerta "pagos pendientes" del Dashboard (Fase 84).
+    if (this.route.snapshot.queryParamMap.get('pendingBalance') === 'true') {
+      this.pendingBalanceControl.setValue(true, { emitEvent: false });
+    }
+
     // Pre-filtro por cliente al llegar desde "Ver todas" en la ficha del cliente (customer-detail).
     const customerId = this.route.snapshot.queryParamMap.get('customerId');
     const customerName = this.route.snapshot.queryParamMap.get('customerName');

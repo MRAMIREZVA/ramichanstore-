@@ -16,21 +16,22 @@ export type ShipmentStatus =
   | 'PENDIENTE_PAGO'
   | 'EN_CAMINO'
   | 'LLEGO_A_SERPOST'
+  | 'LLEGO_A_PERU'
   | 'OBSERVADO_ADUANAS'
   | 'LISTO_PARA_DELIVERY'
-  | 'EN_TIENDA'
-  | 'LLEGO_A_PERU';
+  | 'EN_TIENDA';
 
+/** Fase 84: orden corregido — "Llegó a Perú" estaba al final, después de "En tienda"/"Listo para delivery" (imposible: un paquete siempre llega al país antes de eso). */
 export const SHIPMENT_STATUS_LABELS: Record<ShipmentStatus, string> = {
   PENDIENTE_ENVIO: 'Pendiente envío',
   EN_COTIZACION_ENVIO: 'En cotización de envío',
   PENDIENTE_PAGO: 'Pendiente pago',
   EN_CAMINO: 'En camino',
   LLEGO_A_SERPOST: 'Llegó a Serpost',
+  LLEGO_A_PERU: 'Llegó a Perú',
   OBSERVADO_ADUANAS: 'Observado x Aduanas',
   LISTO_PARA_DELIVERY: 'Listo para delivery',
   EN_TIENDA: 'En tienda',
-  LLEGO_A_PERU: 'Llegó a Perú',
 };
 
 export interface ShipmentHolder {
@@ -127,7 +128,6 @@ export interface Shipment {
   departureDate: string | null;
   arrivalDate: string | null;
   transitDays: number | null;
-  travelDays: number | null;
   possibleArrivalDate: string | null;
   figuresWeight: number | null;
   finalWeight: number | null;
@@ -160,7 +160,6 @@ export interface ShipmentRequest {
   shipmentTypeId: number;
   departureDate: string | null;
   arrivalDate: string | null;
-  travelDays: number | null;
   possibleArrivalDate: string | null;
   figuresWeight: number | null;
   finalWeight: number | null;

@@ -11,7 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 import { DeliveryStatus } from '../../../core/models/delivery.model';
 import { PREORDER_STATUS_LABELS, PreorderStatus } from '../../../core/models/preorder.model';
-import { PAYMENT_STATUS_LABELS, PaymentStatus, Sale, SaleType } from '../../../core/models/sale.model';
+import { PAYMENT_STATUS_LABELS, SALE_TYPE_LABELS, PaymentStatus, Sale, SaleType } from '../../../core/models/sale.model';
 import { PortalReservation } from '../../../core/models/portal.model';
 import { PortalDataService } from '../../../core/services/portal-data.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
@@ -96,6 +96,7 @@ export class PortalHome implements OnInit {
 
   readonly resolveImageUrl = resolveImageUrl;
   readonly statusLabels = PAYMENT_STATUS_LABELS;
+  readonly typeLabels = SALE_TYPE_LABELS;
   readonly reservationStatusLabels = PREORDER_STATUS_LABELS;
   readonly steps = STEPS;
   readonly purchaseColumns = ['date', 'type', 'summary', 'total', 'paid', 'balance', 'status', 'delivery', 'actions'];
@@ -195,6 +196,10 @@ export class PortalHome implements OnInit {
 
   statusLabel(status: PaymentStatus): string {
     return this.statusLabels[status];
+  }
+
+  typeLabel(type: SaleType): string {
+    return this.typeLabels[type];
   }
 
   reservationStatusLabel(status: PreorderStatus): string {

@@ -161,7 +161,6 @@ public class ShipmentService {
         shipment.setShipmentType(resolveShipmentType(request.shipmentTypeId()));
         shipment.setDepartureDate(request.departureDate());
         shipment.setArrivalDate(request.arrivalDate());
-        shipment.setTravelDays(request.travelDays());
         shipment.setPossibleArrivalDate(request.possibleArrivalDate());
         shipment.setFiguresWeight(request.figuresWeight());
         shipment.setFinalWeight(request.finalWeight());

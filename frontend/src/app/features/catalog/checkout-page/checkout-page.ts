@@ -256,6 +256,15 @@ export class CheckoutPage implements OnInit {
     });
   }
 
+  /**
+   * Bug real (sesión posterior): esto solo alternaba VALIDADORES al cambiar de método de
+   * entrega, nunca limpiaba el VALOR de los campos que dejan de aplicar — Angular no vacía un
+   * control solo porque su bloque @if desapareció del DOM. Un cliente que probaba "Delivery"
+   * (tipea dirección), se arrepiente y vuelve a "Recojo en tienda" terminaba enviando un pedido
+   * "Recojo" con una dirección fantasma todavía adentro, que el admin veía como si fuera válida
+   * (`order-request-detail.html` no filtra por `deliveryMethod` antes de mostrarlos). Ahora cada
+   * grupo de campos se resetea explícitamente apenas deja de ser el método activo.
+   */
   private applyLocationValidators(method: DeliveryMethod): void {
     const shipping = this.form.controls.shipping.controls;
     const { guestAddress: address, guestDistrict: district, guestProvince: province, guestDepartment: department } = shipping;
@@ -263,6 +272,7 @@ export class CheckoutPage implements OnInit {
 
     address.clearValidators();
     address.addValidators(method === 'DELIVERY' ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]);
+    if (method !== 'DELIVERY') address.setValue('', { emitEvent: false });
 
     // Departamento/Provincia/Distrito viajan juntos como la misma cascada (Fase 60) tanto para
     // envío a domicilio como para agencia -- ya no solo Distrito ni solo agencia: sin elegir
@@ -271,12 +281,23 @@ export class CheckoutPage implements OnInit {
     department.setValidators(requiredIfNotPickup);
     province.setValidators([...requiredIfNotPickup, Validators.maxLength(100)]);
     district.setValidators([...requiredIfNotPickup, Validators.maxLength(100)]);
+    if (method === 'PICKUP') {
+      department.setValue(null, { emitEvent: false });
+      province.setValue(null, { emitEvent: false });
+      district.setValue(null, { emitEvent: false });
+    }
 
     const requiredIfAgency = method === 'AGENCY' ? [Validators.required] : [];
     agencyId.setValidators(requiredIfAgency);
     dni.setValidators([...requiredIfAgency, Validators.maxLength(20)]);
     recipientName.setValidators([...requiredIfAgency, Validators.maxLength(200)]);
     recipientPhone.setValidators([...requiredIfAgency, Validators.maxLength(30)]);
+    if (method !== 'AGENCY') {
+      agencyId.setValue(null, { emitEvent: false });
+      dni.setValue('', { emitEvent: false });
+      recipientName.setValue('', { emitEvent: false });
+      recipientPhone.setValue('', { emitEvent: false });
+    }
 
     for (const control of [address, district, department, province, agencyId, dni, recipientName, recipientPhone]) {
       control.updateValueAndValidity({ emitEvent: false });

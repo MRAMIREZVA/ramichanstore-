@@ -93,9 +93,6 @@ public class Shipment extends BaseEntity {
     @Column(name = "arrival_date")
     private LocalDate arrivalDate;
 
-    @Column(name = "travel_days")
-    private Integer travelDays;
-
     @Column(name = "possible_arrival_date")
     private LocalDate possibleArrivalDate;
 

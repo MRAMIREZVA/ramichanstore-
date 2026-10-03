@@ -149,6 +149,14 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
 
   private readonly s = this.data.shipment;
 
+  /**
+   * "Días de viaje" (Fase 84): ya no es un campo del formulario ni se envía al backend — era
+   * una columna guardada que duplicaba exactamente lo que ShipmentResponse.transitDays ya
+   * calcula fresco en cada lectura. Arranca con ese valor (siempre correcto, venga o no de un
+   * embarque ya guardado) y se recalcula en vivo con la misma fórmula mientras se edita.
+   */
+  readonly travelDaysPreview = signal<number | null>(this.s?.transitDays ?? null);
+
   readonly documentTypes = DOCUMENT_TYPES;
   readonly documentLabels = SHIPMENT_DOCUMENT_TYPE_LABELS;
   readonly documents = signal<Record<ShipmentDocumentType, DocumentSlot>>(this.buildInitialDocuments());
@@ -162,7 +170,6 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     status: [this.s?.status ?? ('PENDIENTE_ENVIO' as ShipmentStatus), Validators.required],
     departureDate: [parseIsoDate(this.s?.departureDate)],
     arrivalDate: [parseIsoDate(this.s?.arrivalDate)],
-    travelDays: [this.s?.travelDays ?? null],
     possibleArrivalDate: [parseIsoDate(this.s?.possibleArrivalDate)],
     productCost: [this.s?.productCost ?? null],
     shippingCost: [this.s?.shippingCost ?? null],
@@ -206,7 +213,6 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
 
     // "Días de viaje" nunca se escribe a mano: se calcula solo a partir de fecha de
     // salida/llegada, mismo criterio que transitDays/weightDifference en el backend.
-    this.form.controls.travelDays.disable({ emitEvent: false });
     this.form.controls.departureDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.form.controls.arrivalDate.valueChanges.subscribe(() => this.recalculateTravelDays());
     this.recalculateTravelDays();
@@ -275,17 +281,17 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Misma fórmula que ShipmentResponse.transitDays: salida→llegada, o salida→hoy si aún no llega. */
   private recalculateTravelDays(): void {
     const departure = this.form.controls.departureDate.value;
-    const arrival = this.form.controls.arrivalDate.value;
-    if (!departure || !arrival) {
-      this.form.controls.travelDays.setValue(null, { emitEvent: false });
+    if (!departure) {
+      this.travelDaysPreview.set(null);
       return;
     }
+    const arrival = this.form.controls.arrivalDate.value;
     const d = typeof departure === 'string' ? new Date(departure) : departure;
-    const a = typeof arrival === 'string' ? new Date(arrival) : arrival;
-    const days = Math.round((a.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-    this.form.controls.travelDays.setValue(days, { emitEvent: false });
+    const a = arrival ? (typeof arrival === 'string' ? new Date(arrival) : arrival) : new Date();
+    this.travelDaysPreview.set(Math.round((a.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)));
   }
 
   /**
@@ -518,7 +524,6 @@ export class ShipmentFormComponent implements OnInit, OnDestroy {
       shipmentTypeId: v.shipmentTypeId!,
       departureDate: this.toIsoDate(v.departureDate),
       arrivalDate: this.toIsoDate(v.arrivalDate),
-      travelDays: v.travelDays,
       possibleArrivalDate: this.toIsoDate(v.possibleArrivalDate),
       figuresWeight: v.figuresWeight,
       finalWeight: v.finalWeight,

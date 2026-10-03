@@ -71,9 +71,22 @@ public record PublicProductResponse(
                 .findFirst()
                 .orElse(p.getMainImageUrl());
 
-        boolean inStock = p.getCurrentStock() > 0 && p.getStatus() != ProductStatus.OUT_OF_STOCK;
+        // Bug real (hallado en sesión posterior): una campaña de preventa ACTIVE vive en su
+        // propio contador de cupos (preorderInfo.availableSlots), separado de currentStock —
+        // nada los mantiene sincronizados, así que un producto en PREORDER con stock físico
+        // en 0 (normal: el producto aún no llega) pero con cupos reales disponibles quedaba
+        // SIN botón de compra ni WhatsApp, mostrando a la vez la barra de progreso de
+        // preventa Y el formulario de "avísame cuando esté disponible" — contradictorios.
+        // `preorderInfo` solo llega no-null cuando el status ya es PREORDER (CatalogService
+        // .findProductById), así que acá se puede confiar en sus cupos sin volver a chequear
+        // el status. El listado/grilla no resuelve preorderInfo a propósito (evita N+1, ver
+        // Fase 44) y sigue usando solo currentStock — este fix es exclusivo del detalle.
+        boolean inStock = preorderInfo != null
+                ? preorderInfo.availableSlots() > 0
+                : p.getCurrentStock() > 0 && p.getStatus() != ProductStatus.OUT_OF_STOCK;
+        int availableQuantity = preorderInfo != null ? preorderInfo.availableSlots() : p.getCurrentStock();
         // "Últimas unidades": booleano calculado desde el mismo stock que ya se expone acá abajo.
-        boolean lowStock = inStock && p.isLowStock();
+        boolean lowStock = inStock && preorderInfo == null && p.isLowStock();
 
         return new PublicProductResponse(
                 p.getId(), p.getSku(), p.getName(), p.getCharacterName(), p.getFranchise(),
@@ -81,7 +94,7 @@ public record PublicProductResponse(
                 p.getLine() != null ? p.getLine().getName() : null,
                 description, mainImageUrl, imagesToExpose,
                 p.getSize(), p.getSalePrice(),
-                inStock, lowStock, p.getCurrentStock(),
+                inStock, lowStock, availableQuantity,
                 p.getStatus(),
                 p.getMaterial(), p.getHasArticulations(), p.getIncludedAccessories(),
                 p.getPackagingMaterial(), p.getOriginCountry(), p.getReleaseDate(),
